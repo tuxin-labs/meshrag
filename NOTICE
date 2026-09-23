@@ -1,0 +1,12 @@
+MeshRAG
+Copyright 2026 MeshRAG Team
+
+This project is based on LightRAG (https://github.com/HKUDS/LightRAG),
+Copyright 2025 LightRAG Team, licensed under the MIT License.
+
+Modifications and additional features — including multi-knowledge-base
+federated query, external knowledge base integration, document management
+APIs, and the deletion/parsing concurrency pipeline — are
+Copyright 2026 MeshRAG Team, also licensed under the MIT License.
+
+The original MIT License text is preserved in the LICENSE file.
