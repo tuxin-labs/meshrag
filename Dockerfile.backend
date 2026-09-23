@@ -1,0 +1,62 @@
+# syntax=docker/dockerfile:1
+
+FROM python:3.10-slim AS builder
+
+WORKDIR /app
+
+# 换源 + 安装编译依赖
+RUN set -ex \
+    && sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 先复制所有代码（修复 ModuleNotFoundError）
+COPY lightrag/ ./lightrag/
+COPY pyproject.toml setup.py ./
+
+# 安装依赖（包含 api 和 offline extras）
+# pip 换阿里云源(与 apt 源一致)，避免国内访问 PyPI 官方源(files.pythonhosted.org)超时；加超时与重试容忍网络波动
+RUN pip install --no-cache-dir \
+    -i https://mirrors.aliyun.com/pypi/simple/ \
+    --trusted-host mirrors.aliyun.com \
+    --default-timeout=300 --retries 5 \
+    ".[api,offline-storage,offline-llm]"
+
+# 预缓存 tiktoken（含 gpt-4o-mini 所需的 o200k_base，与主 Dockerfile 一致）
+RUN mkdir -p /app/data/tiktoken \
+    && meshrag-download-cache --cache-dir /app/data/tiktoken \
+    || status=$?; \
+    if [ -n "${status:-}" ] && [ "$status" -ne 0 ] && [ "$status" -ne 2 ]; then exit "$status"; fi
+
+# 最终镜像
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN set -ex \
+    && sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /app/lightrag ./lightrag
+COPY --from=builder /app/data/tiktoken /app/data/tiktoken
+COPY pyproject.toml .
+COPY setup.py .
+
+ENV TIKTOKEN_CACHE_DIR=/app/data/tiktoken
+ENV HOST=0.0.0.0
+ENV PORT=9621
+
+EXPOSE 9621
+
+# 默认单进程(uvicorn)。
+# 设置 SERVER_MODE=gunicorn 切换为 gunicorn 多进程,worker 数由 WORKERS 控制(默认 2,>1 才真正多进程)。
+# exec 让目标进程取代 sh 成为 PID 1,确保 docker stop 能正确触发 graceful shutdown。
+CMD ["sh", "-c", "if [ \"$SERVER_MODE\" = \"gunicorn\" ]; then exec meshrag-gunicorn --workers \"${WORKERS:-2}\"; else exec python -m lightrag.api.lightrag_server; fi"]
