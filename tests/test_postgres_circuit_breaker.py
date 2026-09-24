@@ -106,19 +106,13 @@ class TestCircuitBreakerStateMachine:
         await cb.record_failure(exc)
         assert cb.state == CircuitState.OPEN
 
-        # 模拟时间经过 recovery_timeout
-        with patch("time.monotonic") as mock_time:
-            # 第一次调用：allow_request 内部获取当前时间
-            # 第二次调用：获取 last_failure_time 对应的时间
-            base_time = 1000.0
-            mock_time.side_effect = [base_time, base_time - 5.0, base_time]
-            # now=1000.0, last_failure_time was set to some earlier value
-            # 我们需要 last_failure_time + recovery_timeout <= now
-            # 直接修改内部状态更简单
-            cb._last_failure_time = base_time - 10.0  # 10 秒前
-
-        # 不需要 mock，直接设置 last_failure_time 为过去
-        result = await cb.allow_request()
+        # 将 last_failure_time 固定为 10 秒前，并在 allow_request 读取
+        # time.monotonic() 时将其冻结在 base_time，使时间差 (10s) 稳定
+        # 超过 recovery_timeout (5s) —— 断言结果与机器真实时钟无关
+        base_time = 1000.0
+        cb._last_failure_time = base_time - 10.0
+        with patch("time.monotonic", return_value=base_time):
+            result = await cb.allow_request()
         assert result is True
         assert cb.state == CircuitState.HALF_OPEN
 
