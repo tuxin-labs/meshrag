@@ -211,7 +211,14 @@ class TestQueryModes:
         }
 
         assert "query_mode" in metadata
-        assert metadata["query_mode"] in ["local", "global", "hybrid", "mix", "naive", "bypass"]
+        assert metadata["query_mode"] in [
+            "local",
+            "global",
+            "hybrid",
+            "mix",
+            "naive",
+            "bypass",
+        ]
 
 
 # ──────────────────────────────────────────────

@@ -367,6 +367,7 @@ def create_app(args):
 
             # 关闭外部知识库共享 HTTP session
             from lightrag.api.external_kb_client import close_session
+
             await close_session()
 
             if "LIGHTRAG_GUNICORN_MODE" not in os.environ:
@@ -1054,10 +1055,10 @@ def create_app(args):
 
     # 判断是否使用文件类存储
     is_file_based_storage = (
-        args.kv_storage == "JsonKVStorage" or
-        args.vector_storage == "NanoVectorDBStorage" or
-        args.graph_storage == "NetworkXStorage" or
-        args.doc_status_storage == "JsonDocStatusStorage"
+        args.kv_storage == "JsonKVStorage"
+        or args.vector_storage == "NanoVectorDBStorage"
+        or args.graph_storage == "NetworkXStorage"
+        or args.doc_status_storage == "JsonDocStatusStorage"
     )
 
     def discover_knowledge_bases() -> list[str]:
@@ -1067,7 +1068,9 @@ def create_app(args):
         For non-file storage: return empty list (KBs are created explicitly via API)
         """
         if not is_file_based_storage:
-            logger.debug("Using non-file based storage, skipping directory scan for KB discovery")
+            logger.debug(
+                "Using non-file based storage, skipping directory scan for KB discovery"
+            )
             return []
 
         if not os.path.isdir(args.working_dir):
@@ -1081,6 +1084,7 @@ def create_app(args):
 
     # Initialize RAGManager
     try:
+
         def create_rag(workspace: str) -> LightRAG:
             return LightRAG(
                 working_dir=args.working_dir,
@@ -1116,7 +1120,7 @@ def create_app(args):
                 },
                 ollama_server_infos=ollama_server_infos,
             )
-            
+
         # 根据存储类型决定是否使用文件 registry
         if is_file_based_storage:
             registry_path = os.path.join(args.working_dir, "knowledge_bases.json")
@@ -1141,27 +1145,35 @@ def create_app(args):
             api_key,
         )
     )
-    app.include_router(create_query_routes(
-        rag_manager, api_key, args.top_k,
-        llm_timeout=llm_timeout,
-        default_llm_api_key=args.llm_binding_api_key,
-        # Pre-compute per-binding model kwargs so ANY requested binding inherits
-        # the correct env defaults (e.g., Ollama num_ctx=32768), not just the
-        # server's own binding.
-        binding_model_kwargs={
-            "ollama": create_llm_model_kwargs("ollama", args, llm_timeout),
-            "lollms": create_llm_model_kwargs("lollms", args, llm_timeout),
-        },
-    ))
+    app.include_router(
+        create_query_routes(
+            rag_manager,
+            api_key,
+            args.top_k,
+            llm_timeout=llm_timeout,
+            default_llm_api_key=args.llm_binding_api_key,
+            # Pre-compute per-binding model kwargs so ANY requested binding inherits
+            # the correct env defaults (e.g., Ollama num_ctx=32768), not just the
+            # server's own binding.
+            binding_model_kwargs={
+                "ollama": create_llm_model_kwargs("ollama", args, llm_timeout),
+                "lollms": create_llm_model_kwargs("lollms", args, llm_timeout),
+            },
+        )
+    )
     app.include_router(create_graph_routes(rag_manager, api_key))
 
     from pydantic import BaseModel
+
     class KBRequest(BaseModel):
         kb_id: str
 
     @app.get("/knowledge_bases", tags=["Knowledge Base Management"])
     async def list_knowledge_bases():
-        return {"status": "success", "knowledge_bases": rag_manager.list_knowledge_bases()}
+        return {
+            "status": "success",
+            "knowledge_bases": rag_manager.list_knowledge_bases(),
+        }
 
     @app.post("/knowledge_bases", tags=["Knowledge Base Management"])
     async def create_knowledge_base(req: KBRequest):
@@ -1174,22 +1186,33 @@ def create_app(args):
             result = await rag_manager.delete_knowledge_base(kb_id)
 
             if result["status"] == "success":
-                return {"status": "success", "kb_id": kb_id, "message": result["message"]}
+                return {
+                    "status": "success",
+                    "kb_id": kb_id,
+                    "message": result["message"],
+                }
             elif result["status"] == "partial_success":
                 return {
                     "status": "partial_success",
                     "kb_id": kb_id,
                     "message": result["message"],
-                    "storage_results": result["storage_results"]
+                    "storage_results": result["storage_results"],
                 }, 207  # Multi-Status
             else:
-                return {"status": "error", "kb_id": kb_id, "message": result["message"]}, 500
+                return {
+                    "status": "error",
+                    "kb_id": kb_id,
+                    "message": result["message"],
+                }, 500
 
         except ValueError as e:
             return {"status": "error", "message": str(e)}, 400
         except Exception as e:
             logger.error(f"Error deleting knowledge base {kb_id}: {e}")
-            return {"status": "error", "message": f"Failed to delete knowledge base: {e}"}, 500
+            return {
+                "status": "error",
+                "message": f"Failed to delete knowledge base: {e}",
+            }, 500
 
     # Add Ollama API routes
     # OllamaAPI now takes rag_manager to function correctly

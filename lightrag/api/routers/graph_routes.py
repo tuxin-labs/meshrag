@@ -162,7 +162,9 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
             rag = await rag_manager.get_rag(kb_id)
             return await rag.chunk_entity_relation_graph.search_labels(q, limit)
         except Exception as e:
-            logger.error(f"Error searching labels in KB {kb_id} with query '{q}': {str(e)}")
+            logger.error(
+                f"Error searching labels in KB {kb_id} with query '{q}': {str(e)}"
+            )
             logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=500, detail=f"Error searching labels: {str(e)}"
@@ -202,7 +204,9 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
                 max_nodes=max_nodes,
             )
         except Exception as e:
-            logger.error(f"Error getting knowledge graph from KB {kb_id} for label '{label}': {str(e)}")
+            logger.error(
+                f"Error getting knowledge graph from KB {kb_id} for label '{label}': {str(e)}"
+            )
             logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=500, detail=f"Error getting knowledge graph: {str(e)}"
@@ -227,7 +231,9 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
             exists = await rag.chunk_entity_relation_graph.has_node(name)
             return {"exists": exists}
         except Exception as e:
-            logger.error(f"Error checking entity existence for '{name}' in KB {kb_id}: {str(e)}")
+            logger.error(
+                f"Error checking entity existence for '{name}' in KB {kb_id}: {str(e)}"
+            )
             logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=500, detail=f"Error checking entity existence: {str(e)}"

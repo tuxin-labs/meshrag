@@ -89,6 +89,7 @@ class TestMilvusIndexCreation:
 
         # 让 vector index 创建成功，scalar index 创建失败
         call_count = [0]
+
         def create_index_side_effect(*args, **kwargs):
             call_count[0] += 1
             if call_count[0] == 1:

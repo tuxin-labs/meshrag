@@ -9,7 +9,7 @@ Tests:
 
 import pytest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from fastapi import Response
 import time
 

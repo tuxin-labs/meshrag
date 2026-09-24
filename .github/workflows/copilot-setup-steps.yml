@@ -48,11 +48,11 @@ jobs:
       - name: Create minimal frontend stub for Copilot agent
         run: |
           mkdir -p lightrag/api/webui
-          echo '<!DOCTYPE html><html><head><title>LightRAG - Copilot Agent</title></head><body><h1>Copilot Agent Mode</h1></body></html>' > lightrag/api/webui/index.html
+          echo '<!DOCTYPE html><html><head><title>MeshRAG - Copilot Agent</title></head><body><h1>Copilot Agent Mode</h1></body></html>' > lightrag/api/webui/index.html
           echo "Created minimal frontend stub for Copilot agent environment"
 
       - name: Verify installation
         run: |
           python --version
-          pip list | grep lightrag
+          pip list | grep meshrag
           meshrag-server --help || echo "Note: Server requires .env configuration to run"

@@ -75,7 +75,12 @@ class TestQueryRequestValidation:
         from lightrag.api.routers.query_routes import QueryRequest
 
         with pytest.raises(ValueError, match="llm_binding must be one of"):
-            QueryRequest(query="test", llm_binding="invalid", llm_model="gpt-4", llm_binding_host="http://api")
+            QueryRequest(
+                query="test",
+                llm_binding="invalid",
+                llm_model="gpt-4",
+                llm_binding_host="http://api",
+            )
 
     def test_conversation_history_role_validation(self):
         """消息缺少 role 键应返回错误。"""
@@ -89,7 +94,9 @@ class TestQueryRequestValidation:
         from lightrag.api.routers.query_routes import QueryRequest
 
         with pytest.raises(ValueError, match="non-empty string"):
-            QueryRequest(query="test", conversation_history=[{"role": "", "content": "test"}])
+            QueryRequest(
+                query="test", conversation_history=[{"role": "", "content": "test"}]
+            )
 
     def test_valid_query_request(self):
         """有效的 QueryRequest 应成功创建。"""
@@ -168,11 +175,17 @@ class TestQueryEndpoint:
     @pytest.mark.asyncio
     async def test_query_endpoint_success(self, test_app):
         """成功查询应返回 200 和响应内容。"""
+
         async def mock_multi_kb_query(*args, **kwargs):
             return {
                 "status": "success",
                 "message": "Query executed successfully",
-                "data": {"references": [], "entities": [], "relationships": [], "chunks": []},
+                "data": {
+                    "references": [],
+                    "entities": [],
+                    "relationships": [],
+                    "chunks": [],
+                },
                 "metadata": {},
                 "llm_response": {"content": "AI response text", "is_streaming": False},
             }
@@ -192,6 +205,7 @@ class TestQueryEndpoint:
     @pytest.mark.asyncio
     async def test_query_bypass_no_references(self, test_app):
         """bypass 模式不应返回引用。"""
+
         async def mock_multi_kb_query(*args, **kwargs):
             return {
                 "status": "success",
@@ -215,6 +229,7 @@ class TestQueryEndpoint:
     @pytest.mark.asyncio
     async def test_query_without_references(self, test_app):
         """include_references=False 应不返回引用。"""
+
         async def mock_multi_kb_query(*args, **kwargs):
             return {
                 "status": "success",
@@ -229,7 +244,9 @@ class TestQueryEndpoint:
         mock_mgr.default_kb = "default"
 
         client = _make_client(mock_mgr)
-        response = client.post("/query", json={"query": "test", "include_references": False})
+        response = client.post(
+            "/query", json={"query": "test", "include_references": False}
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -238,6 +255,7 @@ class TestQueryEndpoint:
     @pytest.mark.asyncio
     async def test_query_with_chunk_content(self, test_app):
         """include_chunk_content=True 应在引用中添加内容。"""
+
         async def mock_multi_kb_query(*args, **kwargs):
             return {
                 "status": "success",
@@ -245,8 +263,16 @@ class TestQueryEndpoint:
                 "data": {
                     "references": [{"reference_id": "1", "file_path": "doc.txt"}],
                     "chunks": [
-                        {"chunk_id": "c1", "content": "chunk content 1", "reference_id": "1"},
-                        {"chunk_id": "c2", "content": "chunk content 2", "reference_id": "1"},
+                        {
+                            "chunk_id": "c1",
+                            "content": "chunk content 1",
+                            "reference_id": "1",
+                        },
+                        {
+                            "chunk_id": "c2",
+                            "content": "chunk content 2",
+                            "reference_id": "1",
+                        },
                     ],
                 },
                 "metadata": {},
@@ -258,7 +284,9 @@ class TestQueryEndpoint:
         mock_mgr.default_kb = "default"
 
         client = _make_client(mock_mgr)
-        response = client.post("/query", json={"query": "test", "include_chunk_content": True})
+        response = client.post(
+            "/query", json={"query": "test", "include_chunk_content": True}
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -288,12 +316,15 @@ class TestQueryEndpoint:
         mock_mgr.default_kb = "default"
 
         client = _make_client(mock_mgr)
-        response = client.post("/query", json={
-            "query": "test",
-            "llm_binding": "openai",
-            "llm_model": "gpt-4o",
-            "llm_binding_host": "http://api.openai.com",
-        })
+        response = client.post(
+            "/query",
+            json={
+                "query": "test",
+                "llm_binding": "openai",
+                "llm_model": "gpt-4o",
+                "llm_binding_host": "http://api.openai.com",
+            },
+        )
 
         assert response.status_code == 200
         assert captured["model_func"] is not None
@@ -326,13 +357,16 @@ class TestQueryEndpoint:
         mock_mgr.default_kb = "default"
 
         client = _make_client(mock_mgr)
-        response = client.post("/query", json={
-            "query": "test",
-            "llm_binding": "openai",
-            "llm_model": "qwen3_32b",
-            "llm_binding_host": "https://example.com/v1",
-            "llm_default_headers": {"X-Apig-AppCode": "app-code-123"},
-        })
+        response = client.post(
+            "/query",
+            json={
+                "query": "test",
+                "llm_binding": "openai",
+                "llm_model": "qwen3_32b",
+                "llm_binding_host": "https://example.com/v1",
+                "llm_default_headers": {"X-Apig-AppCode": "app-code-123"},
+            },
+        )
 
         assert response.status_code == 200
         assert captured_headers == [{"X-Apig-AppCode": "app-code-123"}]
@@ -340,6 +374,7 @@ class TestQueryEndpoint:
     @pytest.mark.asyncio
     async def test_query_error_500(self, test_app):
         """内部错误应返回 500。"""
+
         async def mock_multi_kb_query(*args, **kwargs):
             raise Exception("Internal error")
 
@@ -366,6 +401,7 @@ class TestQueryStreamEndpoint:
     @pytest.mark.asyncio
     async def test_stream_ndjson_format(self, test_app):
         """流式响应应返回 NDJSON 格式。"""
+
         async def stream_generator():
             yield "chunk1"
             yield "chunk2"
@@ -376,7 +412,11 @@ class TestQueryStreamEndpoint:
                 "message": "",
                 "data": {"references": []},
                 "metadata": {},
-                "llm_response": {"content": "", "is_streaming": True, "response_iterator": stream_generator()},
+                "llm_response": {
+                    "content": "",
+                    "is_streaming": True,
+                    "response_iterator": stream_generator(),
+                },
             }
 
         mock_mgr = MagicMock()
@@ -398,6 +438,7 @@ class TestQueryStreamEndpoint:
     @pytest.mark.asyncio
     async def test_stream_with_references_first_line(self, test_app):
         """include_references=True 时首行应包含引用。"""
+
         async def stream_generator():
             yield "response text"
 
@@ -407,7 +448,11 @@ class TestQueryStreamEndpoint:
                 "message": "",
                 "data": {"references": [{"reference_id": "1", "file_path": "doc.txt"}]},
                 "metadata": {},
-                "llm_response": {"content": "", "is_streaming": True, "response_iterator": stream_generator()},
+                "llm_response": {
+                    "content": "",
+                    "is_streaming": True,
+                    "response_iterator": stream_generator(),
+                },
             }
 
         mock_mgr = MagicMock()
@@ -415,7 +460,9 @@ class TestQueryStreamEndpoint:
         mock_mgr.default_kb = "default"
 
         client = _make_client(mock_mgr)
-        response = client.post("/query/stream", json={"query": "test", "include_references": True})
+        response = client.post(
+            "/query/stream", json={"query": "test", "include_references": True}
+        )
 
         lines = response.text.strip().split("\n")
         first_line = json.loads(lines[0])
@@ -424,6 +471,7 @@ class TestQueryStreamEndpoint:
     @pytest.mark.asyncio
     async def test_stream_error_in_ndjson(self, test_app):
         """流式过程中的错误应作为 NDJSON 行返回。"""
+
         async def error_stream_generator():
             yield "start"
             raise Exception("Stream error")
@@ -434,7 +482,11 @@ class TestQueryStreamEndpoint:
                 "message": "",
                 "data": {"references": []},
                 "metadata": {},
-                "llm_response": {"content": "", "is_streaming": True, "response_iterator": error_stream_generator()},
+                "llm_response": {
+                    "content": "",
+                    "is_streaming": True,
+                    "response_iterator": error_stream_generator(),
+                },
             }
 
         mock_mgr = MagicMock()
@@ -452,6 +504,7 @@ class TestQueryStreamEndpoint:
     @pytest.mark.asyncio
     async def test_stream_non_streaming_mode(self, test_app):
         """stream=False 应返回单行完整响应。"""
+
         async def mock_multi_kb_query(*args, **kwargs):
             return {
                 "status": "success",
@@ -549,6 +602,7 @@ class TestQueryDataEndpoint:
     @pytest.mark.asyncio
     async def test_query_data_success(self, test_app):
         """成功请求应返回结构化数据。"""
+
         async def mock_multi_kb_get_data(*args, **kwargs):
             return {
                 "status": "success",
@@ -579,11 +633,17 @@ class TestQueryDataEndpoint:
     @pytest.mark.asyncio
     async def test_query_data_structure(self, test_app):
         """返回数据应包含所有必需字段。"""
+
         async def mock_multi_kb_get_data(*args, **kwargs):
             return {
                 "status": "success",
                 "message": "",
-                "data": {"entities": [], "relationships": [], "chunks": [], "references": []},
+                "data": {
+                    "entities": [],
+                    "relationships": [],
+                    "chunks": [],
+                    "references": [],
+                },
                 "metadata": {"query_mode": "mix"},
             }
 
@@ -612,7 +672,12 @@ class TestQueryDataEndpoint:
             return {
                 "status": "success",
                 "message": "",
-                "data": {"entities": [], "relationships": [], "chunks": [], "references": []},
+                "data": {
+                    "entities": [],
+                    "relationships": [],
+                    "chunks": [],
+                    "references": [],
+                },
                 "metadata": {"query_mode": "mix"},
             }
 
@@ -621,10 +686,15 @@ class TestQueryDataEndpoint:
         mock_mgr.default_kb = "default"
 
         client = _make_client(mock_mgr)
-        response = client.post("/query/data", json={
-            "query": "test",
-            "external_kbs": [{"type": "retrieval", "url": "http://ext.kb", "top_k": 5}],
-        })
+        response = client.post(
+            "/query/data",
+            json={
+                "query": "test",
+                "external_kbs": [
+                    {"type": "retrieval", "url": "http://ext.kb", "top_k": 5}
+                ],
+            },
+        )
 
         assert response.status_code == 200
         assert len(captured_external_kbs) == 1
@@ -634,6 +704,7 @@ class TestQueryDataEndpoint:
     async def test_query_data_invalid_response(self, test_app):
         """非 dict 响应应触发异常（路由 handler 的 fallback 缺少 metadata 字段，
         Pydantic 校验失败后被 except 捕获并返回 500）。"""
+
         async def mock_multi_kb_get_data(*args, **kwargs):
             return "invalid response"
 
@@ -662,17 +733,23 @@ class TestExternalKBMockEndpoints:
     async def test_ext_retrieval_endpoint(self, test_app):
         """/ext/retrieval 应返回标准格式。"""
         mock_rag = MagicMock()
-        mock_rag.aquery_data = AsyncMock(return_value={
-            "status": "success",
-            "data": {
-                "chunks": [
-                    {"content": "test chunk", "file_path": "doc.txt", "chunk_id": "c1"},
-                ],
-                "references": [],
-                "entities": [],
-                "relationships": [],
-            },
-        })
+        mock_rag.aquery_data = AsyncMock(
+            return_value={
+                "status": "success",
+                "data": {
+                    "chunks": [
+                        {
+                            "content": "test chunk",
+                            "file_path": "doc.txt",
+                            "chunk_id": "c1",
+                        },
+                    ],
+                    "references": [],
+                    "entities": [],
+                    "relationships": [],
+                },
+            }
+        )
 
         mock_mgr = MagicMock()
         mock_mgr.get_rag = AsyncMock(return_value=mock_rag)
@@ -695,11 +772,13 @@ class TestExternalKBMockEndpoints:
     async def test_ext_rag_endpoint(self, test_app):
         """/ext/rag 应返回 RAG 格式。"""
         mock_rag = MagicMock()
-        mock_rag.aquery_llm = AsyncMock(return_value={
-            "status": "success",
-            "data": {"references": []},
-            "llm_response": {"content": "RAG answer", "is_streaming": False},
-        })
+        mock_rag.aquery_llm = AsyncMock(
+            return_value={
+                "status": "success",
+                "data": {"references": []},
+                "llm_response": {"content": "RAG answer", "is_streaming": False},
+            }
+        )
 
         mock_mgr = MagicMock()
         mock_mgr.get_rag = AsyncMock(return_value=mock_rag)

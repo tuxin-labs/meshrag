@@ -58,9 +58,7 @@ class TestApplyTokenTruncation:
 
     def test_truncate_entities(self):
         """验证实体截断。"""
-        entities = [
-            {"description": f"Entity {i} description text"} for i in range(10)
-        ]
+        entities = [{"description": f"Entity {i} description text"} for i in range(10)]
 
         # 简化逻辑：按数量截断
         result = entities[:3]

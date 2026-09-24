@@ -375,7 +375,14 @@ class TestDeleteDocByIdResponse:
         """验证 DeleteDocByIdResponse 的有效状态值。"""
         from lightrag.api.routers.document_routes import DeleteDocByIdResponse
 
-        valid_statuses = ["deletion_started", "deletion_queued", "busy", "not_allowed", "partial_not_found", "not_found"]
+        valid_statuses = [
+            "deletion_started",
+            "deletion_queued",
+            "busy",
+            "not_allowed",
+            "partial_not_found",
+            "not_found",
+        ]
         for status in valid_statuses:
             resp = DeleteDocByIdResponse(
                 status=status,
@@ -504,9 +511,7 @@ class TestOverwriteParameter:
         # 模拟 overwrite=True 时的 file_source 检查
         overwrite = True
         file_source = "source.txt"
-        existing_doc_data = await mock_rag.doc_status.get_doc_by_file_path(
-            file_source
-        )
+        existing_doc_data = await mock_rag.doc_status.get_doc_by_file_path(file_source)
 
         assert existing_doc_data is not None
         if overwrite:

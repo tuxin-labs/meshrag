@@ -296,7 +296,7 @@ async def generic_rerank_api(
         _ssl_verify = None
     async with aiohttp.ClientSession(
         connector=aiohttp.TCPConnector(ssl=_ssl_verify),
-        timeout=aiohttp.ClientTimeout(total=10)
+        timeout=aiohttp.ClientTimeout(total=10),
     ) as session:
         async with session.post(base_url, headers=headers, json=payload) as response:
             if response.status != 200:

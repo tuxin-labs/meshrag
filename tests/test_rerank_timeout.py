@@ -108,7 +108,8 @@ class TestRerankTimeoutAndRetry:
         session.post = _post
 
         with patch(
-            "lightrag.rerank.aiohttp.ClientSession", return_value=_MockSessionCtx(session)
+            "lightrag.rerank.aiohttp.ClientSession",
+            return_value=_MockSessionCtx(session),
         ):
             with pytest.raises(RetryError):
                 await generic_rerank_api(

@@ -1,4 +1,4 @@
-name: Upload LightRAG-hku Package
+name: Upload MeshRAG Package
 
 on:
   release:

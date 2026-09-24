@@ -61,6 +61,7 @@ async def close_session() -> None:
 # 检索型外部知识库客户端
 # ──────────────────────────────────────────────
 
+
 async def fetch_external_kb(
     query: str,
     url: str,
@@ -125,9 +126,7 @@ async def _do_fetch_retrieval(
     ) as response:
         if response.status != 200:
             body = await response.text()
-            raise ValueError(
-                f"外部知识库返回 HTTP {response.status}: {body[:200]}"
-            )
+            raise ValueError(f"外部知识库返回 HTTP {response.status}: {body[:200]}")
 
         data = await response.json()
 
@@ -152,11 +151,13 @@ async def _do_fetch_retrieval(
         content = item.get("content", "")
         if not content:
             continue
-        chunks.append({
-            "content": content,
-            "file_path": item.get("file_path", f"external_result_{i}"),
-            "chunk_id": item.get("chunk_id", f"ext_{uuid.uuid4().hex[:12]}"),
-        })
+        chunks.append(
+            {
+                "content": content,
+                "file_path": item.get("file_path", f"external_result_{i}"),
+                "chunk_id": item.get("chunk_id", f"ext_{uuid.uuid4().hex[:12]}"),
+            }
+        )
 
     logger.info(f"外部知识库(检索型) [{url}] 返回 {len(chunks)} 条结果")
     return chunks
@@ -165,6 +166,7 @@ async def _do_fetch_retrieval(
 # ──────────────────────────────────────────────
 # 完整 RAG 服务型外部知识库客户端
 # ──────────────────────────────────────────────
+
 
 async def fetch_rag_kb(
     query: str,
@@ -192,7 +194,11 @@ async def fetch_rag_kb(
         return await _do_fetch_rag(query, url, api_key, timeout), None
     except Exception as e:
         logger.warning(f"外部 RAG 服务请求失败 [{url}]: {e}")
-        return {"answer": "", "references": [], "source": url}, f"外部知识库(RAG服务型) [{url}] 请求失败: {e}"
+        return {
+            "answer": "",
+            "references": [],
+            "source": url,
+        }, f"外部知识库(RAG服务型) [{url}] 请求失败: {e}"
 
 
 @retry(
@@ -227,9 +233,7 @@ async def _do_fetch_rag(
     ) as response:
         if response.status != 200:
             body = await response.text()
-            raise ValueError(
-                f"外部 RAG 服务返回 HTTP {response.status}: {body[:200]}"
-            )
+            raise ValueError(f"外部 RAG 服务返回 HTTP {response.status}: {body[:200]}")
 
         data = await response.json()
 
@@ -258,5 +262,7 @@ async def _do_fetch_rag(
         if isinstance(ref, dict) and ref.get("file_path")
     ]
 
-    logger.info(f"外部 RAG 服务 [{url}] 返回答案（{len(answer)} 字符，{len(clean_refs)} 条引用）")
+    logger.info(
+        f"外部 RAG 服务 [{url}] 返回答案（{len(answer)} 字符，{len(clean_refs)} 条引用）"
+    )
     return {"answer": answer, "references": clean_refs, "source": url}

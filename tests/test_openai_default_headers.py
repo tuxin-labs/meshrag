@@ -18,9 +18,7 @@ class TestCreateOpenAIAsyncClientHeaders:
             create_openai_async_client(
                 api_key="test-key",
                 base_url="https://example.com/v1",
-                client_configs={
-                    "default_headers": {"X-Apig-AppCode": "app-code-123"}
-                },
+                client_configs={"default_headers": {"X-Apig-AppCode": "app-code-123"}},
             )
 
         _, kwargs = mock_client_cls.call_args
@@ -48,7 +46,9 @@ class TestOpenAICompleteDefaultHeaders:
     """openai_complete_if_cache should route headers to the client, not the API call."""
 
     @patch("lightrag.llm.openai.create_openai_async_client")
-    async def test_default_headers_kwarg_goes_to_client_configs(self, mock_create_client):
+    async def test_default_headers_kwarg_goes_to_client_configs(
+        self, mock_create_client
+    ):
         from lightrag.llm.openai import openai_complete_if_cache
 
         mock_client = MagicMock()
@@ -70,7 +70,9 @@ class TestOpenAICompleteDefaultHeaders:
         assert "default_headers" not in api_kwargs
 
     @patch("lightrag.llm.openai.create_openai_async_client")
-    async def test_env_openai_llm_default_headers_applied(self, mock_create_client, monkeypatch):
+    async def test_env_openai_llm_default_headers_applied(
+        self, mock_create_client, monkeypatch
+    ):
         from lightrag.llm.openai import openai_complete_if_cache
 
         monkeypatch.setenv(
@@ -90,7 +92,9 @@ class TestOpenAICompleteDefaultHeaders:
         assert client_configs["default_headers"]["X-Apig-AppCode"] == "from-env"
 
     @patch("lightrag.llm.openai.create_openai_async_client")
-    async def test_query_default_headers_override_env(self, mock_create_client, monkeypatch):
+    async def test_query_default_headers_override_env(
+        self, mock_create_client, monkeypatch
+    ):
         from lightrag.llm.openai import openai_complete_if_cache
 
         monkeypatch.setenv(
@@ -122,8 +126,6 @@ class TestOpenAILLMOptionsDefaultHeaders:
         from argparse import Namespace
         from lightrag.llm.binding_options import OpenAILLMOptions
 
-        args = Namespace(
-            openai_llm_default_headers={"X-Apig-AppCode": "app-code-123"}
-        )
+        args = Namespace(openai_llm_default_headers={"X-Apig-AppCode": "app-code-123"})
         options = OpenAILLMOptions.options_dict(args)
         assert options["default_headers"] == {"X-Apig-AppCode": "app-code-123"}

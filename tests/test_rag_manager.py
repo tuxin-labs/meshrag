@@ -16,13 +16,9 @@ RAG Manager 核心测试。
 - 上下文构建（_build_fallback_context、_build_context_from_merged）
 """
 
-import asyncio
 import json
-import os
 import pytest
-from collections import OrderedDict
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
 
 
 # ──────────────────────────────────────────────
@@ -32,8 +28,10 @@ from unittest.mock import AsyncMock, MagicMock, patch, call
 
 def _make_mock_llm_func(response_text="mock llm response"):
     """创建 mock LLM 函数。"""
+
     async def _func(*args, **kwargs):
         return response_text
+
     return _func
 
 
@@ -73,7 +71,9 @@ class TestRAGManagerInit:
         """初始化应包含 default KB。"""
         from lightrag.api.rag_manager import RAGManager
 
-        rag_factory = lambda kb_id: MagicMock()
+        def rag_factory(kb_id):
+            return MagicMock()
+
         manager = RAGManager(rag_factory=rag_factory, default_kb="default")
 
         assert "default" in manager._known_kbs
@@ -87,7 +87,9 @@ class TestRAGManagerInit:
         registry_path = tmp_path / "registry.json"
         registry_path.write_text(json.dumps(["kb1", "kb2", "kb3"]), encoding="utf-8")
 
-        rag_factory = lambda kb_id: MagicMock()
+        def rag_factory(kb_id):
+            return MagicMock()
+
         manager = RAGManager(
             rag_factory=rag_factory,
             default_kb="default",
@@ -107,7 +109,9 @@ class TestRAGManagerInit:
         registry_path = tmp_path / "registry.json"
         registry_path.write_text("{invalid json", encoding="utf-8")
 
-        rag_factory = lambda kb_id: MagicMock()
+        def rag_factory(kb_id):
+            return MagicMock()
+
         manager = RAGManager(
             rag_factory=rag_factory,
             default_kb="default",
@@ -123,8 +127,12 @@ class TestRAGManagerInit:
         """应调用 kb_discovery 函数并合并结果。"""
         from lightrag.api.rag_manager import RAGManager
 
-        discovery_func = lambda: ["discovered1", "discovered2"]
-        rag_factory = lambda kb_id: MagicMock()
+        def discovery_func():
+            return ["discovered1", "discovered2"]
+
+        def rag_factory(kb_id):
+            return MagicMock()
+
         manager = RAGManager(
             rag_factory=rag_factory,
             default_kb="default",
@@ -143,7 +151,9 @@ class TestRAGManagerInit:
         registry_path = tmp_path / "registry.json"
         registry_path.write_text(json.dumps(["zebra", "alpha"]), encoding="utf-8")
 
-        rag_factory = lambda kb_id: MagicMock()
+        def rag_factory(kb_id):
+            return MagicMock()
+
         manager = RAGManager(
             rag_factory=rag_factory,
             default_kb="default",
@@ -161,7 +171,10 @@ class TestRAGManagerInit:
         from lightrag.api.rag_manager import RAGManager
 
         registry_path = tmp_path / "registry.json"
-        rag_factory = lambda kb_id: MagicMock()
+
+        def rag_factory(kb_id):
+            return MagicMock()
+
         manager = RAGManager(
             rag_factory=rag_factory,
             default_kb="default",
@@ -195,7 +208,9 @@ class TestRAGManagerLRU:
         mock_rag.initialize_storages = AsyncMock()
         mock_rag.check_and_migrate_data = AsyncMock()
 
-        rag_factory = lambda kb_id: mock_rag
+        def rag_factory(kb_id):
+            return mock_rag
+
         manager = RAGManager(rag_factory=rag_factory, max_instances=2)
 
         result = await manager.get_rag("kb1")
@@ -214,13 +229,15 @@ class TestRAGManagerLRU:
         mock_rag.initialize_storages = AsyncMock()
         mock_rag.check_and_migrate_data = AsyncMock()
 
-        rag_factory = lambda kb_id: mock_rag
+        def rag_factory(kb_id):
+            return mock_rag
+
         manager = RAGManager(rag_factory=rag_factory)
 
         # 第一次调用
         await manager.get_rag("kb1")
         # 第二次调用
-        result = await manager.get_rag("kb1")
+        await manager.get_rag("kb1")
 
         # initialize_storages 仍只应被调用一次
         assert mock_rag.initialize_storages.call_count == 1
@@ -231,6 +248,7 @@ class TestRAGManagerLRU:
         from lightrag.api.rag_manager import RAGManager
 
         instances = {}
+
         def rag_factory(kb_id):
             mock_rag = MagicMock()
             mock_rag.initialize_storages = AsyncMock()
@@ -298,7 +316,9 @@ class TestRAGManagerLRU:
         """应返回所有已知 KB（包括未加载的）。"""
         from lightrag.api.rag_manager import RAGManager
 
-        rag_factory = lambda kb_id: MagicMock()
+        def rag_factory(kb_id):
+            return MagicMock()
+
         manager = RAGManager(
             rag_factory=rag_factory,
             default_kb="default",
@@ -319,9 +339,13 @@ class TestRAGManagerLRU:
         mock_rag.initialize_storages = AsyncMock()
         mock_rag.check_and_migrate_data = AsyncMock()
         mock_rag.finalize_storages = AsyncMock()
-        mock_rag.drop_storages = AsyncMock(return_value={"succeeded": ["all"], "failed": []})
+        mock_rag.drop_storages = AsyncMock(
+            return_value={"succeeded": ["all"], "failed": []}
+        )
 
-        rag_factory = lambda kb_id: mock_rag
+        def rag_factory(kb_id):
+            return mock_rag
+
         manager = RAGManager(rag_factory=rag_factory)
 
         # 先加载 KB
@@ -342,7 +366,9 @@ class TestRAGManagerLRU:
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
 
-        with pytest.raises(ValueError, match="Default knowledge base cannot be deleted"):
+        with pytest.raises(
+            ValueError, match="Default knowledge base cannot be deleted"
+        ):
             await manager.delete_knowledge_base("default")
 
     @pytest.mark.asyncio
@@ -401,14 +427,19 @@ class TestRAGManagerLRU:
 
         def rag_factory(kb_id):
             mock_rag = MagicMock()
-            mock_rag.drop_storages = AsyncMock(return_value={
-                "success": ["full_docs"],
-                "failed": ["entities_vdb", "chunk_entity_relation_graph"],
-                "failed_details": [
-                    {"storage": "entities_vdb", "error": "connection refused"},
-                    {"storage": "chunk_entity_relation_graph", "error": "auth failed"},
-                ],
-            })
+            mock_rag.drop_storages = AsyncMock(
+                return_value={
+                    "success": ["full_docs"],
+                    "failed": ["entities_vdb", "chunk_entity_relation_graph"],
+                    "failed_details": [
+                        {"storage": "entities_vdb", "error": "connection refused"},
+                        {
+                            "storage": "chunk_entity_relation_graph",
+                            "error": "auth failed",
+                        },
+                    ],
+                }
+            )
             mock_rag.finalize_storages = AsyncMock()
             return mock_rag
 
@@ -482,7 +513,9 @@ class TestRAGManagerLRU:
             mock_rag = MagicMock()
             mock_rag.initialize_storages = AsyncMock()
             mock_rag.check_and_migrate_data = AsyncMock()
-            mock_rag.finalize_storages = AsyncMock(side_effect=lambda: finalized.append(kb_id))
+            mock_rag.finalize_storages = AsyncMock(
+                side_effect=lambda: finalized.append(kb_id)
+            )
             return mock_rag
 
         manager = RAGManager(rag_factory=rag_factory)
@@ -510,11 +543,20 @@ class TestMergeKBResults:
         from lightrag.api.rag_manager import RAGManager
 
         kb_results = [
-            ("kb1", _make_kb_result(
-                entities=[{"entity_name": "Alice", "entity_type": "Person", "description": "Engineer"}],
-                chunks=[{"chunk_id": "c1", "content": "Alice works at TechCorp"}],
-                references=[{"reference_id": "1", "file_path": "doc.txt"}],
-            )),
+            (
+                "kb1",
+                _make_kb_result(
+                    entities=[
+                        {
+                            "entity_name": "Alice",
+                            "entity_type": "Person",
+                            "description": "Engineer",
+                        }
+                    ],
+                    chunks=[{"chunk_id": "c1", "content": "Alice works at TechCorp"}],
+                    references=[{"reference_id": "1", "file_path": "doc.txt"}],
+                ),
+            ),
         ]
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
@@ -529,12 +571,30 @@ class TestMergeKBResults:
         from lightrag.api.rag_manager import RAGManager
 
         kb_results = [
-            ("kb1", _make_kb_result(
-                entities=[{"entity_name": "Alice", "entity_type": "Person", "description": "Engineer"}],
-            )),
-            ("kb2", _make_kb_result(
-                entities=[{"entity_name": "Bob", "entity_type": "Person", "description": "Scientist"}],
-            )),
+            (
+                "kb1",
+                _make_kb_result(
+                    entities=[
+                        {
+                            "entity_name": "Alice",
+                            "entity_type": "Person",
+                            "description": "Engineer",
+                        }
+                    ],
+                ),
+            ),
+            (
+                "kb2",
+                _make_kb_result(
+                    entities=[
+                        {
+                            "entity_name": "Bob",
+                            "entity_type": "Person",
+                            "description": "Scientist",
+                        }
+                    ],
+                ),
+            ),
         ]
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
@@ -549,22 +609,32 @@ class TestMergeKBResults:
         from lightrag.api.rag_manager import RAGManager
 
         kb_results = [
-            ("kb1", _make_kb_result(
-                entities=[{
-                    "entity_name": "Alice",
-                    "entity_type": "Person",
-                    "description": "Engineer",
-                }],
-                references=[{"reference_id": "1", "file_path": "doc1.txt"}],
-            )),
-            ("kb2", _make_kb_result(
-                entities=[{
-                    "entity_name": "Alice",
-                    "entity_type": "Person",
-                    "description": "Senior Engineer with 5 years experience",
-                }],
-                references=[{"reference_id": "2", "file_path": "doc2.txt"}],
-            )),
+            (
+                "kb1",
+                _make_kb_result(
+                    entities=[
+                        {
+                            "entity_name": "Alice",
+                            "entity_type": "Person",
+                            "description": "Engineer",
+                        }
+                    ],
+                    references=[{"reference_id": "1", "file_path": "doc1.txt"}],
+                ),
+            ),
+            (
+                "kb2",
+                _make_kb_result(
+                    entities=[
+                        {
+                            "entity_name": "Alice",
+                            "entity_type": "Person",
+                            "description": "Senior Engineer with 5 years experience",
+                        }
+                    ],
+                    references=[{"reference_id": "2", "file_path": "doc2.txt"}],
+                ),
+            ),
         ]
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
@@ -584,12 +654,24 @@ class TestMergeKBResults:
         from lightrag.api.rag_manager import RAGManager
 
         kb_results = [
-            ("kb1", _make_kb_result(
-                entities=[{"entity_name": "Alice", "description": "Engineer"}],
-            )),
-            ("kb2", _make_kb_result(
-                entities=[{"entity_name": "Alice", "entity_type": "Person", "description": "Scientist"}],
-            )),
+            (
+                "kb1",
+                _make_kb_result(
+                    entities=[{"entity_name": "Alice", "description": "Engineer"}],
+                ),
+            ),
+            (
+                "kb2",
+                _make_kb_result(
+                    entities=[
+                        {
+                            "entity_name": "Alice",
+                            "entity_type": "Person",
+                            "description": "Scientist",
+                        }
+                    ],
+                ),
+            ),
         ]
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
@@ -603,22 +685,32 @@ class TestMergeKBResults:
         from lightrag.api.rag_manager import RAGManager
 
         kb_results = [
-            ("kb1", _make_kb_result(
-                relationships=[{
-                    "src_id": "Alice",
-                    "tgt_id": "Bob",
-                    "description": "colleague",
-                    "weight": 1.0,
-                }],
-            )),
-            ("kb2", _make_kb_result(
-                relationships=[{
-                    "src_id": "Bob",  # 反向
-                    "tgt_id": "Alice",
-                    "description": "close colleague",
-                    "weight": 2.0,
-                }],
-            )),
+            (
+                "kb1",
+                _make_kb_result(
+                    relationships=[
+                        {
+                            "src_id": "Alice",
+                            "tgt_id": "Bob",
+                            "description": "colleague",
+                            "weight": 1.0,
+                        }
+                    ],
+                ),
+            ),
+            (
+                "kb2",
+                _make_kb_result(
+                    relationships=[
+                        {
+                            "src_id": "Bob",  # 反向
+                            "tgt_id": "Alice",
+                            "description": "close colleague",
+                            "weight": 2.0,
+                        }
+                    ],
+                ),
+            ),
         ]
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
@@ -635,12 +727,27 @@ class TestMergeKBResults:
         from lightrag.api.rag_manager import RAGManager
 
         kb_results = [
-            ("kb1", _make_kb_result(
-                relationships=[{"src_id": "A", "tgt_id": "B", "description": "related"}],
-            )),
-            ("kb2", _make_kb_result(
-                relationships=[{"src_id": "A", "tgt_id": "B", "description": "connected", "keywords": "strong"}],
-            )),
+            (
+                "kb1",
+                _make_kb_result(
+                    relationships=[
+                        {"src_id": "A", "tgt_id": "B", "description": "related"}
+                    ],
+                ),
+            ),
+            (
+                "kb2",
+                _make_kb_result(
+                    relationships=[
+                        {
+                            "src_id": "A",
+                            "tgt_id": "B",
+                            "description": "connected",
+                            "keywords": "strong",
+                        }
+                    ],
+                ),
+            ),
         ]
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
@@ -654,17 +761,26 @@ class TestMergeKBResults:
         from lightrag.api.rag_manager import RAGManager
 
         kb_results = [
-            ("kb1", _make_kb_result(
-                chunks=[
-                    {"chunk_id": "c1", "content": "content 1"},
-                    {"chunk_id": "c2", "content": "content 2"},
-                ],
-            )),
-            ("kb2", _make_kb_result(
-                chunks=[
-                    {"chunk_id": "c1", "content": "content 1 same id"},  # 相同 chunk_id 但不同 KB
-                ],
-            )),
+            (
+                "kb1",
+                _make_kb_result(
+                    chunks=[
+                        {"chunk_id": "c1", "content": "content 1"},
+                        {"chunk_id": "c2", "content": "content 2"},
+                    ],
+                ),
+            ),
+            (
+                "kb2",
+                _make_kb_result(
+                    chunks=[
+                        {
+                            "chunk_id": "c1",
+                            "content": "content 1 same id",
+                        },  # 相同 chunk_id 但不同 KB
+                    ],
+                ),
+            ),
         ]
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
@@ -681,17 +797,23 @@ class TestMergeKBResults:
         from lightrag.api.rag_manager import RAGManager
 
         kb_results = [
-            ("kb1", _make_kb_result(
-                entities=[{"entity_name": "Alice", "reference_id": "kb1_ref1"}],
-                references=[
-                    {"reference_id": "kb1_ref1", "file_path": "doc1.txt"},
-                    {"reference_id": "kb1_ref2", "file_path": "doc2.txt"},
-                ],
-            )),
-            ("kb2", _make_kb_result(
-                entities=[{"entity_name": "Bob", "reference_id": "kb2_ref1"}],
-                references=[{"reference_id": "kb2_ref1", "file_path": "doc3.txt"}],
-            )),
+            (
+                "kb1",
+                _make_kb_result(
+                    entities=[{"entity_name": "Alice", "reference_id": "kb1_ref1"}],
+                    references=[
+                        {"reference_id": "kb1_ref1", "file_path": "doc1.txt"},
+                        {"reference_id": "kb1_ref2", "file_path": "doc2.txt"},
+                    ],
+                ),
+            ),
+            (
+                "kb2",
+                _make_kb_result(
+                    entities=[{"entity_name": "Bob", "reference_id": "kb2_ref1"}],
+                    references=[{"reference_id": "kb2_ref1", "file_path": "doc3.txt"}],
+                ),
+            ),
         ]
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
@@ -749,15 +871,28 @@ class TestContentDedupChunks:
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
 
         chunks = [
-            {"chunk_id": "c1", "content": "Same content", "kb_id": "kb1", "reference_id": "ref1"},
-            {"chunk_id": "c2", "content": "Same content", "kb_id": "kb2", "reference_id": "ref2"},
+            {
+                "chunk_id": "c1",
+                "content": "Same content",
+                "kb_id": "kb1",
+                "reference_id": "ref1",
+            },
+            {
+                "chunk_id": "c2",
+                "content": "Same content",
+                "kb_id": "kb2",
+                "reference_id": "ref2",
+            },
         ]
 
         result = manager._content_dedup_chunks(chunks)
 
         assert len(result) == 1
         chunk = result[0]
-        assert set(chunk.get("reference_ids", chunk.get("kb_ids", []))) == {"ref1", "ref2"}
+        assert set(chunk.get("reference_ids", chunk.get("kb_ids", []))) == {
+            "ref1",
+            "ref2",
+        }
 
     def test_dedup_prefers_more_kb_sources(self):
         """更多 KB 来源的 chunk 应被保留。"""
@@ -766,9 +901,24 @@ class TestContentDedupChunks:
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
 
         chunks = [
-            {"chunk_id": "c1", "content": "content", "kb_id": "kb1", "reference_id": "ref1"},
-            {"chunk_id": "c2", "content": "content", "kb_id": "kb2", "reference_id": "ref2"},
-            {"chunk_id": "c3", "content": "content", "kb_id": "kb3", "reference_id": "ref3"},
+            {
+                "chunk_id": "c1",
+                "content": "content",
+                "kb_id": "kb1",
+                "reference_id": "ref1",
+            },
+            {
+                "chunk_id": "c2",
+                "content": "content",
+                "kb_id": "kb2",
+                "reference_id": "ref2",
+            },
+            {
+                "chunk_id": "c3",
+                "content": "content",
+                "kb_id": "kb3",
+                "reference_id": "ref3",
+            },
         ]
 
         result = manager._content_dedup_chunks(chunks)
@@ -832,8 +982,14 @@ class TestStaticHelperMethods:
         from lightrag.api.rag_manager import RAGManager
 
         rag_results = [
-            ("http://rag1", {"answer": "ans1", "references": [], "source": "http://rag1"}),
-            ("http://rag2", {"answer": "ans2", "references": [], "source": "http://rag2"}),
+            (
+                "http://rag1",
+                {"answer": "ans1", "references": [], "source": "http://rag1"},
+            ),
+            (
+                "http://rag2",
+                {"answer": "ans2", "references": [], "source": "http://rag2"},
+            ),
         ]
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
@@ -848,7 +1004,10 @@ class TestStaticHelperMethods:
         from lightrag.api.rag_manager import RAGManager
 
         rag_results = [
-            ("http://rag1", {"answer": "Answer 1", "references": [], "source": "http://rag1"}),
+            (
+                "http://rag1",
+                {"answer": "Answer 1", "references": [], "source": "http://rag1"},
+            ),
         ]
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
@@ -893,7 +1052,9 @@ class TestBypassLlm:
 
         manager = RAGManager(rag_factory=rag_factory)
 
-        result = await manager._bypass_llm("test query", mock_query_param, None, ["kb1"])
+        result = await manager._bypass_llm(
+            "test query", mock_query_param, None, ["kb1"]
+        )
 
         assert result["status"] == "success"
         assert result["llm_response"]["content"] == "bypass response"
@@ -903,7 +1064,6 @@ class TestBypassLlm:
     async def test_bypass_with_priority_8(self, mock_query_param):
         """bypass 应使用 _priority=8。"""
         from lightrag.api.rag_manager import RAGManager
-        from unittest.mock import sentinel
 
         priority_captured = []
 
@@ -957,15 +1117,20 @@ class TestFetchExternalKbs:
 
         async def mock_fetch(*args, **kwargs):
             return [
-                {"content": "external chunk", "file_path": "ext_doc.txt", "chunk_id": "ext_1"}
+                {
+                    "content": "external chunk",
+                    "file_path": "ext_doc.txt",
+                    "chunk_id": "ext_1",
+                }
             ], None
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
 
-        with patch("lightrag.api.external_kb_client.fetch_external_kb", side_effect=mock_fetch):
+        with patch(
+            "lightrag.api.external_kb_client.fetch_external_kb", side_effect=mock_fetch
+        ):
             result, errors = await manager._fetch_all_external_kbs(
-                "test query",
-                [{"url": "http://ext.kb", "top_k": 5}]
+                "test query", [{"url": "http://ext.kb", "top_k": 5}]
             )
 
         assert len(result) == 1
@@ -991,10 +1156,11 @@ class TestFetchExternalKbs:
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
 
-        with patch("lightrag.api.external_kb_client.fetch_external_kb", side_effect=mock_fetch):
+        with patch(
+            "lightrag.api.external_kb_client.fetch_external_kb", side_effect=mock_fetch
+        ):
             result, errors = await manager._fetch_all_external_kbs(
-                "query",
-                [{"url": "http://fail.kb"}, {"url": "http://ok.kb"}]
+                "query", [{"url": "http://fail.kb"}, {"url": "http://ok.kb"}]
             )
 
         assert len(result) == 2
@@ -1009,14 +1175,19 @@ class TestFetchExternalKbs:
         from lightrag.api.rag_manager import RAGManager
 
         async def mock_fetch(*args, **kwargs):
-            return {"answer": "RAG answer", "references": [], "source": "http://rag.kb"}, None
+            return {
+                "answer": "RAG answer",
+                "references": [],
+                "source": "http://rag.kb",
+            }, None
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
 
-        with patch("lightrag.api.external_kb_client.fetch_rag_kb", side_effect=mock_fetch):
+        with patch(
+            "lightrag.api.external_kb_client.fetch_rag_kb", side_effect=mock_fetch
+        ):
             result, errors = await manager._fetch_rag_kbs(
-                "query",
-                [{"url": "http://rag.kb"}]
+                "query", [{"url": "http://rag.kb"}]
             )
 
         assert len(result) == 1
@@ -1031,14 +1202,19 @@ class TestFetchExternalKbs:
         from lightrag.api.rag_manager import RAGManager
 
         async def mock_fetch(*args, **kwargs):
-            return {"answer": "", "references": [], "source": "http://fail.kb"}, "外部知识库(RAG服务型) [http://fail.kb] 请求失败: timeout"
+            return {
+                "answer": "",
+                "references": [],
+                "source": "http://fail.kb",
+            }, "外部知识库(RAG服务型) [http://fail.kb] 请求失败: timeout"
 
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
 
-        with patch("lightrag.api.external_kb_client.fetch_rag_kb", side_effect=mock_fetch):
+        with patch(
+            "lightrag.api.external_kb_client.fetch_rag_kb", side_effect=mock_fetch
+        ):
             result, errors = await manager._fetch_rag_kbs(
-                "query",
-                [{"url": "http://fail.kb"}]
+                "query", [{"url": "http://fail.kb"}]
             )
 
         assert len(result) == 1
@@ -1069,8 +1245,14 @@ class TestMergeRagRefsIntoData:
         }
 
         rag_results = [
-            ("http://rag1", {"answer": "ans1", "references": [{"file_path": "rag1.txt"}]}),
-            ("http://rag2", {"answer": "ans2", "references": [{"file_path": "rag2.txt"}]}),
+            (
+                "http://rag1",
+                {"answer": "ans1", "references": [{"file_path": "rag1.txt"}]},
+            ),
+            (
+                "http://rag2",
+                {"answer": "ans2", "references": [{"file_path": "rag2.txt"}]},
+            ),
         ]
 
         manager._merge_rag_refs_into_data(merged_data, rag_results)
@@ -1093,7 +1275,10 @@ class TestMergeRagRefsIntoData:
 
         merged_data = {"references": []}
         rag_results = [
-            ("http://rag1", {"answer": "ans1", "references": [{"file_path": "rag1.txt"}]}),
+            (
+                "http://rag1",
+                {"answer": "ans1", "references": [{"file_path": "rag1.txt"}]},
+            ),
         ]
 
         manager._merge_rag_refs_into_data(merged_data, rag_results)
@@ -1118,13 +1303,22 @@ class TestBuildContextMethods:
         manager = RAGManager(rag_factory=lambda kb_id: MagicMock())
         merged_data = {
             "entities": [{"entity_name": "Alice", "entity_type": "Person"}],
-            "relationships": [{"src_id": "Alice", "tgt_id": "Bob", "description": "knows"}],
+            "relationships": [
+                {"src_id": "Alice", "tgt_id": "Bob", "description": "knows"}
+            ],
             "chunks": [{"content": "chunk content", "reference_ids": ["1"]}],
             "references": [{"reference_id": "1", "file_path": "doc.txt"}],
         }
 
-        with patch("lightrag.api.rag_manager.PROMPTS", {"multi_kb_kg_query_context": "{entities_str}\n{relations_str}\n{text_chunks_str}\n{reference_list_str}"}):
-            result = manager._build_context_from_merged(merged_data, "mix", {"evidence", "kb_ids", "source_count"})
+        with patch(
+            "lightrag.api.rag_manager.PROMPTS",
+            {
+                "multi_kb_kg_query_context": "{entities_str}\n{relations_str}\n{text_chunks_str}\n{reference_list_str}"
+            },
+        ):
+            result = manager._build_context_from_merged(
+                merged_data, "mix", {"evidence", "kb_ids", "source_count"}
+            )
 
         assert "Alice" in result
         assert "Bob" in result
@@ -1142,8 +1336,13 @@ class TestBuildContextMethods:
             "references": [{"reference_id": "1", "file_path": "doc.txt"}],
         }
 
-        with patch("lightrag.api.rag_manager.PROMPTS", {"multi_kb_naive_query_context": "{text_chunks_str}\n{reference_list_str}"}):
-            result = manager._build_context_from_merged(merged_data, "naive", {"evidence", "kb_ids", "source_count"})
+        with patch(
+            "lightrag.api.rag_manager.PROMPTS",
+            {"multi_kb_naive_query_context": "{text_chunks_str}\n{reference_list_str}"},
+        ):
+            result = manager._build_context_from_merged(
+                merged_data, "naive", {"evidence", "kb_ids", "source_count"}
+            )
 
             assert "chunk content" in result
 
@@ -1159,10 +1358,13 @@ class TestBuildContextMethods:
             "references": [{"reference_id": "1", "file_path": "doc.txt"}],
         }
 
-        with patch("lightrag.api.rag_manager.PROMPTS", {
-            "multi_kb_kg_query_context": "{entities_str}\n{relations_str}\n{text_chunks_str}\n{reference_list_str}",
-            "multi_kb_naive_query_context": "{text_chunks_str}\n{reference_list_str}",
-        }):
+        with patch(
+            "lightrag.api.rag_manager.PROMPTS",
+            {
+                "multi_kb_kg_query_context": "{entities_str}\n{relations_str}\n{text_chunks_str}\n{reference_list_str}",
+                "multi_kb_naive_query_context": "{text_chunks_str}\n{reference_list_str}",
+            },
+        ):
             result = manager._build_fallback_context(merged_data, "mix")
 
             assert "Alice" in result
@@ -1179,7 +1381,9 @@ class TestMultiKbGetData:
     """测试 multi_kb_get_data 方法。"""
 
     @pytest.mark.asyncio
-    async def test_multi_kb_get_data_single_kb_fast_path(self, mock_query_param, mock_rag_factory):
+    async def test_multi_kb_get_data_single_kb_fast_path(
+        self, mock_query_param, mock_rag_factory
+    ):
         """单 KB 应走快速路径直接返回。"""
         from lightrag.api.rag_manager import RAGManager
 
@@ -1201,7 +1405,9 @@ class TestMultiKbGetData:
         assert result is single_result
 
     @pytest.mark.asyncio
-    async def test_multi_kb_get_data_empty_results_failure(self, mock_query_param, mock_rag_factory):
+    async def test_multi_kb_get_data_empty_results_failure(
+        self, mock_query_param, mock_rag_factory
+    ):
         """多 KB 场景下所有 KB 返回空结果应返回 failure。
 
         注意：单 KB 走快速路径直接返回结果，不会触发空结果检查。
@@ -1212,7 +1418,9 @@ class TestMultiKbGetData:
         manager = RAGManager(rag_factory=mock_rag_factory)
 
         empty_result = _make_kb_result(
-            entities=[], relationships=[], chunks=[],
+            entities=[],
+            relationships=[],
+            chunks=[],
             metadata={"keywords": {}, "processing_info": {}},
         )
 
@@ -1229,10 +1437,17 @@ class TestMultiKbGetData:
         manager._instances["kb2"] = mock_rag2
 
         # Mock _multi_kb_post_process 避免 asdict(MagicMock) 错误
-        async def mock_post_process(merged_data, mode, query, query_param, rag_instance):
+        async def mock_post_process(
+            merged_data, mode, query, query_param, rag_instance
+        ):
             return merged_data, ""
-        with patch.object(RAGManager, "_multi_kb_post_process", side_effect=mock_post_process):
-            result = await manager.multi_kb_get_data("query", ["kb1", "kb2"], mock_query_param)
+
+        with patch.object(
+            RAGManager, "_multi_kb_post_process", side_effect=mock_post_process
+        ):
+            result = await manager.multi_kb_get_data(
+                "query", ["kb1", "kb2"], mock_query_param
+            )
 
         assert result["status"] == "failure"
 
@@ -1272,7 +1487,9 @@ class TestMultiKbQueryPaths:
         assert result["metadata"]["query_mode"] == "bypass"
 
     @pytest.mark.asyncio
-    async def test_multi_kb_query_single_local_kb(self, mock_query_param, mock_rag_factory):
+    async def test_multi_kb_query_single_local_kb(
+        self, mock_query_param, mock_rag_factory
+    ):
         """单本地 KB 应直接调用 aquery_llm。"""
         from lightrag.api.rag_manager import RAGManager
 
@@ -1281,11 +1498,13 @@ class TestMultiKbQueryPaths:
         manager = RAGManager(rag_factory=lambda kb_id: mock_rag_factory())
 
         mock_rag = MagicMock()
-        mock_rag.aquery_llm = AsyncMock(return_value={
-            "status": "success",
-            "data": {"content": "answer"},
-            "llm_response": {"content": "answer text", "is_streaming": False},
-        })
+        mock_rag.aquery_llm = AsyncMock(
+            return_value={
+                "status": "success",
+                "data": {"content": "answer"},
+                "llm_response": {"content": "answer text", "is_streaming": False},
+            }
+        )
         manager._instances["kb1"] = mock_rag
 
         result = await manager.multi_kb_query("query", ["kb1"], mock_query_param)
@@ -1294,7 +1513,9 @@ class TestMultiKbQueryPaths:
         mock_rag.aquery_llm.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_multi_kb_query_only_external_rag_single(self, mock_query_param, mock_rag_factory):
+    async def test_multi_kb_query_only_external_rag_single(
+        self, mock_query_param, mock_rag_factory
+    ):
         """仅单个外部 RAG KB 应直接返回答案。"""
         from lightrag.api.rag_manager import RAGManager
 
@@ -1302,23 +1523,41 @@ class TestMultiKbQueryPaths:
         # 所以需要包装为 lambda 接受位置参数
         manager = RAGManager(rag_factory=lambda kb_id: mock_rag_factory())
 
-        rag_results = [("http://rag.kb", {"answer": "RAG answer", "references": [{"file_path": "rag.txt"}], "source": "http://rag.kb"})]
+        rag_results = [
+            (
+                "http://rag.kb",
+                {
+                    "answer": "RAG answer",
+                    "references": [{"file_path": "rag.txt"}],
+                    "source": "http://rag.kb",
+                },
+            )
+        ]
 
         async def mock_fetch(*args, **kwargs):
             return rag_results[0][1]
 
-        manager._fetch_rag_kbs = lambda q, kbs: AsyncMock(return_value=(rag_results, []))()
+        manager._fetch_rag_kbs = lambda q, kbs: AsyncMock(
+            return_value=(rag_results, [])
+        )()
 
-        with patch("lightrag.api.external_kb_client.fetch_rag_kb", side_effect=mock_fetch):
+        with patch(
+            "lightrag.api.external_kb_client.fetch_rag_kb", side_effect=mock_fetch
+        ):
             result = await manager.multi_kb_query(
-                "query", [], mock_query_param, external_kbs=[{"type": "rag", "url": "http://rag.kb"}]
+                "query",
+                [],
+                mock_query_param,
+                external_kbs=[{"type": "rag", "url": "http://rag.kb"}],
             )
 
         assert result["status"] == "success"
         assert result["llm_response"]["content"] == "RAG answer"
 
     @pytest.mark.asyncio
-    async def test_multi_kb_query_no_kbs_raises(self, mock_query_param, mock_rag_factory):
+    async def test_multi_kb_query_no_kbs_raises(
+        self, mock_query_param, mock_rag_factory
+    ):
         """无 KB 和外部 KB 应抛出 ValueError。"""
         from lightrag.api.rag_manager import RAGManager
 

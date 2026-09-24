@@ -186,22 +186,39 @@ class QueryRequest(BaseModel):
     @model_validator(mode="after")
     def validate_llm_override(self):
         """Validate LLM override fields: if any LLM field is provided, llm_binding, llm_model, and llm_binding_host must all be present."""
-        valid_bindings = ["openai", "ollama", "azure_openai", "gemini", "aws_bedrock", "lollms"]
-        llm_fields = [self.llm_binding, self.llm_model, self.llm_binding_host, self.llm_binding_api_key]
+        valid_bindings = [
+            "openai",
+            "ollama",
+            "azure_openai",
+            "gemini",
+            "aws_bedrock",
+            "lollms",
+        ]
+        llm_fields = [
+            self.llm_binding,
+            self.llm_model,
+            self.llm_binding_host,
+            self.llm_binding_api_key,
+        ]
         has_any = any(f is not None for f in llm_fields)
         if has_any:
             if not self.llm_binding:
-                raise ValueError("llm_binding is required when providing LLM override parameters")
+                raise ValueError(
+                    "llm_binding is required when providing LLM override parameters"
+                )
             if not self.llm_model:
-                raise ValueError("llm_model is required when providing LLM override parameters")
+                raise ValueError(
+                    "llm_model is required when providing LLM override parameters"
+                )
             if not self.llm_binding_host:
-                raise ValueError("llm_binding_host is required when providing LLM override parameters")
+                raise ValueError(
+                    "llm_binding_host is required when providing LLM override parameters"
+                )
             if self.llm_binding not in valid_bindings:
                 raise ValueError(
                     f"llm_binding must be one of: {', '.join(valid_bindings)}"
                 )
         return self
-
 
     @classmethod
     def query_strip_after(cls, query: str) -> str:
@@ -295,7 +312,9 @@ class StreamChunkResponse(BaseModel):
     )
 
 
-def _prepare_external_kbs(external_kbs: Optional[List[ExternalKBConfig]]) -> Optional[list[dict]]:
+def _prepare_external_kbs(
+    external_kbs: Optional[List[ExternalKBConfig]],
+) -> Optional[list[dict]]:
     """将 ExternalKBConfig 列表转为 dict 列表，供 rag_manager 使用。"""
     if not external_kbs:
         return None
@@ -317,8 +336,13 @@ def create_query_routes(
         if not request.llm_binding or not request.llm_model:
             return None
         from lightrag.api.llm_factory import create_dynamic_llm_func
+
         # Inherit server's default API key when not explicitly provided by request
-        effective_api_key = request.llm_binding_api_key if request.llm_binding_api_key is not None else default_llm_api_key
+        effective_api_key = (
+            request.llm_binding_api_key
+            if request.llm_binding_api_key is not None
+            else default_llm_api_key
+        )
         # Look up binding-specific kwargs (e.g., Ollama options with num_ctx)
         # This works regardless of the server's own binding type
         effective_model_kwargs = (binding_model_kwargs or {}).get(request.llm_binding)
@@ -563,7 +587,9 @@ def create_query_routes(
                 kb_ids = [rag_manager.default_kb]
 
             # Unified approach: use rag_manager.multi_kb_query
-            result = await rag_manager.multi_kb_query(request.query, kb_ids, param=param, external_kbs=ext_kbs)
+            result = await rag_manager.multi_kb_query(
+                request.query, kb_ids, param=param, external_kbs=ext_kbs
+            )
             llm_response = result.get("llm_response", {})
             data = result.get("data", {})
             references = data.get("references", [])
@@ -576,7 +602,9 @@ def create_query_routes(
 
             # Bypass mode: no references, return pure LLM response
             if param.mode == "bypass":
-                return QueryResponse(response=response_content, references=None, warnings=warnings)
+                return QueryResponse(
+                    response=response_content, references=None, warnings=warnings
+                )
 
             # Enrich references with chunk content if requested
             if request.include_references and request.include_chunk_content:
@@ -603,9 +631,13 @@ def create_query_routes(
 
             # Return response with or without references based on request
             if request.include_references:
-                return QueryResponse(response=response_content, references=references, warnings=warnings)
+                return QueryResponse(
+                    response=response_content, references=references, warnings=warnings
+                )
             else:
-                return QueryResponse(response=response_content, references=None, warnings=warnings)
+                return QueryResponse(
+                    response=response_content, references=None, warnings=warnings
+                )
         except Exception as e:
             logger.error(f"Error processing query: {str(e)}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))
@@ -911,7 +943,9 @@ def create_query_routes(
                     else:
                         response_content = llm_response.get("content", "")
                         if not response_content:
-                            response_content = "No relevant context found for the query."
+                            response_content = (
+                                "No relevant context found for the query."
+                            )
                         yield f"{json.dumps({'response': response_content})}\n"
                     return
 
@@ -1408,7 +1442,9 @@ def create_query_routes(
             else:
                 kb_ids = [rag_manager.default_kb]
 
-            response = await rag_manager.multi_kb_get_data(request.query, kb_ids, param=param, external_kbs=ext_kbs)
+            response = await rag_manager.multi_kb_get_data(
+                request.query, kb_ids, param=param, external_kbs=ext_kbs
+            )
 
             # aquery_data returns the new format with status, message, data, and metadata
             if isinstance(response, dict):
@@ -1433,11 +1469,13 @@ def create_query_routes(
 
     class ExtRetrievalRequest(BaseModel):
         """检索型请求，与 external_kb_client 发出的格式一致。"""
+
         query: str
         top_k: int = Field(default=5, ge=1, le=50)
 
     class ExtRAGRequest(BaseModel):
         """RAG 型请求，与 external_kb_client 发出的格式一致。"""
+
         query: str
 
     @router.post(
@@ -1458,7 +1496,9 @@ def create_query_routes(
         """
         # 校验 Bearer Token
         if not authorization or authorization != f"Bearer {EXT_KB_TEST_API_KEY}":
-            raise HTTPException(status_code=401, detail="Unauthorized: invalid or missing API key")
+            raise HTTPException(
+                status_code=401, detail="Unauthorized: invalid or missing API key"
+            )
 
         param = QueryParam(mode="mix", top_k=req.top_k, chunk_top_k=req.top_k)
         try:
@@ -1472,7 +1512,7 @@ def create_query_routes(
 
             results = [
                 {"content": c["content"], "file_path": c.get("file_path", "")}
-                for c in chunks[:req.top_k]
+                for c in chunks[: req.top_k]
                 if c.get("content")
             ]
             return {"status": "success", "results": results}
@@ -1498,7 +1538,9 @@ def create_query_routes(
         """
         # 校验 Bearer Token
         if not authorization or authorization != f"Bearer {EXT_KB_TEST_API_KEY}":
-            raise HTTPException(status_code=401, detail="Unauthorized: invalid or missing API key")
+            raise HTTPException(
+                status_code=401, detail="Unauthorized: invalid or missing API key"
+            )
 
         param = QueryParam(mode="mix", stream=False)
         try:

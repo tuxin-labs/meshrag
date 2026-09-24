@@ -1113,7 +1113,11 @@ class RedisDocStatusStorage(DocStatusStorage):
                                 try:
                                     doc_data = json.loads(value)
                                     if doc_data.get("file_path") == file_path:
-                                        doc_id = keys[i].decode().replace(f"{self.final_namespace}:", "")
+                                        doc_id = (
+                                            keys[i]
+                                            .decode()
+                                            .replace(f"{self.final_namespace}:", "")
+                                        )
                                         return doc_id
                                 except json.JSONDecodeError:
                                     continue
@@ -1122,7 +1126,9 @@ class RedisDocStatusStorage(DocStatusStorage):
                         break
 
             except Exception as e:
-                logger.error(f"[{self.workspace}] Error in get_doc_id_by_file_path: {e}")
+                logger.error(
+                    f"[{self.workspace}] Error in get_doc_id_by_file_path: {e}"
+                )
 
         return None
 

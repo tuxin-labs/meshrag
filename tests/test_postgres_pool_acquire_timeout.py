@@ -243,7 +243,11 @@ class TestPoolAcquireTimeoutConfig:
         """未设置环境变量时应使用默认值 10.0"""
         from lightrag.kg.postgres_impl import ClientManager
 
-        env = {k: v for k, v in __import__("os").environ.items() if k != "POSTGRES_POOL_ACQUIRE_TIMEOUT"}
+        env = {
+            k: v
+            for k, v in __import__("os").environ.items()
+            if k != "POSTGRES_POOL_ACQUIRE_TIMEOUT"
+        }
         with patch.dict("os.environ", env, clear=True):
             config = ClientManager.get_config()
             assert config["pool_acquire_timeout"] == 10.0

@@ -44,7 +44,11 @@ class TestRequestModelsStructure:
     def test_entity_merge_request_fields(self):
         """验证 EntityMergeRequest 的字段结构。"""
         expected_fields = {"kb_id", "entities_to_change", "entity_to_change_into"}
-        assert expected_fields == {"kb_id", "entities_to_change", "entity_to_change_into"}
+        assert expected_fields == {
+            "kb_id",
+            "entities_to_change",
+            "entity_to_change_into",
+        }
 
     def test_entity_create_request_fields(self):
         """验证 EntityCreateRequest 的字段结构。"""
