@@ -2709,7 +2709,7 @@ prompt_secret_until_valid_with_default() {{ printf '%s' "$2"; }}
 confirm_default_no() {{ return 1; }}
 confirm_default_yes() {{
   case "$1" in
-    "Run LightRAG Server via Docker?") return 0 ;;
+    "Run MeshRAG Server via Docker?") return 0 ;;
     *) return 1 ;;
   esac
 }}
@@ -2794,7 +2794,7 @@ confirm_default_no() {{
   case "$1" in
     "Run embedding model locally via Docker (vLLM)?") return 1 ;;
     "Enable reranking?") return 1 ;;
-    "Run LightRAG Server via Docker?") return 0 ;;
+    "Run MeshRAG Server via Docker?") return 0 ;;
     *) return 1 ;;
   esac
 }}
@@ -3180,7 +3180,7 @@ confirm_default_no() {{
   case "$1" in
     "Run embedding model locally via Docker (vLLM)?") return 1 ;;
     "Run rerank service locally via Docker?") return 1 ;;
-    "Run LightRAG Server via Docker?") return 1 ;;
+    "Run MeshRAG Server via Docker?") return 1 ;;
     *) return 1 ;;
   esac
 }}
