@@ -17,7 +17,12 @@ import pytest
 
 from lightrag.base import DocStatus
 from lightrag.lightrag import LightRAG
-from lightrag.utils import EmbeddingFunc, Tokenizer, compute_mdhash_id, generate_track_id
+from lightrag.utils import (
+    EmbeddingFunc,
+    Tokenizer,
+    compute_mdhash_id,
+    generate_track_id,
+)
 
 pytestmark = pytest.mark.offline
 

@@ -56,15 +56,21 @@ class RAGManager:
                     data = json.load(f)
                 if isinstance(data, list):
                     known_kbs.update(
-                        kb_id for kb_id in data if isinstance(kb_id, str) and kb_id.strip()
+                        kb_id
+                        for kb_id in data
+                        if isinstance(kb_id, str) and kb_id.strip()
                     )
             except Exception as e:
-                logger.warning(f"Failed to load KB registry '{self._registry_path}': {e}")
+                logger.warning(
+                    f"Failed to load KB registry '{self._registry_path}': {e}"
+                )
 
         if self._kb_discovery is not None:
             try:
                 known_kbs.update(
-                    kb_id for kb_id in self._kb_discovery() if isinstance(kb_id, str) and kb_id.strip()
+                    kb_id
+                    for kb_id in self._kb_discovery()
+                    if isinstance(kb_id, str) and kb_id.strip()
                 )
             except Exception as e:
                 logger.warning(f"Failed to discover persisted knowledge bases: {e}")
@@ -84,11 +90,15 @@ class RAGManager:
             with open(self._registry_path, "w", encoding="utf-8") as f:
                 json.dump(self._ordered_known_kbs(), f, ensure_ascii=True, indent=2)
         except Exception as e:
-            logger.warning(f"Failed to persist KB registry '{self._registry_path}': {e}")
+            logger.warning(
+                f"Failed to persist KB registry '{self._registry_path}': {e}"
+            )
 
     def _ordered_known_kbs(self) -> List[str]:
         """Keep the default KB first and make the rest stable."""
-        remaining = sorted(kb_id for kb_id in self._known_kbs if kb_id != self.default_kb)
+        remaining = sorted(
+            kb_id for kb_id in self._known_kbs if kb_id != self.default_kb
+        )
         if self.default_kb in self._known_kbs:
             return [self.default_kb, *remaining]
         return remaining
@@ -114,7 +124,7 @@ class RAGManager:
         """
         if not kb_id:
             raise ValueError("kb_id cannot be empty")
-        
+
         # Fast path
         if kb_id in self._instances:
             async with self._lock:
@@ -122,13 +132,13 @@ class RAGManager:
                 if kb_id in self._instances:
                     self._touch_unlocked(kb_id)
                     return self._instances[kb_id]
-            
+
         async with self._lock:
             # Check again under lock
             if kb_id in self._instances:
                 self._touch_unlocked(kb_id)
                 return self._instances[kb_id]
-                
+
             logger.info(f"Initializing new knowledge base: {kb_id}")
             rag = self._rag_factory(kb_id)
             await rag.initialize_storages()
@@ -163,7 +173,9 @@ class RAGManager:
         """List all known knowledge bases, not only the ones loaded in memory."""
         return self._ordered_known_kbs()
 
-    async def delete_knowledge_base(self, kb_id: str, drop_storage: bool = True) -> dict[str, any]:
+    async def delete_knowledge_base(
+        self, kb_id: str, drop_storage: bool = True
+    ) -> dict[str, any]:
         """
         Delete a knowledge base from memory and optionally drop its storage.
 
@@ -185,7 +197,9 @@ class RAGManager:
             raise ValueError("kb_id cannot be empty")
 
         async with self._lock:
-            logger.info(f"Deleting knowledge base: {kb_id}, drop_storage={drop_storage}")
+            logger.info(
+                f"Deleting knowledge base: {kb_id}, drop_storage={drop_storage}"
+            )
 
             # Result object to track deletion process
             result = {
@@ -193,7 +207,7 @@ class RAGManager:
                 "status": "success",
                 "message": "",
                 "storage_results": None,
-                "workspace_dir": None
+                "workspace_dir": None,
             }
 
             # ── 决定使用哪个 RAG 实例 ──
@@ -338,11 +352,14 @@ class RAGManager:
             )
             if error_msg:
                 errors.append(error_msg)
-                return (virtual_id, {
-                    "status": "failure",
-                    "data": {},
-                    "metadata": {},
-                })
+                return (
+                    virtual_id,
+                    {
+                        "status": "failure",
+                        "data": {},
+                        "metadata": {},
+                    },
+                )
 
             # 构建与本地 aquery_data() 返回格式一致的结果
             references = []
@@ -352,23 +369,28 @@ class RAGManager:
                 if fp and fp not in seen_paths:
                     ref_id = str(len(seen_paths) + 1)
                     seen_paths[fp] = ref_id
-                    references.append({
-                        "reference_id": ref_id,
-                        "file_path": fp,
-                    })
+                    references.append(
+                        {
+                            "reference_id": ref_id,
+                            "file_path": fp,
+                        }
+                    )
                 if fp:
                     c["reference_id"] = seen_paths[fp]
 
-            return (virtual_id, {
-                "status": "success",
-                "data": {
-                    "entities": [],
-                    "relationships": [],
-                    "chunks": chunks,
-                    "references": references,
+            return (
+                virtual_id,
+                {
+                    "status": "success",
+                    "data": {
+                        "entities": [],
+                        "relationships": [],
+                        "chunks": chunks,
+                        "references": references,
+                    },
+                    "metadata": {},
                 },
-                "metadata": {},
-            })
+            )
 
         tasks = [_fetch_one(i, cfg) for i, cfg in enumerate(external_kbs)]
         results = await asyncio.gather(*tasks, return_exceptions=False)
@@ -411,7 +433,9 @@ class RAGManager:
         return list(results), errors
 
     @staticmethod
-    def _rag_refs_to_standard(rag_references: list[dict], source_url: str) -> list[dict]:
+    def _rag_refs_to_standard(
+        rag_references: list[dict], source_url: str
+    ) -> list[dict]:
         """将外部 RAG 服务返回的引用转为标准 reference 格式。
 
         标准 reference 格式: {"reference_id": str, "file_path": str, "kb_id": str}
@@ -420,22 +444,30 @@ class RAGManager:
         standard_refs = []
         for i, ref in enumerate(rag_references):
             if isinstance(ref, dict) and ref.get("file_path"):
-                standard_refs.append({
-                    "reference_id": f"rag_{i + 1}",
-                    "file_path": ref["file_path"],
-                    "kb_id": source_url,
-                })
+                standard_refs.append(
+                    {
+                        "reference_id": f"rag_{i + 1}",
+                        "file_path": ref["file_path"],
+                        "kb_id": source_url,
+                    }
+                )
         return standard_refs
 
     @staticmethod
     def _build_external_answers(rag_results: list[tuple[str, dict]]) -> list[dict]:
         """从 RAG 型外部 KB 结果构建 external_answers 列表。"""
         return [
-            {"source": s, "answer": a.get("answer", ""), "references": a.get("references", [])}
+            {
+                "source": s,
+                "answer": a.get("answer", ""),
+                "references": a.get("references", []),
+            }
             for s, a in rag_results
         ]
 
-    def _merge_rag_refs_into_data(self, merged_data: dict, rag_results: list[tuple[str, dict]]) -> None:
+    def _merge_rag_refs_into_data(
+        self, merged_data: dict, rag_results: list[tuple[str, dict]]
+    ) -> None:
         """将外部 RAG 服务的引用合并到 merged_data.references 中，分配不冲突的 reference_id。
 
         同时设置 merged_data["external_answers"]。
@@ -447,9 +479,11 @@ class RAGManager:
         # 收集所有 RAG 引用
         all_rag_refs: list[dict] = []
         for source_url, answer_dict in rag_results:
-            all_rag_refs.extend(self._rag_refs_to_standard(
-                answer_dict.get("references", []), source_url
-            ))
+            all_rag_refs.extend(
+                self._rag_refs_to_standard(
+                    answer_dict.get("references", []), source_url
+                )
+            )
 
         if not all_rag_refs:
             return
@@ -495,10 +529,16 @@ class RAGManager:
                 "status": "failure",
                 "message": "No valid RAG answers to merge",
                 "data": {},
-                "llm_response": {"content": PROMPTS["fail_response"], "is_streaming": False, "response_iterator": None},
+                "llm_response": {
+                    "content": PROMPTS["fail_response"],
+                    "is_streaming": False,
+                    "response_iterator": None,
+                },
             }
 
-        response_type = param.response_type if param.response_type else "Multiple Paragraphs"
+        response_type = (
+            param.response_type if param.response_type else "Multiple Paragraphs"
+        )
         sys_prompt = PROMPTS["rag_answers_merge"].format(
             source_answers=rag_context,
             response_type=response_type,
@@ -509,7 +549,9 @@ class RAGManager:
             first_rag = await self.get_rag(kb_ids[0])
         else:
             first_rag = await self.get_rag(self.default_kb)
-        use_model_func = param.model_func if param.model_func else first_rag.llm_model_func
+        use_model_func = (
+            param.model_func if param.model_func else first_rag.llm_model_func
+        )
 
         response = await use_model_func(
             query,
@@ -521,14 +563,20 @@ class RAGManager:
 
         # 构建 external_answers 数据 + 合并引用
         ext_answers = [
-            {"source": s, "answer": a.get("answer", ""), "references": a.get("references", [])}
+            {
+                "source": s,
+                "answer": a.get("answer", ""),
+                "references": a.get("references", []),
+            }
             for s, a in rag_results
         ]
         # 将所有 RAG 引用合并为标准 references，并统一重编号避免跨服务 reference_id 重复
         all_rag_refs = []
         ref_counter = 1
         for source_url, answer_dict in rag_results:
-            raw_refs = self._rag_refs_to_standard(answer_dict.get("references", []), source_url)
+            raw_refs = self._rag_refs_to_standard(
+                answer_dict.get("references", []), source_url
+            )
             for ref in raw_refs:
                 ref["reference_id"] = str(ref_counter)
                 ref_counter += 1
@@ -539,16 +587,30 @@ class RAGManager:
                 "status": "success",
                 "message": "Merged RAG answers via LLM",
                 "data": {"external_answers": ext_answers, "references": all_rag_refs},
-                "metadata": {"query_mode": param.mode, "sources": [s for s, _ in rag_results]},
-                "llm_response": {"content": "", "is_streaming": True, "response_iterator": response},
+                "metadata": {
+                    "query_mode": param.mode,
+                    "sources": [s for s, _ in rag_results],
+                },
+                "llm_response": {
+                    "content": "",
+                    "is_streaming": True,
+                    "response_iterator": response,
+                },
             }
         else:
             return {
                 "status": "success",
                 "message": "Merged RAG answers via LLM",
                 "data": {"external_answers": ext_answers, "references": all_rag_refs},
-                "metadata": {"query_mode": param.mode, "sources": [s for s, _ in rag_results]},
-                "llm_response": {"content": str(response), "is_streaming": False, "response_iterator": None},
+                "metadata": {
+                    "query_mode": param.mode,
+                    "sources": [s for s, _ in rag_results],
+                },
+                "llm_response": {
+                    "content": str(response),
+                    "is_streaming": False,
+                    "response_iterator": None,
+                },
             }
 
     async def _bypass_llm(
@@ -583,7 +645,11 @@ class RAGManager:
                 "message": "Bypass mode response",
                 "data": {},
                 "metadata": {"query_mode": "bypass"},
-                "llm_response": {"content": "", "is_streaming": True, "response_iterator": response},
+                "llm_response": {
+                    "content": "",
+                    "is_streaming": True,
+                    "response_iterator": response,
+                },
             }
         else:
             return {
@@ -591,17 +657,32 @@ class RAGManager:
                 "message": "Bypass mode response",
                 "data": {},
                 "metadata": {"query_mode": "bypass"},
-                "llm_response": {"content": str(response), "is_streaming": False, "response_iterator": None},
+                "llm_response": {
+                    "content": str(response),
+                    "is_streaming": False,
+                    "response_iterator": None,
+                },
             }
 
-    async def multi_kb_get_data(self, query: str, kb_ids: List[str], param: QueryParam, external_kbs: list[dict] | None = None, on_progress: ProgressCallback | None = None) -> Dict[str, Any]:
+    async def multi_kb_get_data(
+        self,
+        query: str,
+        kb_ids: List[str],
+        param: QueryParam,
+        external_kbs: list[dict] | None = None,
+        on_progress: ProgressCallback | None = None,
+    ) -> Dict[str, Any]:
         """
         Concurrently retrieve structured data from multiple knowledge bases and merge them.
         Supports optional external knowledge bases that are fetched in parallel.
         仅处理 retrieval 型外部 KB。rag 型外部 KB 的答案追加到 data.external_answers。
         """
         # 按 type 分组外部 KB
-        retrieval_kbs = [kb for kb in (external_kbs or []) if kb.get("type", "retrieval") == "retrieval"]
+        retrieval_kbs = [
+            kb
+            for kb in (external_kbs or [])
+            if kb.get("type", "retrieval") == "retrieval"
+        ]
         rag_kbs = [kb for kb in (external_kbs or []) if kb.get("type") == "rag"]
 
         if not kb_ids and not retrieval_kbs and not rag_kbs:
@@ -628,11 +709,17 @@ class RAGManager:
         ext_errors: list[str] = []
         if has_external:
             local_results_raw, (external_results, ext_errors) = await asyncio.gather(
-                asyncio.gather(*local_coros, return_exceptions=True) if local_coros else asyncio.gather(),
+                asyncio.gather(*local_coros, return_exceptions=True)
+                if local_coros
+                else asyncio.gather(),
                 self._fetch_all_external_kbs(query, retrieval_kbs),
             )
         else:
-            local_results_raw = await asyncio.gather(*local_coros, return_exceptions=True) if local_coros else []
+            local_results_raw = (
+                await asyncio.gather(*local_coros, return_exceptions=True)
+                if local_coros
+                else []
+            )
 
         # 构建合并输入
         kb_results = list(zip(local_kb_ids, local_results_raw))
@@ -679,7 +766,11 @@ class RAGManager:
         total_relations_before_merge = 0
         retrieved_chunks_before_merge = 0
         for kb_id, res in kb_results:
-            if isinstance(res, Exception) or not isinstance(res, dict) or res.get("status") != "success":
+            if (
+                isinstance(res, Exception)
+                or not isinstance(res, dict)
+                or res.get("status") != "success"
+            ):
                 continue
             kb_meta = res.get("metadata", {})
             kb_keywords = kb_meta.get("keywords", {})
@@ -696,7 +787,9 @@ class RAGManager:
             elif "total_chunks_found" in kb_proc:
                 retrieved_chunks_before_merge += kb_proc["total_chunks_found"]
             else:
-                retrieved_chunks_before_merge += len(res.get("data", {}).get("chunks", []))
+                retrieved_chunks_before_merge += len(
+                    res.get("data", {}).get("chunks", [])
+                )
 
         # Deduplicate keywords
         all_hl_keywords = list(dict.fromkeys(all_hl_keywords))
@@ -721,7 +814,7 @@ class RAGManager:
                 "final_chunks_count": len(merged_data.get("chunks", [])),
             },
         }
-        
+
         # 获取 RAG 型外部 KB 答案并追加到 data
         rag_errors: list[str] = []
         if rag_kbs:
@@ -737,10 +830,18 @@ class RAGManager:
             "status": "success",
             "message": "Merged query executed successfully",
             "data": merged_data,
-            "metadata": metadata
+            "metadata": metadata,
         }
 
-    async def multi_kb_query(self, query: str, kb_ids: List[str], param: QueryParam, system_prompt: str | None = None, external_kbs: list[dict] | None = None, on_progress: ProgressCallback | None = None) -> Any:
+    async def multi_kb_query(
+        self,
+        query: str,
+        kb_ids: List[str],
+        param: QueryParam,
+        system_prompt: str | None = None,
+        external_kbs: list[dict] | None = None,
+        on_progress: ProgressCallback | None = None,
+    ) -> Any:
         """
         并发查询多个知识库并合并结果，支持两种外部 KB 类型：
         - retrieval 型：返回文本块，参与本地合并 rerank 流程
@@ -780,7 +881,11 @@ class RAGManager:
             raise ValueError("At least one kb_id or external_kbs must be specified.")
 
         # ─── Step 1: 按 type 分组外部 KB ───
-        retrieval_kbs = [kb for kb in (external_kbs or []) if kb.get("type", "retrieval") == "retrieval"]
+        retrieval_kbs = [
+            kb
+            for kb in (external_kbs or [])
+            if kb.get("type", "retrieval") == "retrieval"
+        ]
         rag_kbs = [kb for kb in (external_kbs or []) if kb.get("type") == "rag"]
         has_local = bool(kb_ids)
         has_ext_retrieval = bool(retrieval_kbs)
@@ -791,14 +896,21 @@ class RAGManager:
         # ─── 场景 A: Bypass — 跳过所有检索 ───
         if param.mode == "bypass":
             if has_any_ext:
-                logger.warning("bypass mode ignores all knowledge bases including external_kbs")
+                logger.warning(
+                    "bypass mode ignores all knowledge bases including external_kbs"
+                )
             return await self._bypass_llm(query, param, system_prompt, kb_ids)
 
         # ─── 场景 B: 仅内部 KB，无外部（当前快速路径） ───
         if has_local and not has_any_ext:
             if len(kb_ids) == 1:
                 rag = await self.get_rag(kb_ids[0])
-                result = await rag.aquery_llm(query, param=param, system_prompt=system_prompt, on_progress=on_progress)
+                result = await rag.aquery_llm(
+                    query,
+                    param=param,
+                    system_prompt=system_prompt,
+                    on_progress=on_progress,
+                )
                 if isinstance(result, dict) and result.get("status") == "failure":
                     llm_content = result.get("llm_response", {}).get("content")
                     if not llm_content:
@@ -817,14 +929,22 @@ class RAGManager:
                     "status": "failure",
                     "message": "All external RAG services returned empty results",
                     "data": {},
-                    "metadata": {"external_kb_errors": all_ext_errors} if all_ext_errors else {},
-                    "llm_response": {"content": PROMPTS["fail_response"], "is_streaming": False, "response_iterator": None},
+                    "metadata": {"external_kb_errors": all_ext_errors}
+                    if all_ext_errors
+                    else {},
+                    "llm_response": {
+                        "content": PROMPTS["fail_response"],
+                        "is_streaming": False,
+                        "response_iterator": None,
+                    },
                 }
             if len(valid) == 1:
                 # 单个 RAG：直接返回外部答案
                 _, answer_dict = valid[0]
                 # 将 RAG 引用转为标准 reference 格式
-                rag_refs = self._rag_refs_to_standard(answer_dict.get("references", []), valid[0][0])
+                rag_refs = self._rag_refs_to_standard(
+                    answer_dict.get("references", []), valid[0][0]
+                )
                 metadata = {"query_mode": param.mode, "sources": [valid[0][0]]}
                 if all_ext_errors:
                     metadata["external_kb_errors"] = all_ext_errors
@@ -833,7 +953,11 @@ class RAGManager:
                     "message": "External RAG service response",
                     "data": {"references": rag_refs},
                     "metadata": metadata,
-                    "llm_response": {"content": answer_dict["answer"], "is_streaming": False, "response_iterator": None},
+                    "llm_response": {
+                        "content": answer_dict["answer"],
+                        "is_streaming": False,
+                        "response_iterator": None,
+                    },
                 }
             # 多个 RAG：LLM 合并
             return await self._merge_rag_answers(query, valid, param, kb_ids)
@@ -842,11 +966,15 @@ class RAGManager:
         # 并行获取 retrieval 数据 + RAG 答案
         tasks = []
         if has_retrieval_data:
-            tasks.append(self.multi_kb_get_data(
-                query, kb_ids, param,
-                external_kbs=retrieval_kbs if has_ext_retrieval else None,
-                on_progress=on_progress,
-            ))
+            tasks.append(
+                self.multi_kb_get_data(
+                    query,
+                    kb_ids,
+                    param,
+                    external_kbs=retrieval_kbs if has_ext_retrieval else None,
+                    on_progress=on_progress,
+                )
+            )
         if has_ext_rag:
             tasks.append(self._fetch_rag_kbs(query, rag_kbs))
 
@@ -866,7 +994,9 @@ class RAGManager:
 
         # 从 data_res 的 metadata 中提取 retrieval 型外部 KB 的错误信息
         if data_res and isinstance(data_res, dict):
-            retrieval_errors = data_res.get("metadata", {}).get("external_kb_errors", [])
+            retrieval_errors = data_res.get("metadata", {}).get(
+                "external_kb_errors", []
+            )
             all_ext_errors.extend(retrieval_errors)
 
         # 检查 retrieval 数据并构建上下文
@@ -891,14 +1021,22 @@ class RAGManager:
                         "message": err_msg,
                         "data": {},
                         "metadata": fail_metadata,
-                        "llm_response": {"content": PROMPTS["fail_response"], "is_streaming": False, "response_iterator": None},
+                        "llm_response": {
+                            "content": PROMPTS["fail_response"],
+                            "is_streaming": False,
+                            "response_iterator": None,
+                        },
                     }
                 return {
                     "status": data_res.get("status", "failure"),
                     "message": data_res.get("message", "Query returned no results"),
                     "data": {},
                     "metadata": fail_metadata,
-                    "llm_response": {"content": PROMPTS["fail_response"], "is_streaming": False, "response_iterator": None},
+                    "llm_response": {
+                        "content": PROMPTS["fail_response"],
+                        "is_streaming": False,
+                        "response_iterator": None,
+                    },
                 }
             # else: retrieval 失败但有 RAG 答案兜底，继续
 
@@ -906,7 +1044,9 @@ class RAGManager:
         if has_ext_rag and rag_results:
             rag_context = self._build_rag_context(rag_results)
             if rag_context:
-                context_str = (context_str + "\n\n" + rag_context) if context_str else rag_context
+                context_str = (
+                    (context_str + "\n\n" + rag_context) if context_str else rag_context
+                )
             # 合并 RAG 引用到 merged_data（含 external_answers + references 重编号）
             self._merge_rag_refs_into_data(merged_data, rag_results)
 
@@ -920,12 +1060,22 @@ class RAGManager:
                 "message": "Query returned no results from any source",
                 "data": merged_data,
                 "metadata": fail_metadata,
-                "llm_response": {"content": PROMPTS["fail_response"], "is_streaming": False, "response_iterator": None},
+                "llm_response": {
+                    "content": PROMPTS["fail_response"],
+                    "is_streaming": False,
+                    "response_iterator": None,
+                },
             }
 
         # ─── 调用 LLM 生成最终答案 ───
-        sys_prompt_temp = PROMPTS["multi_kb_rag_response"] if param.mode != "naive" else PROMPTS["multi_kb_naive_rag_response"]
-        response_type = param.response_type if param.response_type else "Multiple Paragraphs"
+        sys_prompt_temp = (
+            PROMPTS["multi_kb_rag_response"]
+            if param.mode != "naive"
+            else PROMPTS["multi_kb_naive_rag_response"]
+        )
+        response_type = (
+            param.response_type if param.response_type else "Multiple Paragraphs"
+        )
         user_prompt = f"\n\n{param.user_prompt}" if param.user_prompt else "n/a"
 
         if param.mode != "naive":
@@ -946,7 +1096,9 @@ class RAGManager:
             first_rag = await self.get_rag(kb_ids[0])
         else:
             first_rag = await self.get_rag(self.default_kb)
-        use_model_func = param.model_func if param.model_func else first_rag.llm_model_func
+        use_model_func = (
+            param.model_func if param.model_func else first_rag.llm_model_func
+        )
 
         response = await use_model_func(
             query,
@@ -957,12 +1109,18 @@ class RAGManager:
         )
 
         # 透传 multi_kb_get_data() 已构建的完整 metadata
-        final_metadata = data_res.get("metadata", {}) if data_res and isinstance(data_res, dict) else {}
+        final_metadata = (
+            data_res.get("metadata", {})
+            if data_res and isinstance(data_res, dict)
+            else {}
+        )
         final_metadata["query_mode"] = param.mode
         if all_ext_errors:
             # 合并，避免覆盖 multi_kb_get_data 已设置的 external_kb_errors
             existing_errors = final_metadata.get("external_kb_errors", [])
-            final_metadata["external_kb_errors"] = existing_errors + [e for e in all_ext_errors if e not in existing_errors]
+            final_metadata["external_kb_errors"] = existing_errors + [
+                e for e in all_ext_errors if e not in existing_errors
+            ]
 
         if param.stream:
             return {
@@ -970,7 +1128,11 @@ class RAGManager:
                 "message": "Query executed successfully",
                 "data": merged_data,
                 "metadata": final_metadata,
-                "llm_response": {"content": "", "is_streaming": True, "response_iterator": response},
+                "llm_response": {
+                    "content": "",
+                    "is_streaming": True,
+                    "response_iterator": response,
+                },
             }
         else:
             return {
@@ -978,9 +1140,13 @@ class RAGManager:
                 "message": "Query executed successfully",
                 "data": merged_data,
                 "metadata": final_metadata,
-                "llm_response": {"content": str(response), "is_streaming": False, "response_iterator": None},
+                "llm_response": {
+                    "content": str(response),
+                    "is_streaming": False,
+                    "response_iterator": None,
+                },
             }
-    
+
     def _merge_kb_results(self, kb_results: List[tuple]) -> Dict[str, Any]:
         """Merge retrieval results from multiple KBs into structured data."""
         merged_chunks = []
@@ -1022,7 +1188,7 @@ class RAGManager:
 
                 if local_ref_id:
                     local_reference_map[local_ref_id] = reference_key_to_id[ref_key]
-            
+
             # Merge entities (by entity_name, preserve supplementary evidence from multiple KBs)
             for e in data.get("entities", []):
                 e_name = e.get("entity_name")
@@ -1032,9 +1198,18 @@ class RAGManager:
                 # Track used reference (always, even for duplicates)
                 ref_id = e.get("reference_id", "")
                 if ref_id and ref_id in local_reference_map:
-                    original_ref = next((r for r in data.get("references", []) if r.get("reference_id") == ref_id), None)
+                    original_ref = next(
+                        (
+                            r
+                            for r in data.get("references", [])
+                            if r.get("reference_id") == ref_id
+                        ),
+                        None,
+                    )
                     if original_ref:
-                        used_reference_keys.add((kb_id, original_ref.get("file_path", "")))
+                        used_reference_keys.add(
+                            (kb_id, original_ref.get("file_path", ""))
+                        )
 
                 if e_name not in entity_map:
                     # First occurrence: keep full entity with kb_ids and evidence tracking
@@ -1094,9 +1269,18 @@ class RAGManager:
                 # Track used reference (always, even for duplicates)
                 ref_id = r.get("reference_id", "")
                 if ref_id and ref_id in local_reference_map:
-                    original_ref = next((rr for rr in data.get("references", []) if rr.get("reference_id") == ref_id), None)
+                    original_ref = next(
+                        (
+                            rr
+                            for rr in data.get("references", [])
+                            if rr.get("reference_id") == ref_id
+                        ),
+                        None,
+                    )
                     if original_ref:
-                        used_reference_keys.add((kb_id, original_ref.get("file_path", "")))
+                        used_reference_keys.add(
+                            (kb_id, original_ref.get("file_path", ""))
+                        )
 
                 if r_key not in relation_map:
                     # First occurrence: keep full relation with kb_ids and evidence tracking
@@ -1165,11 +1349,20 @@ class RAGManager:
                     if ref_id in local_reference_map:
                         chunk_copy["reference_id"] = local_reference_map[ref_id]
                         # Find the reference key
-                        original_ref = next((r for r in data.get("references", []) if r.get("reference_id") == ref_id), None)
+                        original_ref = next(
+                            (
+                                r
+                                for r in data.get("references", [])
+                                if r.get("reference_id") == ref_id
+                            ),
+                            None,
+                        )
                         if original_ref:
-                            used_reference_keys.add((kb_id, original_ref.get("file_path", "")))
+                            used_reference_keys.add(
+                                (kb_id, original_ref.get("file_path", ""))
+                            )
                     merged_chunks.append(chunk_copy)
-                
+
         # Convert merge maps to lists
         merged_entities = list(entity_map.values())
         merged_relations = list(relation_map.values())
@@ -1226,7 +1419,7 @@ class RAGManager:
             "entities": merged_entities,
             "relationships": merged_relations,
             "chunks": merged_chunks,
-            "references": merged_references
+            "references": merged_references,
         }
 
         return merged_data
@@ -1244,9 +1437,7 @@ class RAGManager:
 
         for chunk in chunks:
             content = chunk.get("content", "")
-            content_hash = hashlib.md5(
-                content.strip().lower().encode()
-            ).hexdigest()
+            content_hash = hashlib.md5(content.strip().lower().encode()).hexdigest()
 
             if content_hash not in seen:
                 seen[content_hash] = chunk
@@ -1323,7 +1514,8 @@ class RAGManager:
 
         # Step 2: Entity token truncation
         max_entity_tokens = getattr(
-            query_param, "max_entity_tokens",
+            query_param,
+            "max_entity_tokens",
             global_config.get("max_entity_tokens", DEFAULT_MAX_ENTITY_TOKENS),
         )
         entities = merged_data.get("entities", [])
@@ -1353,7 +1545,8 @@ class RAGManager:
 
         # Step 3: Relation token truncation
         max_relation_tokens = getattr(
-            query_param, "max_relation_tokens",
+            query_param,
+            "max_relation_tokens",
             global_config.get("max_relation_tokens", DEFAULT_MAX_RELATION_TOKENS),
         )
         relations = merged_data.get("relationships", [])
@@ -1381,28 +1574,40 @@ class RAGManager:
                 for r in truncated_relations
             }
             merged_data["relationships"] = [
-                r for r in relations
+                r
+                for r in relations
                 if tuple(sorted([r.get("src_id"), r.get("tgt_id")])) in truncated_keys
             ]
 
         # Step 4: Calculate dynamic chunk token budget
         max_total_tokens = getattr(
-            query_param, "max_total_tokens",
+            query_param,
+            "max_total_tokens",
             global_config.get("max_total_tokens", DEFAULT_MAX_TOTAL_TOKENS),
         )
 
-        user_prompt = f"\n\n{query_param.user_prompt}" if query_param.user_prompt else "n/a"
+        user_prompt = (
+            f"\n\n{query_param.user_prompt}" if query_param.user_prompt else "n/a"
+        )
         response_type = (
-            query_param.response_type if query_param.response_type else "Multiple Paragraphs"
+            query_param.response_type
+            if query_param.response_type
+            else "Multiple Paragraphs"
         )
 
         # Build preliminary entity/relation strings for overhead calculation
         entities_str = "\n".join(
-            json.dumps({k: v for k, v in e.items() if k not in _multi_kb_keys}, ensure_ascii=False)
+            json.dumps(
+                {k: v for k, v in e.items() if k not in _multi_kb_keys},
+                ensure_ascii=False,
+            )
             for e in merged_data.get("entities", [])
         )
         relations_str = "\n".join(
-            json.dumps({k: v for k, v in r.items() if k not in _multi_kb_keys}, ensure_ascii=False)
+            json.dumps(
+                {k: v for k, v in r.items() if k not in _multi_kb_keys},
+                ensure_ascii=False,
+            )
             for r in merged_data.get("relationships", [])
         )
 
@@ -1425,7 +1630,9 @@ class RAGManager:
 
         # Calculate system prompt overhead (use multi-KB response templates for accurate budget)
         sys_prompt_template = (
-            PROMPTS["multi_kb_naive_rag_response"] if mode == "naive" else PROMPTS["multi_kb_rag_response"]
+            PROMPTS["multi_kb_naive_rag_response"]
+            if mode == "naive"
+            else PROMPTS["multi_kb_rag_response"]
         )
         if mode == "naive":
             pre_sys_prompt = sys_prompt_template.format(
@@ -1540,8 +1747,7 @@ class RAGManager:
             ref_ids = c.get("reference_ids")
             if ref_ids:
                 c["reference_ids"] = [
-                    old_to_new[rid] if rid in old_to_new else rid
-                    for rid in ref_ids
+                    old_to_new[rid] if rid in old_to_new else rid for rid in ref_ids
                 ]
 
         # Step 6: Build final context_str
@@ -1560,16 +1766,15 @@ class RAGManager:
 
         return merged_data, context_str
 
-    def _build_fallback_context(
-        self, merged_data: Dict[str, Any], mode: str
-    ) -> str:
+    def _build_fallback_context(self, merged_data: Dict[str, Any], mode: str) -> str:
         """Build a basic context string without token budget control (fallback when no tokenizer)."""
         _multi_kb_keys = {"evidence", "kb_ids", "source_count"}
 
         text_units_str = "\n".join(
             json.dumps(
                 {
-                    "reference_ids": c.get("reference_ids") or [c.get("reference_id", "")],
+                    "reference_ids": c.get("reference_ids")
+                    or [c.get("reference_id", "")],
                     "content": c.get("content", ""),
                 },
                 ensure_ascii=False,
@@ -1589,11 +1794,17 @@ class RAGManager:
             )
 
         entities_str = "\n".join(
-            json.dumps({k: v for k, v in e.items() if k not in _multi_kb_keys}, ensure_ascii=False)
+            json.dumps(
+                {k: v for k, v in e.items() if k not in _multi_kb_keys},
+                ensure_ascii=False,
+            )
             for e in merged_data.get("entities", [])
         )
         relations_str = "\n".join(
-            json.dumps({k: v for k, v in r.items() if k not in _multi_kb_keys}, ensure_ascii=False)
+            json.dumps(
+                {k: v for k, v in r.items() if k not in _multi_kb_keys},
+                ensure_ascii=False,
+            )
             for r in merged_data.get("relationships", [])
         )
         return PROMPTS["multi_kb_kg_query_context"].format(
@@ -1610,7 +1821,8 @@ class RAGManager:
         text_units_str = "\n".join(
             json.dumps(
                 {
-                    "reference_ids": c.get("reference_ids") or [c.get("reference_id", "")],
+                    "reference_ids": c.get("reference_ids")
+                    or [c.get("reference_id", "")],
                     "content": c.get("content", ""),
                 },
                 ensure_ascii=False,
@@ -1630,11 +1842,17 @@ class RAGManager:
             )
 
         entities_str = "\n".join(
-            json.dumps({k: v for k, v in e.items() if k not in _multi_kb_keys}, ensure_ascii=False)
+            json.dumps(
+                {k: v for k, v in e.items() if k not in _multi_kb_keys},
+                ensure_ascii=False,
+            )
             for e in merged_data.get("entities", [])
         )
         relations_str = "\n".join(
-            json.dumps({k: v for k, v in r.items() if k not in _multi_kb_keys}, ensure_ascii=False)
+            json.dumps(
+                {k: v for k, v in r.items() if k not in _multi_kb_keys},
+                ensure_ascii=False,
+            )
             for r in merged_data.get("relationships", [])
         )
         return PROMPTS["multi_kb_kg_query_context"].format(

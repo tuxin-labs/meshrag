@@ -1778,7 +1778,9 @@ async def _merge_nodes_then_upsert(
             # 删除暂停优先，并保留 request_pending 以便删除完成后恢复解析
             if pipeline_status.get("deletion_pending", False):
                 pipeline_status["request_pending"] = True
-                raise PipelineCancelledException("High priority deletion pending during entity summary")
+                raise PipelineCancelledException(
+                    "High priority deletion pending during entity summary"
+                )
             if pipeline_status.get("cancellation_requested", False):
                 raise PipelineCancelledException("User cancelled during entity summary")
 
@@ -2502,7 +2504,9 @@ async def merge_nodes_and_edges(
             # 删除暂停优先，并保留 request_pending 以便删除完成后恢复解析
             if pipeline_status.get("deletion_pending", False):
                 pipeline_status["request_pending"] = True
-                raise PipelineCancelledException("High priority deletion pending during merge phase")
+                raise PipelineCancelledException(
+                    "High priority deletion pending during merge phase"
+                )
             if pipeline_status.get("cancellation_requested", False):
                 raise PipelineCancelledException("User cancelled during merge phase")
 

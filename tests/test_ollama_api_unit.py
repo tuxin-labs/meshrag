@@ -81,7 +81,9 @@ class TestParseQueryMode:
     def test_local_mode(self):
         """解析 /local 前缀。"""
         parse_query_mode = self._get_parse_query_mode_impl()
-        query, mode, only_need_context, user_prompt = parse_query_mode("/local test query")
+        query, mode, only_need_context, user_prompt = parse_query_mode(
+            "/local test query"
+        )
         assert query == "test query"
         assert mode.value == "local"
         assert only_need_context is False
@@ -90,7 +92,9 @@ class TestParseQueryMode:
     def test_global_mode(self):
         """解析 /global 前缀。"""
         parse_query_mode = self._get_parse_query_mode_impl()
-        query, mode, only_need_context, user_prompt = parse_query_mode("/global test query")
+        query, mode, only_need_context, user_prompt = parse_query_mode(
+            "/global test query"
+        )
         assert query == "test query"
         assert mode.value == "global"
         assert only_need_context is False
@@ -98,7 +102,9 @@ class TestParseQueryMode:
     def test_naive_mode(self):
         """解析 /naive 前缀。"""
         parse_query_mode = self._get_parse_query_mode_impl()
-        query, mode, only_need_context, user_prompt = parse_query_mode("/naive test query")
+        query, mode, only_need_context, user_prompt = parse_query_mode(
+            "/naive test query"
+        )
         assert query == "test query"
         assert mode.value == "naive"
         assert only_need_context is False
@@ -106,7 +112,9 @@ class TestParseQueryMode:
     def test_hybrid_mode(self):
         """解析 /hybrid 前缀。"""
         parse_query_mode = self._get_parse_query_mode_impl()
-        query, mode, only_need_context, user_prompt = parse_query_mode("/hybrid test query")
+        query, mode, only_need_context, user_prompt = parse_query_mode(
+            "/hybrid test query"
+        )
         assert query == "test query"
         assert mode.value == "hybrid"
         assert only_need_context is False
@@ -114,7 +122,9 @@ class TestParseQueryMode:
     def test_mix_mode(self):
         """解析 /mix 前缀。"""
         parse_query_mode = self._get_parse_query_mode_impl()
-        query, mode, only_need_context, user_prompt = parse_query_mode("/mix test query")
+        query, mode, only_need_context, user_prompt = parse_query_mode(
+            "/mix test query"
+        )
         assert query == "test query"
         assert mode.value == "mix"
         assert only_need_context is False
@@ -122,7 +132,9 @@ class TestParseQueryMode:
     def test_bypass_mode(self):
         """解析 /bypass 前缀。"""
         parse_query_mode = self._get_parse_query_mode_impl()
-        query, mode, only_need_context, user_prompt = parse_query_mode("/bypass test query")
+        query, mode, only_need_context, user_prompt = parse_query_mode(
+            "/bypass test query"
+        )
         assert query == "test query"
         assert mode.value == "bypass"
         assert only_need_context is False
@@ -130,7 +142,9 @@ class TestParseQueryMode:
     def test_context_mode(self):
         """解析 /context 前缀（only_need_context=True）。"""
         parse_query_mode = self._get_parse_query_mode_impl()
-        query, mode, only_need_context, user_prompt = parse_query_mode("/context test query")
+        query, mode, only_need_context, user_prompt = parse_query_mode(
+            "/context test query"
+        )
         assert query == "test query"
         assert mode.value == "mix"
         assert only_need_context is True
@@ -227,7 +241,9 @@ class TestParseQueryMode:
     def test_trailing_whitespace_removed(self):
         """移除前缀后的前导空格。"""
         parse_query_mode = self._get_parse_query_mode_impl()
-        query, mode, only_need_context, user_prompt = parse_query_mode("/local     test query")
+        query, mode, only_need_context, user_prompt = parse_query_mode(
+            "/local     test query"
+        )
         assert query == "test query"
 
 

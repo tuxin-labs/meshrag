@@ -201,7 +201,8 @@ class TestProcessChunksUnified:
 
         # 过滤掉分数低于阈值的 chunk
         result = [
-            chunk for chunk in unique_chunks
+            chunk
+            for chunk in unique_chunks
             if chunk.get("rerank_score", 1.0) >= min_rerank_score
         ]
 
@@ -285,6 +286,7 @@ class TestUtilityFunctions:
 
         # 简化的实现
         import hashlib
+
         hash_value = hashlib.md5(content.encode()).hexdigest()
         result = prefix + hash_value
 

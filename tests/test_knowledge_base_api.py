@@ -1,8 +1,7 @@
-
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 
 @pytest.fixture(scope="module")
@@ -32,14 +31,21 @@ def test_app():
     mock_rag.doc_status = mock_doc_status
 
     mock_rag_mgr.get_rag = AsyncMock(return_value=mock_rag)
-    mock_rag_mgr.delete_knowledge_base = AsyncMock(return_value={"status": "success", "message": "deleted"})
+    mock_rag_mgr.delete_knowledge_base = AsyncMock(
+        return_value={"status": "success", "message": "deleted"}
+    )
 
     # Mock multi_kb_query 和 multi_kb_get_data
     async def mock_multi_kb_query(*args, **kwargs):
         return {
             "status": "success",
             "message": "",
-            "data": {"references": [], "entities": [], "relationships": [], "chunks": []},
+            "data": {
+                "references": [],
+                "entities": [],
+                "relationships": [],
+                "chunks": [],
+            },
             "metadata": {},
             "llm_response": {"content": "mock answer", "is_streaming": False},
         }
@@ -48,7 +54,12 @@ def test_app():
         return {
             "status": "success",
             "message": "",
-            "data": {"entities": [], "relationships": [], "chunks": [], "references": []},
+            "data": {
+                "entities": [],
+                "relationships": [],
+                "chunks": [],
+                "references": [],
+            },
             "metadata": {},
         }
 
@@ -57,6 +68,7 @@ def test_app():
 
     # 创建 mock DocManager，设置 base_input_dir 为有效路径
     import tempfile
+
     tmp_dir = tempfile.mkdtemp()
     mock_doc_mgr = MagicMock()
     mock_doc_mgr.base_input_dir = tmp_dir
@@ -68,12 +80,16 @@ def test_app():
 
     # 添加 KB 管理端点
     from pydantic import BaseModel
+
     class KBRequest(BaseModel):
         kb_id: str
 
     @app.get("/knowledge_bases", tags=["Knowledge Base Management"])
     async def list_knowledge_bases():
-        return {"status": "success", "knowledge_bases": mock_rag_mgr.list_knowledge_bases()}
+        return {
+            "status": "success",
+            "knowledge_bases": mock_rag_mgr.list_knowledge_bases(),
+        }
 
     @app.post("/knowledge_bases", tags=["Knowledge Base Management"])
     async def create_knowledge_base(req: KBRequest):
@@ -132,7 +148,10 @@ def test_document_upload_with_kb_id(client):
     assert response.status_code == 422  # FastAPI 验证错误
 
     # 带 kb_id 上传
-    response = client.post(f"/documents/upload?kb_id={kb_id}", files={"file": ("test.txt", file_content, "text/plain")})
+    response = client.post(
+        f"/documents/upload?kb_id={kb_id}",
+        files={"file": ("test.txt", file_content, "text/plain")},
+    )
     assert response.status_code == 200
     assert response.json()["status"] == "success"
 
@@ -141,23 +160,19 @@ def test_document_upload_with_kb_id(client):
 def test_query_with_kb_ids(client):
     """测试查询单个或多个 KB"""
     # 1. 查询指定 kb_id
-    response = client.post("/query", json={
-        "query": "test query",
-        "kb_ids": ["default"]
-    })
+    response = client.post(
+        "/query", json={"query": "test query", "kb_ids": ["default"]}
+    )
     assert response.status_code == 200
 
     # 2. 查询多个 kb_ids
-    response = client.post("/query", json={
-        "query": "multi query",
-        "kb_ids": ["default", "other_kb"]
-    })
+    response = client.post(
+        "/query", json={"query": "multi query", "kb_ids": ["default", "other_kb"]}
+    )
     assert response.status_code == 200
 
     # 3. 不带 kb_ids（使用默认）
-    response = client.post("/query", json={
-        "query": "default query"
-    })
+    response = client.post("/query", json={"query": "default query"})
     assert response.status_code == 200
 
 

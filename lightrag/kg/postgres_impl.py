@@ -375,7 +375,9 @@ class PostgreSQLDB:
             self.connection_retry_backoff,
             self.connection_retry_backoff_max,
             self.pool_close_timeout,
-            f"{self.pool_acquire_timeout}s" if self.pool_acquire_timeout else "None (unlimited)",
+            f"{self.pool_acquire_timeout}s"
+            if self.pool_acquire_timeout
+            else "None (unlimited)",
             self.bootstrap_connect_timeout,
         )
         logger.info(
@@ -521,7 +523,9 @@ class PostgreSQLDB:
         if self.keepalives_idle > 0:
             keepalive_defaults["tcp_keepalives_idle"] = str(self.keepalives_idle)
         if self.keepalives_interval > 0:
-            keepalive_defaults["tcp_keepalives_interval"] = str(self.keepalives_interval)
+            keepalive_defaults["tcp_keepalives_interval"] = str(
+                self.keepalives_interval
+            )
         if self.keepalives_count > 0:
             keepalive_defaults["tcp_keepalives_count"] = str(self.keepalives_count)
         for key, value in keepalive_defaults.items():
@@ -703,11 +707,15 @@ class PostgreSQLDB:
                 with attempt:
                     await self._ensure_pool()
                     assert self.pool is not None
-                    async with self.pool.acquire(timeout=self.pool_acquire_timeout) as connection:  # type: ignore[arg-type]
+                    async with self.pool.acquire(
+                        timeout=self.pool_acquire_timeout
+                    ) as connection:  # type: ignore[arg-type]
                         if with_age and graph_name:
                             await self.configure_age(connection, graph_name)
                         elif with_age and not graph_name:
-                            raise ValueError("Graph name is required when with_age is True")
+                            raise ValueError(
+                                "Graph name is required when with_age is True"
+                            )
                         if self.enable_vector and self.vector_index_type == "VCHORDRQ":
                             await self.configure_vchordrq(connection)
                         result = await operation(connection)

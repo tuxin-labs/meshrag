@@ -96,7 +96,9 @@ def _get_env_float(key: str, default: float) -> float:
 MILVUS_CONNECTION_TIMEOUT = _get_env_float("MILVUS_CONNECTION_TIMEOUT", 10.0)
 MILVUS_CONNECTION_RETRY_ATTEMPTS = _get_env_int("MILVUS_CONNECTION_RETRY_ATTEMPTS", 3)
 MILVUS_CONNECTION_RETRY_BACKOFF = _get_env_float("MILVUS_CONNECTION_RETRY_BACKOFF", 3.0)
-MILVUS_CONNECTION_RETRY_BACKOFF_MAX = _get_env_float("MILVUS_CONNECTION_RETRY_BACKOFF_MAX", 30.0)
+MILVUS_CONNECTION_RETRY_BACKOFF_MAX = _get_env_float(
+    "MILVUS_CONNECTION_RETRY_BACKOFF_MAX", 30.0
+)
 
 
 @dataclass
@@ -247,16 +249,15 @@ class MilvusIndexConfig:
         """
         if index_params is None:
             if self.index_type == "AUTOINDEX":
-                logger.info("Using AUTOINDEX (Milvus default), but IndexParams not available")
+                logger.info(
+                    "Using AUTOINDEX (Milvus default), but IndexParams not available"
+                )
             return None
 
         if self.index_type == "AUTOINDEX":
             logger.info("Using AUTOINDEX (Milvus default)")
             # For AUTOINDEX, still need to create index with minimal params
-            index_params.add_index(
-                field_name=field_name,
-                index_type="AUTOINDEX"
-            )
+            index_params.add_index(field_name=field_name, index_type="AUTOINDEX")
             return index_params
 
         params: Dict[str, Any] = {}
@@ -520,9 +521,7 @@ class MilvusVectorDBStorage(BaseVectorStorage):
             )
 
             if self.index_config.index_type == "AUTOINDEX":
-                logger.debug(
-                    f"[{self.workspace}] Created AUTOINDEX for vector field"
-                )
+                logger.debug(f"[{self.workspace}] Created AUTOINDEX for vector field")
             else:
                 logger.debug(
                     f"[{self.workspace}] Created vector index with config: {self.index_config.to_dict()}"
@@ -1128,8 +1127,12 @@ class MilvusVectorDBStorage(BaseVectorStorage):
 
         except Exception as e:
             # Check if it's a connection-related error (gRPC channel closed)
-            if "Cannot invoke RPC on closed channel" in str(e) or "RPC on closed channel" in str(e):
-                logger.warning(f"[{self.workspace}] Milvus connection closed, attempting to reconnect")
+            if "Cannot invoke RPC on closed channel" in str(
+                e
+            ) or "RPC on closed channel" in str(e):
+                logger.warning(
+                    f"[{self.workspace}] Milvus connection closed, attempting to reconnect"
+                )
                 self._reconnect()
                 # Retry the operation after reconnecting
                 try:
@@ -1137,10 +1140,14 @@ class MilvusVectorDBStorage(BaseVectorStorage):
                         logger.error(
                             f"[{self.workspace}] Collection {self.namespace} does not exist after reconnect"
                         )
-                        raise ValueError(f"Collection {self.final_namespace} does not exist")
+                        raise ValueError(
+                            f"Collection {self.final_namespace} does not exist"
+                        )
 
                     self._client.load_collection(self.final_namespace)
-                    logger.info(f"[{self.workspace}] Collection {self.namespace} loaded successfully after reconnection")
+                    logger.info(
+                        f"[{self.workspace}] Collection {self.namespace} loaded successfully after reconnection"
+                    )
                 except Exception as retry_e:
                     logger.error(
                         f"[{self.workspace}] Failed to load collection {self.namespace} after reconnection: {retry_e}"
@@ -1159,7 +1166,9 @@ class MilvusVectorDBStorage(BaseVectorStorage):
             self._client = self._create_client()
             logger.debug(f"[{self.workspace}] MilvusClient recreated successfully")
         except Exception as e:
-            logger.error(f"[{self.workspace}] Failed to recreate MilvusClient connection: {e}")
+            logger.error(
+                f"[{self.workspace}] Failed to recreate MilvusClient connection: {e}"
+            )
             raise
 
     def _create_collection_if_not_exist(self):
@@ -1525,17 +1534,25 @@ class MilvusVectorDBStorage(BaseVectorStorage):
             )
             return results
         except Exception as e:
-            if "Cannot invoke RPC on closed channel" in str(e) or "RPC on closed channel" in str(e):
-                logger.warning(f"[{self.workspace}] Upsert failed due to closed channel, attempting to reconnect")
+            if "Cannot invoke RPC on closed channel" in str(
+                e
+            ) or "RPC on closed channel" in str(e):
+                logger.warning(
+                    f"[{self.workspace}] Upsert failed due to closed channel, attempting to reconnect"
+                )
                 self._reconnect()
                 try:
                     results = self._client.upsert(
                         collection_name=self.final_namespace, data=list_data
                     )
-                    logger.info(f"[{self.workspace}] Upsert succeeded after reconnection")
+                    logger.info(
+                        f"[{self.workspace}] Upsert succeeded after reconnection"
+                    )
                     return results
                 except Exception as retry_e:
-                    logger.error(f"[{self.workspace}] Upsert failed again after reconnection: {retry_e}")
+                    logger.error(
+                        f"[{self.workspace}] Upsert failed again after reconnection: {retry_e}"
+                    )
                     raise
             else:
                 raise
@@ -1578,8 +1595,12 @@ class MilvusVectorDBStorage(BaseVectorStorage):
                 search_params=search_params,
             )
         except Exception as e:
-            if "Cannot invoke RPC on closed channel" in str(e) or "RPC on closed channel" in str(e):
-                logger.warning(f"[{self.workspace}] Search failed due to closed channel, attempting to reconnect")
+            if "Cannot invoke RPC on closed channel" in str(
+                e
+            ) or "RPC on closed channel" in str(e):
+                logger.warning(
+                    f"[{self.workspace}] Search failed due to closed channel, attempting to reconnect"
+                )
                 self._reconnect()
                 try:
                     results = self._client.search(
@@ -1589,9 +1610,13 @@ class MilvusVectorDBStorage(BaseVectorStorage):
                         output_fields=output_fields,
                         search_params=search_params,
                     )
-                    logger.info(f"[{self.workspace}] Search succeeded after reconnection")
+                    logger.info(
+                        f"[{self.workspace}] Search succeeded after reconnection"
+                    )
                 except Exception as retry_e:
-                    logger.error(f"[{self.workspace}] Search failed again after reconnection: {retry_e}")
+                    logger.error(
+                        f"[{self.workspace}] Search failed again after reconnection: {retry_e}"
+                    )
                     raise
             else:
                 raise
@@ -1874,7 +1899,9 @@ class MilvusVectorDBStorage(BaseVectorStorage):
         logger.debug(f"[{self.workspace}] Finalizing Milvus storage '{self.namespace}'")
         # 注意：MilvusClient 没有明确的 close 方法，但我们可以通过将 client 设置为 None 来帮助 GC
         if self._client is not None:
-            logger.debug(f"[{self.workspace}] Milvus client for '{self.namespace}' finalized")
+            logger.debug(
+                f"[{self.workspace}] Milvus client for '{self.namespace}' finalized"
+            )
             # 一些 MilvusClient 实现可能有 close 方法，但标准 API 中没有明确说明
             # 如果 MilvusClient 将来添加了 close 方法，可以在这里调用
             # 目前，我们只需要标记为未初始化

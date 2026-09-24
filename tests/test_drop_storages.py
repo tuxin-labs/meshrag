@@ -30,9 +30,7 @@ class TestDropStoragesRetry:
 
         # 成功的存储
         ok_storage = MagicMock()
-        ok_storage.drop = AsyncMock(
-            return_value={"status": "success", "message": "ok"}
-        )
+        ok_storage.drop = AsyncMock(return_value={"status": "success", "message": "ok"})
         # 始终抛异常的存储（应重试 3 次）
         exc_storage = MagicMock()
         exc_storage.drop = AsyncMock(side_effect=ConnectionError("connection refused"))
@@ -60,8 +58,10 @@ class TestDropStoragesRetry:
             setattr(rag, attr, None)
 
         # patch initialize / finalize，避免依赖真实实现
-        with patch.object(LightRAG, "initialize_storages", AsyncMock()), \
-                patch.object(LightRAG, "finalize_storages", AsyncMock()):
+        with (
+            patch.object(LightRAG, "initialize_storages", AsyncMock()),
+            patch.object(LightRAG, "finalize_storages", AsyncMock()),
+        ):
             results = await rag.drop_storages()
 
         # 成功存储：在 success，只调用 1 次
@@ -92,18 +92,31 @@ class TestDropStoragesRetry:
         # 首次抛异常，第二次成功
         flaky_storage = MagicMock()
         flaky_storage.drop = AsyncMock(
-            side_effect=[ConnectionError("transient"), {"status": "success", "message": "ok"}]
+            side_effect=[
+                ConnectionError("transient"),
+                {"status": "success", "message": "ok"},
+            ]
         )
         rag.llm_response_cache = flaky_storage
         for attr in (
-            "text_chunks", "full_docs", "full_entities", "full_relations",
-            "entity_chunks", "relation_chunks", "entities_vdb", "relationships_vdb",
-            "chunks_vdb", "chunk_entity_relation_graph", "doc_status",
+            "text_chunks",
+            "full_docs",
+            "full_entities",
+            "full_relations",
+            "entity_chunks",
+            "relation_chunks",
+            "entities_vdb",
+            "relationships_vdb",
+            "chunks_vdb",
+            "chunk_entity_relation_graph",
+            "doc_status",
         ):
             setattr(rag, attr, None)
 
-        with patch.object(LightRAG, "initialize_storages", AsyncMock()), \
-                patch.object(LightRAG, "finalize_storages", AsyncMock()):
+        with (
+            patch.object(LightRAG, "initialize_storages", AsyncMock()),
+            patch.object(LightRAG, "finalize_storages", AsyncMock()),
+        ):
             results = await rag.drop_storages()
 
         # 重试后成功 → 进 success，不进 failed

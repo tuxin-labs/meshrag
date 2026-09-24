@@ -38,6 +38,7 @@ def _make_mock_post(mock_resp):
 
     class MockContextManager:
         """模拟异步上下文管理器。"""
+
         def __init__(self, response):
             self._response = response
 
@@ -282,9 +283,7 @@ class TestFetchExternalKB:
     @patch("lightrag.api.external_kb_client.get_session")
     async def test_fetch_http_error_returns_empty(self, mock_get_session):
         """HTTP 非 200 状态码应返回空列表和错误信息。"""
-        mock_resp = _make_mock_response(
-            status=500, text_data="Internal Server Error"
-        )
+        mock_resp = _make_mock_response(status=500, text_data="Internal Server Error")
         mock_session = AsyncMock()
         mock_session.post = MagicMock(return_value=_make_mock_post(mock_resp))
         mock_get_session.return_value = mock_session

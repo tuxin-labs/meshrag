@@ -228,7 +228,9 @@ class OllamaAPI:
         # Backward compatible:
         # - Older code passed a single LightRAG instance
         # - New server code passes RAGManager for multi-KB support
-        self._rag_manager: RAGManager | None = rag if isinstance(rag, RAGManager) else None
+        self._rag_manager: RAGManager | None = (
+            rag if isinstance(rag, RAGManager) else None
+        )
         self._rag_single: LightRAG | None = rag if isinstance(rag, LightRAG) else None
 
         self.top_k = top_k
@@ -241,7 +243,9 @@ class OllamaAPI:
             return self._rag_single
 
         if self._rag_manager is None:
-            raise HTTPException(status_code=500, detail="RAG backend is not initialized")
+            raise HTTPException(
+                status_code=500, detail="RAG backend is not initialized"
+            )
 
         # Allow selecting knowledge base by header; default to server default KB.
         kb_id = None
@@ -560,9 +564,7 @@ class OllamaAPI:
                             **rag.llm_model_kwargs,
                         )
                     else:
-                        response = await rag.aquery(
-                            cleaned_query, param=query_param
-                        )
+                        response = await rag.aquery(cleaned_query, param=query_param)
 
                     async def stream_generator():
                         first_chunk_time = None

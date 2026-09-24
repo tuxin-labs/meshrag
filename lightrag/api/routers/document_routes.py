@@ -328,7 +328,9 @@ class UpdateResponse(BaseModel):
     )
     message: str = Field(description="Message describing the operation result")
     doc_id: Optional[str] = Field(None, description="Document ID (if applicable)")
-    track_id: Optional[str] = Field(None, description="Tracking ID for monitoring processing status")
+    track_id: Optional[str] = Field(
+        None, description="Tracking ID for monitoring processing status"
+    )
 
     class Config:
         json_schema_extra = {
@@ -357,8 +359,12 @@ class UpdateDetail(BaseModel):
         description="Status of the update operation"
     )
     doc_id: Optional[str] = Field(None, description="Document ID (if applicable)")
-    track_id: Optional[str] = Field(None, description="Tracking ID for monitoring processing status")
-    message: Optional[str] = Field(None, description="Additional details about the operation")
+    track_id: Optional[str] = Field(
+        None, description="Tracking ID for monitoring processing status"
+    )
+    message: Optional[str] = Field(
+        None, description="Additional details about the operation"
+    )
 
 
 class UpdateTextsResponse(BaseModel):
@@ -373,12 +379,22 @@ class UpdateTextsResponse(BaseModel):
         details: List of individual document update details
     """
 
-    status: Literal["success", "fail"] = Field(description="Overall status of the operation")
+    status: Literal["success", "fail"] = Field(
+        description="Overall status of the operation"
+    )
     message: str = Field(description="Message describing the operation result")
-    updated_count: int = Field(0, description="Number of documents successfully updated")
-    unchanged_count: int = Field(0, description="Number of documents with unchanged content")
-    not_found_count: int = Field(0, description="Number of documents not found in the system")
-    details: List[UpdateDetail] = Field(default_factory=list, description="Details of individual document updates")
+    updated_count: int = Field(
+        0, description="Number of documents successfully updated"
+    )
+    unchanged_count: int = Field(
+        0, description="Number of documents with unchanged content"
+    )
+    not_found_count: int = Field(
+        0, description="Number of documents not found in the system"
+    )
+    details: List[UpdateDetail] = Field(
+        default_factory=list, description="Details of individual document updates"
+    )
 
     class Config:
         json_schema_extra = {
@@ -394,20 +410,20 @@ class UpdateTextsResponse(BaseModel):
                         "status": "success",
                         "doc_id": "doc-abc123xyz",
                         "track_id": "update_20250729_170612_abc123",
-                        "message": "Document 'document1.pdf' update initiated."
+                        "message": "Document 'document1.pdf' update initiated.",
                     },
                     {
                         "file_source": "document2.pdf",
                         "status": "unchanged",
                         "doc_id": "doc-def456uvw",
-                        "message": "Document 'document2.pdf' content unchanged. No update needed."
+                        "message": "Document 'document2.pdf' content unchanged. No update needed.",
                     },
                     {
                         "file_source": "document3.pdf",
                         "status": "not_found",
-                        "message": "File source 'document3.pdf' not found in document storage."
-                    }
-                ]
+                        "message": "File source 'document3.pdf' not found in document storage.",
+                    },
+                ],
             }
         }
 
@@ -505,12 +521,12 @@ class UpdateTextsRequest(BaseModel):
                 "items": [
                     {
                         "text": "This is the first updated text content.",
-                        "file_source": "document1.pdf"
+                        "file_source": "document1.pdf",
                     },
                     {
                         "text": "This is the second updated text content.",
-                        "file_source": "document2.pdf"
-                    }
+                        "file_source": "document2.pdf",
+                    },
                 ],
                 "delete_llm_cache": True,
             }
@@ -621,11 +637,18 @@ class DeleteDocRequest(BaseModel):
 class DeleteDocByIdResponse(BaseModel):
     """Response model for document deletion operation."""
 
-    status: Literal["deletion_started", "deletion_queued", "busy", "not_allowed", "partial_not_found", "not_found"] = Field(
-        description="Status of the deletion operation"
-    )
+    status: Literal[
+        "deletion_started",
+        "deletion_queued",
+        "busy",
+        "not_allowed",
+        "partial_not_found",
+        "not_found",
+    ] = Field(description="Status of the deletion operation")
     message: str = Field(description="Message describing the operation result")
-    doc_id: str = Field(description="The IDs of the documents to delete, comma-separated")
+    doc_id: str = Field(
+        description="The IDs of the documents to delete, comma-separated"
+    )
     not_found_ids: List[str] = Field(
         default=[],
         description="Document IDs that were not found in the system",
@@ -1421,11 +1444,42 @@ def _extract_xlsx(file_bytes: bytes) -> str:
 # upload 同步内容预检支持的文本类扩展名（须与 pipeline_enqueue_file 保持一致）
 _DEDUP_TEXT_EXTENSIONS = frozenset(
     {
-        ".txt", ".md", ".mdx", ".html", ".htm", ".tex", ".json", ".xml",
-        ".yaml", ".yml", ".rtf", ".odt", ".epub", ".csv", ".log", ".conf",
-        ".ini", ".properties", ".sql", ".bat", ".sh", ".c", ".h", ".cpp",
-        ".hpp", ".py", ".java", ".js", ".ts", ".swift", ".go", ".rb",
-        ".php", ".css", ".scss", ".less",
+        ".txt",
+        ".md",
+        ".mdx",
+        ".html",
+        ".htm",
+        ".tex",
+        ".json",
+        ".xml",
+        ".yaml",
+        ".yml",
+        ".rtf",
+        ".odt",
+        ".epub",
+        ".csv",
+        ".log",
+        ".conf",
+        ".ini",
+        ".properties",
+        ".sql",
+        ".bat",
+        ".sh",
+        ".c",
+        ".h",
+        ".cpp",
+        ".hpp",
+        ".py",
+        ".java",
+        ".js",
+        ".ts",
+        ".swift",
+        ".go",
+        ".rb",
+        ".php",
+        ".css",
+        ".scss",
+        ".less",
     }
 )
 
@@ -1498,9 +1552,7 @@ async def _check_content_duplicate(
     try:
         content = await _extract_text_from_file(file_path)
     except Exception as e:
-        logger.warning(
-            f"[Content Dedup] extraction failed for {file_path.name}: {e}"
-        )
+        logger.warning(f"[Content Dedup] extraction failed for {file_path.name}: {e}")
         return None
 
     if content is None:
@@ -1516,9 +1568,7 @@ async def _check_content_duplicate(
     try:
         file_path.unlink()
     except OSError:
-        logger.warning(
-            f"[Content Dedup] failed to remove temp file {file_path.name}"
-        )
+        logger.warning(f"[Content Dedup] failed to remove temp file {file_path.name}")
 
     existing_track_id = existing.get("track_id") or ""
     existing_file_path = existing.get("file_path") or ""
@@ -2083,7 +2133,7 @@ async def pipeline_update_document(
     new_text: str,
     file_source: str,
     track_id: str,
-    delete_llm_cache: bool = True
+    delete_llm_cache: bool = True,
 ):
     """Background task to update a single document
 
@@ -2101,14 +2151,14 @@ async def pipeline_update_document(
     """
     try:
         # Delete old document
-        delete_result = await rag.adelete_by_doc_id(doc_id, delete_llm_cache=delete_llm_cache)
+        delete_result = await rag.adelete_by_doc_id(
+            doc_id, delete_llm_cache=delete_llm_cache
+        )
 
         if delete_result.status == "success":
             # Insert new document
             await rag.apipeline_enqueue_documents(
-                input=new_text,
-                file_paths=file_source,
-                track_id=track_id
+                input=new_text, file_paths=file_source, track_id=track_id
             )
             await rag.apipeline_process_enqueue_documents()
 
@@ -2338,8 +2388,7 @@ async def background_delete_documents(
         deletion_queue = pipeline_status.get("deletion_queue", [])
         if deletion_queue:
             pipeline_status["deletion_queue"] = [
-                task for task in deletion_queue
-                if task.get("doc_ids") != doc_ids
+                task for task in deletion_queue if task.get("doc_ids") != doc_ids
             ]
 
     try:
@@ -2544,7 +2593,9 @@ async def background_delete_documents(
             else:
                 # 没有排队请求，正常释放 busy
                 pipeline_status["busy"] = False
-                pipeline_status["request_pending"] = False  # 修正历史 typo: pending_requests → request_pending
+                pipeline_status["request_pending"] = (
+                    False  # 修正历史 typo: pending_requests → request_pending
+                )
                 pipeline_status["latest_message"] = completion_msg
                 pipeline_status["history_messages"].append(completion_msg)
 
@@ -2594,7 +2645,9 @@ def create_document_routes(
 
         try:
             rag = await rag_manager.get_rag(kb_id)
-            kb_doc_manager = DocumentManager(str(doc_manager.base_input_dir), workspace=kb_id)
+            kb_doc_manager = DocumentManager(
+                str(doc_manager.base_input_dir), workspace=kb_id
+            )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -2676,7 +2729,9 @@ def create_document_routes(
         """
         try:
             rag = await rag_manager.get_rag(kb_id)
-            kb_doc_manager = DocumentManager(str(doc_manager.base_input_dir), workspace=kb_id)
+            kb_doc_manager = DocumentManager(
+                str(doc_manager.base_input_dir), workspace=kb_id
+            )
 
             # Sanitize filename to prevent Path Traversal attacks
             safe_filename = sanitize_filename(file.filename, kb_doc_manager.input_dir)
@@ -2712,7 +2767,9 @@ def create_document_routes(
             existing_doc_data = await rag.doc_status.get_doc_by_file_path(safe_filename)
             if existing_doc_data:
                 # 使用 get_doc_id_by_file_path 获取正确的 doc_id
-                existing_doc_id = await rag.doc_status.get_doc_id_by_file_path(safe_filename)
+                existing_doc_id = await rag.doc_status.get_doc_id_by_file_path(
+                    safe_filename
+                )
                 if overwrite:
                     # 覆盖模式：删除已有文档，继续上传流程
                     if existing_doc_id:
@@ -3115,7 +3172,9 @@ def create_document_routes(
 
         # Get pipeline status and lock
         rag = await rag_manager.get_rag(kb_id)
-        kb_doc_manager = DocumentManager(str(doc_manager.base_input_dir), workspace=kb_id)
+        kb_doc_manager = DocumentManager(
+            str(doc_manager.base_input_dir), workspace=kb_id
+        )
 
         pipeline_status = await get_namespace_data(
             "pipeline_status", workspace=rag.workspace
@@ -3531,7 +3590,9 @@ def create_document_routes(
             )
 
             rag = await rag_manager.get_rag(kb_id)
-            kb_doc_manager = DocumentManager(str(doc_manager.base_input_dir), workspace=kb_id)
+            kb_doc_manager = DocumentManager(
+                str(doc_manager.base_input_dir), workspace=kb_id
+            )
 
             # 预校验：检查每个 doc_id 是否存在
             not_found_ids = []
@@ -3584,7 +3645,9 @@ def create_document_routes(
                 # （见 apipeline_process_enqueue_documents 中 deletion_pending 优先检查）。
                 # 不再设置 cancellation_requested：那是"用户主动取消"语义，
                 # 会清除 request_pending，导致删除完成后排队文档无法恢复解析。
-                if is_busy and not pipeline_status.get("job_name", "").startswith("Deleting"):
+                if is_busy and not pipeline_status.get("job_name", "").startswith(
+                    "Deleting"
+                ):
                     logger.info(
                         f"Deletion queued with high priority (deletion_pending set), "
                         f"current job will pause: {pipeline_status.get('job_name')}"
@@ -3653,11 +3716,13 @@ def create_document_routes(
             rag = await rag_manager.get_rag(kb_id)
 
             # 根据file_source查找文档
-            existing_doc_data = await rag.doc_status.get_doc_by_file_path(request.file_source)
+            existing_doc_data = await rag.doc_status.get_doc_by_file_path(
+                request.file_source
+            )
             if not existing_doc_data:
                 return UpdateResponse(
                     status="not_found",
-                    message=f"File source '{request.file_source}' not found in document storage."
+                    message=f"File source '{request.file_source}' not found in document storage.",
                 )
 
             # 检查内容是否变化
@@ -3668,7 +3733,7 @@ def create_document_routes(
                 return UpdateResponse(
                     status="unchanged",
                     message=f"Document '{request.file_source}' content unchanged. No update needed.",
-                    doc_id=doc_id
+                    doc_id=doc_id,
                 )
 
             # 内容有变化，执行更新
@@ -3681,14 +3746,14 @@ def create_document_routes(
                 request.text,
                 request.file_source,
                 track_id,
-                request.delete_llm_cache
+                request.delete_llm_cache,
             )
 
             return UpdateResponse(
                 status="success",
                 message=f"Document '{request.file_source}' update initiated.",
                 doc_id=doc_id,
-                track_id=track_id
+                track_id=track_id,
             )
 
         except Exception as e:
@@ -3732,14 +3797,18 @@ def create_document_routes(
 
             for item in request.items:
                 try:
-                    existing_doc_data = await rag.doc_status.get_doc_by_file_path(item.file_source)
+                    existing_doc_data = await rag.doc_status.get_doc_by_file_path(
+                        item.file_source
+                    )
 
                     if not existing_doc_data:
-                        details.append(UpdateDetail(
-                            file_source=item.file_source,
-                            status="not_found",
-                            message=f"File source '{item.file_source}' not found in document storage."
-                        ))
+                        details.append(
+                            UpdateDetail(
+                                file_source=item.file_source,
+                                status="not_found",
+                                message=f"File source '{item.file_source}' not found in document storage.",
+                            )
+                        )
                         not_found_count += 1
                         continue
 
@@ -3747,12 +3816,14 @@ def create_document_routes(
                     content_data = await rag.full_docs.get_by_id(doc_id)
 
                     if content_data and content_data["content"] == item.text:
-                        details.append(UpdateDetail(
-                            file_source=item.file_source,
-                            status="unchanged",
-                            doc_id=doc_id,
-                            message=f"Document '{item.file_source}' content unchanged. No update needed."
-                        ))
+                        details.append(
+                            UpdateDetail(
+                                file_source=item.file_source,
+                                status="unchanged",
+                                doc_id=doc_id,
+                                message=f"Document '{item.file_source}' content unchanged. No update needed.",
+                            )
+                        )
                         unchanged_count += 1
                         continue
 
@@ -3764,24 +3835,26 @@ def create_document_routes(
                         item.text,
                         item.file_source,
                         track_id,
-                        request.delete_llm_cache
+                        request.delete_llm_cache,
                     )
 
-                    details.append(UpdateDetail(
-                        file_source=item.file_source,
-                        status="success",
-                        doc_id=doc_id,
-                        track_id=track_id,
-                        message=f"Document '{item.file_source}' update initiated."
-                    ))
+                    details.append(
+                        UpdateDetail(
+                            file_source=item.file_source,
+                            status="success",
+                            doc_id=doc_id,
+                            track_id=track_id,
+                            message=f"Document '{item.file_source}' update initiated.",
+                        )
+                    )
                     updated_count += 1
 
                 except Exception as e:
-                    details.append(UpdateDetail(
-                        file_source=item.file_source,
-                        status="fail",
-                        message=str(e)
-                    ))
+                    details.append(
+                        UpdateDetail(
+                            file_source=item.file_source, status="fail", message=str(e)
+                        )
+                    )
 
             overall_status = "success"
             if any(detail.status == "fail" for detail in details):
@@ -3793,7 +3866,7 @@ def create_document_routes(
                 updated_count=updated_count,
                 unchanged_count=unchanged_count,
                 not_found_count=not_found_count,
-                details=details
+                details=details,
             )
 
         except Exception as e:
@@ -3805,7 +3878,7 @@ def create_document_routes(
                 updated_count=0,
                 unchanged_count=0,
                 not_found_count=0,
-                details=[]
+                details=[],
             )
 
     @router.post(
@@ -3952,13 +4025,18 @@ def create_document_routes(
             doc_id = await rag.doc_status.get_doc_id_by_file_path(file_path)
 
             if not doc_id:
-                raise HTTPException(status_code=404, detail=f"Document not found with file path: {file_path}")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Document not found with file path: {file_path}",
+                )
 
             # 使用 doc_id 获取完整的文档数据
             doc_data = await rag.doc_status.get_by_id(doc_id)
 
             if not doc_data:
-                raise HTTPException(status_code=404, detail=f"Document with id '{doc_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Document with id '{doc_id}' not found"
+                )
 
             # Convert to DocStatusResponse format
             if isinstance(doc_data, dict):
@@ -3995,9 +4073,13 @@ def create_document_routes(
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Error getting document by file path '{file_path}' in KB {kb_id}: {str(e)}")
+            logger.error(
+                f"Error getting document by file path '{file_path}' in KB {kb_id}: {str(e)}"
+            )
             logger.error(traceback.format_exc())
-            raise HTTPException(status_code=500, detail=f"Error getting document: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Error getting document: {str(e)}"
+            )
 
     @router.get(
         "/track_status/{track_id}",

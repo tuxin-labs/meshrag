@@ -170,7 +170,9 @@ def _friendly_error_msg_for_exception(e: Exception) -> str:
     if "High priority deletion" in msg or "deletion pending" in msg:
         # 被高优先级删除任务打断，删除完成后会自动恢复解析
         # （文档保持 PROCESSING，不标记 FAILED，_validate_and_fix 会将其重置为 PENDING）
-        return "文档解析已暂停，正在处理更高优先级的删除任务，将在删除完成后自动恢复解析"
+        return (
+            "文档解析已暂停，正在处理更高优先级的删除任务，将在删除完成后自动恢复解析"
+        )
     if "User cancelled" in msg or "user cancel" in msg.lower():
         return "文档解析已被用户取消"
     # PipelineCancelledException 兜底：保留原消息以便排查
@@ -912,7 +914,9 @@ class LightRAG:
                     reraise=True,
                 ):
                     with attempt:
-                        logger.debug(f"[{self.workspace}] Dropping storage: {storage_name}")
+                        logger.debug(
+                            f"[{self.workspace}] Dropping storage: {storage_name}"
+                        )
                         drop_result = await storage.drop()
                         # 把「逻辑失败」(返回非 success) 转为异常以触发重试
                         if not (
@@ -951,11 +955,17 @@ class LightRAG:
             if os.path.exists(workspace_dir):
                 try:
                     shutil.rmtree(workspace_dir)
-                    logger.debug(f"Successfully removed workspace directory: {workspace_dir}")
+                    logger.debug(
+                        f"Successfully removed workspace directory: {workspace_dir}"
+                    )
                 except Exception as e:
-                    logger.warning(f"Failed to remove workspace directory {workspace_dir}: {e}")
+                    logger.warning(
+                        f"Failed to remove workspace directory {workspace_dir}: {e}"
+                    )
 
-        logger.info(f"Storage drop completed: {len(results['success'])} succeeded, {len(results['failed'])} failed")
+        logger.info(
+            f"Storage drop completed: {len(results['success'])} succeeded, {len(results['failed'])} failed"
+        )
         return results
 
     async def check_and_migrate_data(self):
@@ -1887,7 +1897,9 @@ class LightRAG:
             await self.doc_status.upsert(docs_to_reset)
 
             async with pipeline_status_lock:
-                reset_message = f"Reset {reset_count} PROCESSING documents to PENDING status"
+                reset_message = (
+                    f"Reset {reset_count} PROCESSING documents to PENDING status"
+                )
                 logger.info(reset_message)
                 pipeline_status["latest_message"] = reset_message
                 pipeline_status["history_messages"].append(reset_message)
@@ -1931,9 +1943,7 @@ class LightRAG:
             )
             return len(to_reset)
         except Exception as e:
-            logger.warning(
-                "Failed to reset orphan PROCESSING documents: %s", e
-            )
+            logger.warning("Failed to reset orphan PROCESSING documents: %s", e)
             return 0
 
     async def _resume_pipeline_after_orphan_reset(self) -> None:
@@ -1949,9 +1959,7 @@ class LightRAG:
             )
             await self.apipeline_process_enqueue_documents()
         except Exception as e:
-            logger.warning(
-                "Failed to auto-resume pipeline after orphan reset: %s", e
-            )
+            logger.warning("Failed to auto-resume pipeline after orphan reset: %s", e)
 
     async def apipeline_process_enqueue_documents(
         self,
@@ -2202,7 +2210,9 @@ class LightRAG:
                             async with pipeline_status_lock:
                                 if pipeline_status.get("deletion_pending", False):
                                     pipeline_status["request_pending"] = True
-                                    raise PipelineCancelledException("High priority deletion pending")
+                                    raise PipelineCancelledException(
+                                        "High priority deletion pending"
+                                    )
 
                                 if pipeline_status.get("cancellation_requested", False):
                                     raise PipelineCancelledException("User cancelled")
@@ -2286,19 +2296,13 @@ class LightRAG:
                             # Check for cancellation before entity extraction
                             # 删除暂停优先，并保留 request_pending 以便删除后恢复解析
                             async with pipeline_status_lock:
-                                if pipeline_status.get(
-                                    "deletion_pending", False
-                                ):
+                                if pipeline_status.get("deletion_pending", False):
                                     pipeline_status["request_pending"] = True
                                     raise PipelineCancelledException(
                                         "High priority deletion pending"
                                     )
-                                if pipeline_status.get(
-                                    "cancellation_requested", False
-                                ):
-                                    raise PipelineCancelledException(
-                                        "User cancelled"
-                                    )
+                                if pipeline_status.get("cancellation_requested", False):
+                                    raise PipelineCancelledException("User cancelled")
 
                             # Process document in two stages
                             # Stage 1: Process text chunks and docs (parallel execution)
@@ -2420,7 +2424,9 @@ class LightRAG:
                                     {
                                         doc_id: {
                                             "status": DocStatus.FAILED,
-                                            "error_msg": _friendly_error_msg_for_exception(e),
+                                            "error_msg": _friendly_error_msg_for_exception(
+                                                e
+                                            ),
                                             "chunks_count": failed_chunks_count,
                                             "chunks_list": failed_chunks_list,
                                             "content_summary": status_doc.content_summary,
@@ -2445,9 +2451,7 @@ class LightRAG:
                                 # Check for cancellation before merge
                                 # 删除暂停优先，并保留 request_pending 以便删除后恢复解析
                                 async with pipeline_status_lock:
-                                    if pipeline_status.get(
-                                        "deletion_pending", False
-                                    ):
+                                    if pipeline_status.get("deletion_pending", False):
                                         pipeline_status["request_pending"] = True
                                         raise PipelineCancelledException(
                                             "High priority deletion pending"
@@ -2507,9 +2511,7 @@ class LightRAG:
                                 # Check for cancellation before persisting data
                                 # 删除暂停优先，并保留 request_pending 以便删除后恢复解析
                                 async with pipeline_status_lock:
-                                    if pipeline_status.get(
-                                        "deletion_pending", False
-                                    ):
+                                    if pipeline_status.get("deletion_pending", False):
                                         pipeline_status["request_pending"] = True
                                         raise PipelineCancelledException(
                                             "High priority deletion pending"
@@ -2587,7 +2589,9 @@ class LightRAG:
                                         {
                                             doc_id: {
                                                 "status": DocStatus.FAILED,
-                                                "error_msg": _friendly_error_msg_for_exception(e),
+                                                "error_msg": _friendly_error_msg_for_exception(
+                                                    e
+                                                ),
                                                 "chunks_count": failed_chunks_count,
                                                 "chunks_list": failed_chunks_list,
                                                 "content_summary": status_doc.content_summary,

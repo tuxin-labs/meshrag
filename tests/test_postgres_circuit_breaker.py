@@ -288,6 +288,7 @@ class TestCircuitBreakerWithRunWithRetry:
         class FailingAcquireContext:
             async def __aenter__(self):
                 raise asyncpg.exceptions.ConnectionFailureError("test")
+
             async def __aexit__(self, *args):
                 return False
 
@@ -314,6 +315,7 @@ class TestCircuitBreakerWithRunWithRetry:
         class SuccessAcquireContext:
             async def __aenter__(self):
                 return mock_conn
+
             async def __aexit__(self, *args):
                 return False
 
@@ -340,6 +342,7 @@ class TestCircuitBreakerWithRunWithRetry:
 
         class DynamicAcquireContext:
             """根据调用次数决定成功或失败的 async context manager"""
+
             def __init__(self):
                 call_count["value"] += 1
 

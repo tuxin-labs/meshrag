@@ -175,9 +175,9 @@ async def test_deletion_pause_keeps_doc_processing_not_failed(tmp_path):
         )
         # error_msg 不应包含删除暂停的技术串（不暴露给上游）
         error_msg = doc_status.get("error_msg", "") or ""
-        assert "deletion pending" not in error_msg, (
-            f"删除暂停的技术串不应写入 error_msg，实际: {error_msg}"
-        )
+        assert (
+            "deletion pending" not in error_msg
+        ), f"删除暂停的技术串不应写入 error_msg，实际: {error_msg}"
     finally:
         await rag.finalize_storages()
 
@@ -211,9 +211,9 @@ async def test_user_cancellation_still_stops_pipeline(tmp_path):
         await rag.apipeline_process_enqueue_documents()
 
         # 用户取消后 request_pending 应被清除（停止后续处理）
-        assert pipeline_status.get("request_pending") is False, (
-            "用户主动取消应清除 request_pending，停止后续文档处理"
-        )
+        assert (
+            pipeline_status.get("request_pending") is False
+        ), "用户主动取消应清除 request_pending，停止后续文档处理"
     finally:
         await rag.finalize_storages()
 
@@ -279,9 +279,9 @@ async def test_queued_doc_processed_after_deletion_completes(tmp_path, monkeypat
         # 核心断言：文档B 应被处理完成（任务不丢失）
         doc_b_status = await rag.doc_status.get_by_id(doc_b_id)
         assert doc_b_status is not None
-        assert _status_to_text(doc_b_status["status"]) == "processed", (
-            "删除完成后，排队的文档B必须被正常处理（任务不丢失）"
-        )
+        assert (
+            _status_to_text(doc_b_status["status"]) == "processed"
+        ), "删除完成后，排队的文档B必须被正常处理（任务不丢失）"
         # 文档A 应已被删除
         assert await rag.doc_status.get_by_id(doc_a_id) is None
     finally:
@@ -495,13 +495,15 @@ async def test_pipeline_busy_stays_true_across_deletion_handoff(tmp_path, monkey
         )
         # 模拟"文档 A 解析中被删除"后进入 handoff 状态：
         # background_delete_documents 刚完成删除，即将 handoff 回解析。
-        pipeline_status.update({
-            "busy": True,
-            "job_name": "Deleting 1 Documents",
-            "request_pending": True,  # 文档 B 排队等待
-            "deletion_pending": False,
-            "cancellation_requested": False,
-        })
+        pipeline_status.update(
+            {
+                "busy": True,
+                "job_name": "Deleting 1 Documents",
+                "request_pending": True,  # 文档 B 排队等待
+                "deletion_pending": False,
+                "cancellation_requested": False,
+            }
+        )
 
         # 模拟 background_delete_documents 的 finally 逻辑：
         # 若 request_pending=True，切换 job_name，保持 busy=True，调 apipeline(assume_busy=True)
@@ -515,6 +517,7 @@ async def test_pipeline_busy_stays_true_across_deletion_handoff(tmp_path, monkey
             return []
 
         from types import MethodType as _MT
+
         rag._process_extract_entities = _MT(extract_normal, rag)
 
         # assume_busy=True 应无缝接管
@@ -541,11 +544,13 @@ async def test_assume_busy_with_no_pending_docs_releases_busy(tmp_path):
         pipeline_status = await get_namespace_data(
             "pipeline_status", workspace=rag.workspace
         )
-        pipeline_status.update({
-            "busy": True,
-            "job_name": "Resuming indexing after deletion",
-            "request_pending": True,
-        })
+        pipeline_status.update(
+            {
+                "busy": True,
+                "job_name": "Resuming indexing after deletion",
+                "request_pending": True,
+            }
+        )
         # 没有任何 pending 文档
         await rag.apipeline_process_enqueue_documents(assume_busy=True)
         # busy 必须被释放，否则 pipeline 永久卡住
@@ -616,6 +621,7 @@ async def test_orphan_reset_auto_triggers_pipeline(tmp_path, monkeypatch):
         max_parallel_insert=1,
     )
     from types import MethodType as _MT
+
     rag2._process_extract_entities = _MT(extract_normal, rag2)
     await rag2.initialize_storages()
     try:
@@ -671,15 +677,17 @@ async def test_concurrent_deletion_waits_for_handoff_pipeline(tmp_path, monkeypa
 
         # 模拟删除A刚完成handoff的状态：busy=True, job_name="Resuming indexing after deletion"
         # 此时handoff管道正在运行，删除B的force_acquire循环应该设置deletion_pending
-        pipeline_status.update({
-            "busy": True,
-            "job_name": "Resuming indexing after deletion",
-            "request_pending": False,
-            "deletion_pending": False,
-            "cancellation_requested": False,
-            "latest_message": "Resuming indexing after deletion",
-            "history_messages": [],
-        })
+        pipeline_status.update(
+            {
+                "busy": True,
+                "job_name": "Resuming indexing after deletion",
+                "request_pending": False,
+                "deletion_pending": False,
+                "cancellation_requested": False,
+                "latest_message": "Resuming indexing after deletion",
+                "history_messages": [],
+            }
+        )
 
         # 模拟删除B的force_acquire循环逻辑（修复后的版本）
         # 验证：当job_name包含"Resuming"时，应设置deletion_pending而非break
@@ -698,9 +706,9 @@ async def test_concurrent_deletion_waits_for_handoff_pipeline(tmp_path, monkeypa
                     pipeline_status["deletion_pending"] = True
                     deletion_pending_set = True
 
-        assert deletion_pending_set is True, (
-            "删除B应设置 deletion_pending 让handoff管道暂停，而非强行接管"
-        )
+        assert (
+            deletion_pending_set is True
+        ), "删除B应设置 deletion_pending 让handoff管道暂停，而非强行接管"
         assert pipeline_status.get("deletion_pending") is True
 
         # 验证handoff管道检测到deletion_pending后会正确暂停
@@ -711,17 +719,19 @@ async def test_concurrent_deletion_waits_for_handoff_pipeline(tmp_path, monkeypa
         pipeline_status["busy"] = False
 
         # 删除B接管
-        pipeline_status.update({
-            "busy": True,
-            "job_name": "Deleting 1 Documents",
-            "deletion_pending": False,
-        })
+        pipeline_status.update(
+            {
+                "busy": True,
+                "job_name": "Deleting 1 Documents",
+                "deletion_pending": False,
+            }
+        )
 
         # 删除B完成，检查request_pending（handoff管道设置的）
         has_pending = pipeline_status.get("request_pending", False)
-        assert has_pending is True, (
-            "handoff管道暂停时应设置request_pending，确保删除B完成后能恢复解析"
-        )
+        assert (
+            has_pending is True
+        ), "handoff管道暂停时应设置request_pending，确保删除B完成后能恢复解析"
 
         # 删除B的finally：has_pending_request=True → handoff回解析
         pipeline_status["job_name"] = "Resuming indexing after deletion"
@@ -908,11 +918,13 @@ async def test_upload_during_deletion_sets_request_pending(tmp_path, monkeypatch
         )
 
         # 模拟删除正在进行
-        pipeline_status.update({
-            "busy": True,
-            "job_name": "Deleting 1 Documents",
-            "request_pending": False,
-        })
+        pipeline_status.update(
+            {
+                "busy": True,
+                "job_name": "Deleting 1 Documents",
+                "request_pending": False,
+            }
+        )
 
         # 上传文档（应设置 request_pending）
         content_a = "document uploaded during deletion"

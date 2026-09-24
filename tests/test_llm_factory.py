@@ -27,9 +27,7 @@ class TestCreateDynamicLLMFunc:
         from lightrag.api.llm_factory import create_dynamic_llm_func
 
         with pytest.raises(ValueError, match="Unsupported llm_binding"):
-            create_dynamic_llm_func(
-                binding="unknown_provider", model="test-model"
-            )
+            create_dynamic_llm_func(binding="unknown_provider", model="test-model")
 
     @patch("lightrag.api.llm_factory._create_openai_func")
     def test_create_openai_func_called(self, mock_create):
@@ -69,9 +67,7 @@ class TestCreateDynamicLLMFunc:
             binding="gemini", model="gemini-pro", api_key="gemini-key"
         )
 
-        mock_create.assert_called_once_with(
-            "gemini-pro", None, "gemini-key", 120
-        )
+        mock_create.assert_called_once_with("gemini-pro", None, "gemini-key", 120)
 
     @patch("lightrag.api.llm_factory._create_ollama_func")
     def test_create_ollama_func_called(self, mock_create):
@@ -169,7 +165,9 @@ class TestOpenAIFunc:
         from lightrag.api.llm_factory import _create_openai_func
 
         mock_complete.return_value = "ok"
-        func = _create_openai_func(model="gpt-4o-mini", host=None, api_key=None, timeout=60)
+        func = _create_openai_func(
+            model="gpt-4o-mini", host=None, api_key=None, timeout=60
+        )
 
         await func("prompt", hashing_kv={"key": "val"}, _priority=5)
 
@@ -183,7 +181,9 @@ class TestOpenAIFunc:
         from lightrag.api.llm_factory import _create_openai_func
 
         mock_complete.return_value = "keywords"
-        func = _create_openai_func(model="gpt-4o-mini", host=None, api_key=None, timeout=60)
+        func = _create_openai_func(
+            model="gpt-4o-mini", host=None, api_key=None, timeout=60
+        )
 
         await func("prompt", keyword_extraction=True)
 
@@ -294,9 +294,7 @@ class TestOllamaFunc:
         from lightrag.api.llm_factory import _create_ollama_func
 
         mock_model.return_value = "response"
-        func = _create_ollama_func(
-            model="qwen2", host=None, api_key=None, timeout=0
-        )
+        func = _create_ollama_func(model="qwen2", host=None, api_key=None, timeout=0)
 
         await func("prompt")
 
@@ -309,9 +307,7 @@ class TestOllamaFunc:
         from lightrag.api.llm_factory import _create_ollama_func
 
         mock_model.return_value = "response"
-        func = _create_ollama_func(
-            model="qwen2", host=None, api_key=None, timeout=60
-        )
+        func = _create_ollama_func(model="qwen2", host=None, api_key=None, timeout=60)
 
         await func("prompt", stream=True)
 

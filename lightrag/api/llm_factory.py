@@ -8,10 +8,17 @@ QueryParam.model_func for per-query model switching.
 """
 
 import os
-from typing import Any, AsyncIterator, Callable, Awaitable, Union
+from typing import AsyncIterator, Callable, Awaitable, Union
 
 # Supported binding types
-SUPPORTED_BINDINGS = ["openai", "ollama", "azure_openai", "gemini", "aws_bedrock", "lollms"]
+SUPPORTED_BINDINGS = [
+    "openai",
+    "ollama",
+    "azure_openai",
+    "gemini",
+    "aws_bedrock",
+    "lollms",
+]
 
 
 def create_dynamic_llm_func(
@@ -117,8 +124,6 @@ def _create_azure_openai_func(
     default_headers: dict[str, str] | None = None,
 ):
     """Create dynamic LLM function for Azure OpenAI."""
-    from lightrag.llm.azure_openai import azure_openai_complete_if_cache
-
     # azure_openai module re-exports from openai, so import directly
     from lightrag.llm.openai import azure_openai_complete_if_cache
 
@@ -189,7 +194,10 @@ def _create_gemini_func(
 
 
 def _create_ollama_func(
-    model: str, host: str | None, api_key: str | None, timeout: int,
+    model: str,
+    host: str | None,
+    api_key: str | None,
+    timeout: int,
     default_model_kwargs: dict | None = None,
 ):
     """Create dynamic LLM function for Ollama."""
@@ -241,6 +249,7 @@ def _create_ollama_func(
 def _create_bedrock_func(model: str, timeout: int):
     """Create dynamic LLM function for AWS Bedrock."""
     from lightrag.llm.bedrock import bedrock_complete_if_cache
+
     async def dynamic_func(
         prompt,
         system_prompt=None,
@@ -269,6 +278,7 @@ def _create_lollms_func(
 ):
     """Create dynamic LLM function for LoLLMs."""
     from lightrag.llm.lollms import lollms_model_if_cache
+
     async def dynamic_func(
         prompt,
         system_prompt=None,
