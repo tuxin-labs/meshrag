@@ -101,9 +101,7 @@ MILVUS_CONNECTION_RETRY_BACKOFF_MAX = _get_env_float(
 )
 # 集合加载超时：pymilvus 的 load_collection 默认无超时，Milvus 侧加载卡住（如查询节点
 # 内存不足导致 load 长期 pending）时会永久阻塞调用线程，必须显式限制
-MILVUS_COLLECTION_LOAD_TIMEOUT = _get_env_float(
-    "MILVUS_COLLECTION_LOAD_TIMEOUT", 180.0
-)
+MILVUS_COLLECTION_LOAD_TIMEOUT = _get_env_float("MILVUS_COLLECTION_LOAD_TIMEOUT", 180.0)
 
 
 @dataclass
