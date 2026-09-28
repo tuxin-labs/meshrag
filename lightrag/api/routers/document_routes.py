@@ -1564,6 +1564,15 @@ async def _check_content_duplicate(
     if not existing:
         return None
 
+    # FAILED 记录放行：解析失败的内容视同不存在，允许重新上传解析。
+    # 旧记录由入队流程覆盖（apipeline_enqueue_documents），不走删除分支以保留 LLM 缓存。
+    if existing.get("status") == DocStatus.FAILED:
+        logger.info(
+            f"Content duplicate check: existing doc {content_doc_id} is FAILED, "
+            f"allowing re-parse"
+        )
+        return None
+
     # 命中：清理临时文件
     try:
         file_path.unlink()
@@ -2770,7 +2779,14 @@ def create_document_routes(
                 existing_doc_id = await rag.doc_status.get_doc_id_by_file_path(
                     safe_filename
                 )
-                if overwrite:
+                # FAILED 记录放行：解析失败的内容视同不存在，允许重新上传解析，
+                # 不走删除分支（旧记录由入队流程覆盖，保留 LLM 缓存）。
+                if existing_doc_data.get("status") == DocStatus.FAILED:
+                    logger.info(
+                        f"File '{safe_filename}' exists with FAILED status, "
+                        f"allowing re-upload for re-parsing"
+                    )
+                elif overwrite:
                     # 覆盖模式：删除已有文档，继续上传流程
                     if existing_doc_id:
                         logger.info(

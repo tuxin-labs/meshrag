@@ -1586,6 +1586,26 @@ class LightRAG:
             for doc_id in ignored_ids:
                 file_path = new_docs.get(doc_id, {}).get("file_path", "unknown_source")
 
+                # Get existing document info once for this doc_id
+                existing_doc = await self.doc_status.get_by_id(doc_id)
+                existing_status = (
+                    existing_doc.get("status", "unknown") if existing_doc else "unknown"
+                )
+                existing_track_id = (
+                    existing_doc.get("track_id", "") if existing_doc else ""
+                )
+
+                # FAILED 文档放行：解析失败的记录视同不存在，重新纳入入队集合，
+                # 由后续 upsert 覆盖旧状态（PENDING），使失败文档可直接重新解析，
+                # 无需先删除（保留 LLM 缓存，chunk 以相同 id 覆盖写入）。
+                if existing_status == DocStatus.FAILED:
+                    unique_new_doc_ids.add(doc_id)
+                    logger.info(
+                        f"Document {doc_id} ({file_path}) previously FAILED, "
+                        f"re-enqueueing for re-processing"
+                    )
+                    continue
+
                 if overwrite:
                     # 覆盖模式：删除已存在的同内容文档（如文件名不同但内容相同），
                     # 使其可被重新处理，而不是创建 dup-FAILED 记录。
@@ -1623,15 +1643,6 @@ class LightRAG:
 
                 # 默认行为或覆盖删除失败：创建 dup-FAILED 记录
                 logger.warning(f"Duplicate document detected: {doc_id} ({file_path})")
-
-                # Get existing document info for reference
-                existing_doc = await self.doc_status.get_by_id(doc_id)
-                existing_status = (
-                    existing_doc.get("status", "unknown") if existing_doc else "unknown"
-                )
-                existing_track_id = (
-                    existing_doc.get("track_id", "") if existing_doc else ""
-                )
 
                 # Create a new record with unique ID for this duplicate attempt
                 dup_record_id = compute_mdhash_id(f"{doc_id}-{track_id}", prefix="dup-")
