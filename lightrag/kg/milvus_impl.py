@@ -99,6 +99,11 @@ MILVUS_CONNECTION_RETRY_BACKOFF = _get_env_float("MILVUS_CONNECTION_RETRY_BACKOF
 MILVUS_CONNECTION_RETRY_BACKOFF_MAX = _get_env_float(
     "MILVUS_CONNECTION_RETRY_BACKOFF_MAX", 30.0
 )
+# 集合加载超时：pymilvus 的 load_collection 默认无超时，Milvus 侧加载卡住（如查询节点
+# 内存不足导致 load 长期 pending）时会永久阻塞调用线程，必须显式限制
+MILVUS_COLLECTION_LOAD_TIMEOUT = _get_env_float(
+    "MILVUS_COLLECTION_LOAD_TIMEOUT", 180.0
+)
 
 
 @dataclass
@@ -948,7 +953,9 @@ class MilvusVectorDBStorage(BaseVectorStorage):
                 # Continue with migration even if index creation fails
 
             # Load the new collection
-            self._client.load_collection(temp_collection_name)
+            self._client.load_collection(
+                temp_collection_name, timeout=MILVUS_COLLECTION_LOAD_TIMEOUT
+            )
 
             # Step 2: Copy data using query_iterator (solves query window limitation)
             logger.info(
@@ -1122,7 +1129,10 @@ class MilvusVectorDBStorage(BaseVectorStorage):
 
             # Load the collection if it's not already loaded
             # In Milvus, collections need to be loaded before they can be searched
-            self._client.load_collection(self.final_namespace)
+            # 显式超时：Milvus 侧加载卡住时快速失败，避免拖死调用方
+            self._client.load_collection(
+                self.final_namespace, timeout=MILVUS_COLLECTION_LOAD_TIMEOUT
+            )
             # logger.debug(f"[{self.workspace}] Collection {self.namespace} loaded successfully")
 
         except Exception as e:
@@ -1144,7 +1154,9 @@ class MilvusVectorDBStorage(BaseVectorStorage):
                             f"Collection {self.final_namespace} does not exist"
                         )
 
-                    self._client.load_collection(self.final_namespace)
+                    self._client.load_collection(
+                        self.final_namespace, timeout=MILVUS_COLLECTION_LOAD_TIMEOUT
+                    )
                     logger.info(
                         f"[{self.workspace}] Collection {self.namespace} loaded successfully after reconnection"
                     )
@@ -1476,7 +1488,10 @@ class MilvusVectorDBStorage(BaseVectorStorage):
                 # Validate Milvus version compatibility with configured index
                 if self.index_config.index_type in INDEX_VERSION_REQUIREMENTS:
                     try:
-                        server_version = self._client.get_server_version()
+                        # 同步 gRPC 调用放入线程池执行，避免阻塞 asyncio 事件循环
+                        server_version = await asyncio.to_thread(
+                            self._client.get_server_version
+                        )
                         self.index_config.validate_milvus_version(server_version)
                     except Exception as version_error:
                         logger.error(
@@ -1485,7 +1500,9 @@ class MilvusVectorDBStorage(BaseVectorStorage):
                         raise
 
                 # Create collection and check compatibility
-                self._create_collection_if_not_exist()
+                # 内部含 has_collection / describe / load_collection 等同步 gRPC 调用，
+                # 必须放入线程池执行，否则 Milvus 侧卡住会冻结整个服务的事件循环
+                await asyncio.to_thread(self._create_collection_if_not_exist)
                 self._initialized = True
                 logger.info(
                     f"[{self.workspace}] Milvus collection '{self.namespace}' initialized successfully"
@@ -1664,6 +1681,8 @@ class MilvusVectorDBStorage(BaseVectorStorage):
 
         except Exception as e:
             logger.error(f"[{self.workspace}] Error deleting entity {entity_name}: {e}")
+            # 失败必须上抛：静默吞掉会导致实体已从上层删除而向量残留成孤儿数据
+            raise
 
     async def delete_entity_relation(self, entity_name: str) -> None:
         """Delete all relations associated with an entity
@@ -1709,6 +1728,8 @@ class MilvusVectorDBStorage(BaseVectorStorage):
             logger.error(
                 f"[{self.workspace}] Error deleting relations for {entity_name}: {e}"
             )
+            # 失败必须上抛：静默吞掉会导致关系残留成孤儿数据
+            raise
 
     async def delete(self, ids: list[str]) -> None:
         """Delete vectors with specified IDs
@@ -1736,6 +1757,9 @@ class MilvusVectorDBStorage(BaseVectorStorage):
             logger.error(
                 f"[{self.workspace}] Error while deleting vectors from {self.namespace}: {e}"
             )
+            # 失败必须上抛：文档删除流程依赖此异常把状态标记为 delete_failed 以便重试，
+            # 吞掉会导致 doc_status 已删而向量残留
+            raise
 
     async def get_by_id(self, id: str) -> dict[str, Any] | None:
         """Get vector data by its ID
@@ -1768,7 +1792,8 @@ class MilvusVectorDBStorage(BaseVectorStorage):
             logger.error(
                 f"[{self.workspace}] Error retrieving vector data for ID {id}: {e}"
             )
-            return None
+            # 失败必须上抛：与"确实不存在"(返回 None)区分开，避免基础设施故障被当成数据不存在
+            raise
 
     async def get_by_ids(self, ids: list[str]) -> list[dict[str, Any]]:
         """Get multiple vector data by their IDs
@@ -1820,7 +1845,8 @@ class MilvusVectorDBStorage(BaseVectorStorage):
             logger.error(
                 f"[{self.workspace}] Error retrieving vector data for IDs {ids}: {e}"
             )
-            return []
+            # 失败必须上抛：与"未命中"(列表内 None 占位)区分开
+            raise
 
     async def get_vectors_by_ids(self, ids: list[str]) -> dict[str, list[float]]:
         """Get vectors by their IDs, returning only ID and vector data for efficiency
@@ -1864,7 +1890,8 @@ class MilvusVectorDBStorage(BaseVectorStorage):
             logger.error(
                 f"[{self.workspace}] Error retrieving vectors by IDs from {self.namespace}: {e}"
             )
-            return {}
+            # 失败必须上抛：与"无向量数据"(返回空 dict)区分开
+            raise
 
     async def drop(self) -> dict[str, str]:
         """Drop all vector data from storage and clean up resources
