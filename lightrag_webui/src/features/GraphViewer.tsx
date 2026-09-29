@@ -14,6 +14,7 @@ import GraphControl from '@/components/graph/GraphControl'
 import ZoomControl from '@/components/graph/ZoomControl'
 import FullScreenControl from '@/components/graph/FullScreenControl'
 import Settings from '@/components/graph/Settings'
+import GraphEditControls from '@/components/graph/GraphEditControls'
 import GraphSearch from '@/components/graph/GraphSearch'
 import GraphLabels from '@/components/graph/GraphLabels'
 import PropertiesView from '@/components/graph/PropertiesView'
@@ -222,6 +223,7 @@ const GraphViewer = () => {
           <FullScreenControl />
           <LegendButton />
           <Settings />
+          <GraphEditControls />
           {/* <ThemeToggle /> */}
         </div>
 

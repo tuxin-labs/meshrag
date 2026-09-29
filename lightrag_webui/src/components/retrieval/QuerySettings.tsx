@@ -1,5 +1,6 @@
-import { useCallback, useMemo } from 'react'
-import { QueryMode, QueryRequest } from '@/api/lightrag'
+import { useCallback, useEffect, useMemo } from 'react'
+import { QueryMode, QueryRequest, listExternalKBs, listModelProfiles } from '@/api/lightrag'
+import { errorMessage } from '@/lib/utils'
 // Removed unused import for Text component
 import Checkbox from '@/components/ui/Checkbox'
 import Input from '@/components/ui/Input'
@@ -25,6 +26,35 @@ export default function QuerySettings() {
   const userPromptHistory = useSettingsStore((state) => state.userPromptHistory)
   const selectedKbId = useSettingsStore.use.selectedKbId()
   const availableKbIds = useSettingsStore.use.availableKbIds()
+  const modelProfiles = useSettingsStore.use.availableModelProfiles()
+  const externalKBs = useSettingsStore.use.availableExternalKBs()
+  const setModelProfiles = useSettingsStore.use.setAvailableModelProfiles()
+  const setExternalKBs = useSettingsStore.use.setAvailableExternalKBs()
+  const currentTab = useSettingsStore.use.currentTab()
+
+  // Pickers must show profiles/KBs registered on the management tabs without a reload.
+  useEffect(() => {
+    if (currentTab !== 'retrieval') return
+    const refreshRegistries = async () => {
+      try {
+        const [profiles, kbs] = await Promise.all([listModelProfiles(), listExternalKBs()])
+        setModelProfiles(profiles)
+        setExternalKBs(kbs)
+      } catch (error) {
+        console.error('Failed to load model profiles or external knowledge bases:', errorMessage(error))
+      }
+    }
+    refreshRegistries()
+  }, [currentTab, setModelProfiles, setExternalKBs])
+
+  const llmProfiles = useMemo(
+    () => modelProfiles.filter((profile) => profile.kind === 'llm' && profile.enabled),
+    [modelProfiles]
+  )
+  const selectableExternalKBs = useMemo(
+    () => externalKBs.filter((kb) => kb.enabled),
+    [externalKBs]
+  )
 
   const handleChange = useCallback((key: keyof QueryRequest, value: any) => {
     useSettingsStore.getState().updateQuerySettings({ [key]: value })
@@ -54,27 +84,68 @@ export default function QuerySettings() {
     handleChange(key, defaultValues[key])
   }, [handleChange, defaultValues])
 
+  const externalKbCount = (querySettings.external_kb_ids ?? []).length
+  // An unset kb_ids means "current knowledge base"; an explicit empty array is the user's
+  // deliberate choice to query external services only.
+  const kbIdsStored = querySettings.kb_ids
+  const externalOnly = externalKbCount > 0 && Array.isArray(kbIdsStored) && kbIdsStored.length === 0
+
   const effectiveKbIds = useMemo(() => {
     const normalizedKbIds = (querySettings.kb_ids || []).filter((kbId): kbId is string => {
       return !!kbId && availableKbIds.includes(kbId)
     })
-    return normalizedKbIds.length > 0 ? normalizedKbIds : [selectedKbId]
-  }, [querySettings.kb_ids, availableKbIds, selectedKbId])
+    if (normalizedKbIds.length > 0) {
+      return normalizedKbIds
+    }
+    return Array.isArray(kbIdsStored) && kbIdsStored.length === 0 ? [] : [selectedKbId]
+  }, [querySettings.kb_ids, availableKbIds, selectedKbId, kbIdsStored])
 
   const kbSelectionLabel = useMemo(() => {
+    if (effectiveKbIds.length === 0) {
+      return t('retrievePanel.querySettings.kbNoneExternalOnly', { defaultValue: 'None (external only)' })
+    }
     if (effectiveKbIds.length === 1) {
       return effectiveKbIds[0]
     }
     return `${effectiveKbIds[0]} +${effectiveKbIds.length - 1}`
-  }, [effectiveKbIds])
+  }, [effectiveKbIds, t])
 
   const handleToggleKb = useCallback((kbId: string, checked: boolean) => {
     const nextKbIds = checked
       ? Array.from(new Set([...effectiveKbIds, kbId]))
       : effectiveKbIds.filter((item) => item !== kbId)
 
-    handleChange('kb_ids', nextKbIds.length > 0 ? nextKbIds : [selectedKbId])
-  }, [effectiveKbIds, handleChange, selectedKbId])
+    handleChange('kb_ids', nextKbIds.length > 0
+      ? nextKbIds
+      : (querySettings.external_kb_ids?.length ? [] : [selectedKbId]))
+  }, [effectiveKbIds, handleChange, selectedKbId, querySettings.external_kb_ids])
+
+  const selectedExternalKbIds = useMemo(
+    () => (querySettings.external_kb_ids ?? []).filter((id) => selectableExternalKBs.some((kb) => kb.id === id)),
+    [querySettings.external_kb_ids, selectableExternalKBs]
+  )
+
+  const externalKbLabel = useMemo(() => {
+    if (selectedExternalKbIds.length === 0) {
+      return t('retrievePanel.querySettings.externalKbNone', { defaultValue: 'None' })
+    }
+    const first = selectableExternalKBs.find((kb) => kb.id === selectedExternalKbIds[0])
+    return `${first?.name ?? selectedExternalKbIds[0]} +${selectedExternalKbIds.length - 1}`
+  }, [selectedExternalKbIds, selectableExternalKBs, t])
+
+  const handleToggleExternalKb = useCallback((kbId: string, checked: boolean) => {
+    const nextIds = checked
+      ? Array.from(new Set([...selectedExternalKbIds, kbId]))
+      : selectedExternalKbIds.filter((id) => id !== kbId)
+    handleChange('external_kb_ids', nextIds.length > 0 ? nextIds : undefined)
+  }, [selectedExternalKbIds, handleChange])
+
+  const selectedProfileLabel = useMemo(() => {
+    const profile = llmProfiles.find((item) => item.id === querySettings.llm_profile_id)
+    return profile
+      ? profile.name
+      : t('retrievePanel.querySettings.serverDefaultModel', { defaultValue: 'Server default' })
+  }, [llmProfiles, querySettings.llm_profile_id, t])
 
   const handleResetKbSelection = useCallback(() => {
     handleChange('kb_ids', [selectedKbId])
@@ -186,6 +257,133 @@ export default function QuerySettings() {
                   title={t('retrievePanel.querySettings.kbSelectionReset', { defaultValue: 'Reset to current KB' })}
                 />
               </div>
+            </>
+
+            {/* External Knowledge Bases */}
+            <>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label htmlFor="external_kb_ids" className="ml-1 cursor-help">
+                      {t('retrievePanel.querySettings.externalKbs', { defaultValue: 'External knowledge bases' })}
+                    </label>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p>{t('retrievePanel.querySettings.externalKbsTooltip', {
+                      defaultValue: 'Registered third-party services queried together with the internal knowledge bases. Manage them on the External KBs tab.'
+                    })}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <div className="flex items-center gap-1">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      id="external_kb_ids"
+                      type="button"
+                      className="border-input bg-background hover:bg-primary/5 flex h-9 flex-1 items-center justify-between rounded-md border px-3 text-sm"
+                    >
+                      <span className="truncate text-left">{externalKbLabel}</span>
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-[240px] p-2">
+                    {selectableExternalKBs.length === 0 ? (
+                      <p className="text-muted-foreground px-2 py-1 text-sm">
+                        {t('retrievePanel.querySettings.externalKbsEmpty', {
+                          defaultValue: 'No external knowledge bases registered yet.'
+                        })}
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {selectableExternalKBs.map((kb) => (
+                          <label
+                            key={kb.id}
+                            className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                          >
+                            <Checkbox
+                              checked={selectedExternalKbIds.includes(kb.id)}
+                              onCheckedChange={(checked) => handleToggleExternalKb(kb.id, checked === true)}
+                            />
+                            <span className="truncate">{kb.name}</span>
+                            <span className="text-muted-foreground ml-auto shrink-0 text-[11px]">{kb.type}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+                <ResetButton
+                  onClick={() => handleChange('external_kb_ids', undefined)}
+                  title={t('retrievePanel.querySettings.externalKbsReset', { defaultValue: 'Clear external sources' })}
+                />
+              </div>
+
+              {externalKbCount > 0 && (
+                <label className="ml-1 flex cursor-pointer items-center gap-2 text-[11px]">
+                  <Checkbox
+                    checked={externalOnly}
+                    onCheckedChange={(checked) =>
+                      handleChange('kb_ids', checked === true ? [] : [selectedKbId])
+                    }
+                  />
+                  <span>
+                    {t('retrievePanel.querySettings.externalKbOnly', {
+                      defaultValue: 'Skip internal knowledge bases'
+                    })}
+                  </span>
+                </label>
+              )}
+            </>
+
+            {/* Model profile */}
+            <>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label htmlFor="llm_profile_select" className="ml-1 cursor-help">
+                      {t('retrievePanel.querySettings.modelProfile', { defaultValue: 'Model' })}
+                    </label>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p>{t('retrievePanel.querySettings.modelProfileTooltip', {
+                      defaultValue: 'Run this query with a registered model. The API key stays on the server.'
+                    })}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <div className="flex items-center gap-1">
+                <Select
+                  value={querySettings.llm_profile_id || '__server_default__'}
+                  onValueChange={(value) =>
+                    handleChange('llm_profile_id', value === '__server_default__' ? undefined : value)
+                  }
+                >
+                  <SelectTrigger
+                    id="llm_profile_select"
+                    className="hover:bg-primary/5 h-9 flex-1 cursor-pointer text-left [&>span]:break-all [&>span]:line-clamp-1"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="__server_default__">
+                        {t('retrievePanel.querySettings.serverDefaultModel', { defaultValue: 'Server default' })}
+                      </SelectItem>
+                      {llmProfiles.map((profile) => (
+                        <SelectItem key={profile.id} value={profile.id}>
+                          {profile.name} ({profile.model})
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <ResetButton
+                  onClick={() => handleChange('llm_profile_id', undefined)}
+                  title={t('retrievePanel.querySettings.modelProfileReset', { defaultValue: 'Use server default model' })}
+                />
+              </div>
+              <p className="text-muted-foreground ml-1 truncate text-[11px]">{selectedProfileLabel}</p>
             </>
 
             {/* Query Mode */}
@@ -451,6 +649,54 @@ export default function QuerySettings() {
                   id="enable_rerank"
                   checked={querySettings.enable_rerank}
                   onCheckedChange={(checked) => handleChange('enable_rerank', checked)}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <label htmlFor="include_references" className="flex-1 ml-1 cursor-help">
+                        {t('retrievePanel.querySettings.includeReferences')}
+                      </label>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <p>{t('retrievePanel.querySettings.includeReferencesTooltip')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Checkbox
+                  className="mr-10 cursor-pointer"
+                  id="include_references"
+                  checked={querySettings.include_references ?? true}
+                  onCheckedChange={(checked) => {
+                    handleChange('include_references', checked)
+                    if (!checked) {
+                      handleChange('include_chunk_content', false)
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <label htmlFor="include_chunk_content" className="flex-1 ml-1 cursor-help">
+                        {t('retrievePanel.querySettings.includeChunkContent')}
+                      </label>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <p>{t('retrievePanel.querySettings.includeChunkContentTooltip')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Checkbox
+                  className="mr-10 cursor-pointer"
+                  id="include_chunk_content"
+                  disabled={querySettings.include_references === false}
+                  checked={querySettings.include_chunk_content ?? false}
+                  onCheckedChange={(checked) => handleChange('include_chunk_content', checked)}
                 />
               </div>
 

@@ -4,7 +4,20 @@ import Text from '@/components/ui/Text'
 import Button from '@/components/ui/Button'
 import useLightragGraph from '@/hooks/useLightragGraph'
 import { useTranslation } from 'react-i18next'
-import { GitBranchPlus, Scissors } from 'lucide-react'
+import { GitBranchPlus, Scissors, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { deleteEntity, deleteRelation } from '@/api/lightrag'
+import { errorMessage } from '@/lib/utils'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/AlertDialog'
 import EditablePropertyRow from './EditablePropertyRow'
 
 /**
@@ -264,6 +277,63 @@ const PropertyRow = ({
   )
 }
 
+/** Destructive action button with a confirmation dialog, used for entity and relation removal. */
+const DeletionButton = ({
+  tooltip,
+  confirmTitle,
+  confirmDescription,
+  onConfirm
+}: {
+  tooltip: string
+  confirmTitle: string
+  confirmDescription: string
+  onConfirm: () => Promise<void>
+}) => {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleConfirm = async () => {
+    setIsDeleting(true)
+    try {
+      await onConfirm()
+      setOpen(false)
+    } catch (error) {
+      toast.error(errorMessage(error))
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  return (
+    <>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="h-7 w-7 border border-red-300 hover:bg-red-100 dark:border-red-800 dark:hover:bg-red-950"
+        onClick={() => setOpen(true)}
+        tooltip={tooltip}
+      >
+        <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+      </Button>
+      <AlertDialog open={open} onOpenChange={(next) => !isDeleting && setOpen(next)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmDescription}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>
+              {isDeleting ? t('graphPanel.propertiesView.deleting', { defaultValue: 'Deleting' }) : t('common.delete', { defaultValue: 'Delete' })}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+}
+
 const NodePropertiesView = ({ node }: { node: NodeType }) => {
   const { t } = useTranslation()
 
@@ -273,6 +343,18 @@ const NodePropertiesView = ({ node }: { node: NodeType }) => {
 
   const handlePruneNode = () => {
     useGraphStore.getState().triggerNodePrune(node.id)
+  }
+
+  const entityName = String(node.properties['entity_id'] ?? node.labels[0] ?? '')
+
+  const handleDeleteEntity = async () => {
+    const result = await deleteEntity(entityName)
+    if (result.status !== 'success') {
+      throw new Error(result.message)
+    }
+    toast.success(t('graphPanel.propertiesView.success.entityDeleted', { defaultValue: 'Entity deleted' }))
+    useGraphStore.getState().setSelectedNode(null)
+    useGraphStore.getState().incrementGraphDataVersion()
   }
 
   return (
@@ -298,6 +380,15 @@ const NodePropertiesView = ({ node }: { node: NodeType }) => {
           >
             <Scissors className="h-4 w-4 text-gray-900 dark:text-gray-300" />
           </Button>
+          <DeletionButton
+            tooltip={t('graphPanel.propertiesView.node.deleteNode', { defaultValue: 'Delete entity' })}
+            confirmTitle={t('graphPanel.propertiesView.node.deleteTitle', { defaultValue: 'Delete entity' })}
+            confirmDescription={t('graphPanel.propertiesView.node.deleteDescription', {
+              defaultValue: 'Remove "{{name}}" and all of its relationships from the knowledge graph.',
+              name: entityName
+            })}
+            onConfirm={handleDeleteEntity}
+          />
         </div>
       </div>
       <div className="bg-primary/5 max-h-96 overflow-auto rounded p-1">
@@ -358,9 +449,34 @@ const NodePropertiesView = ({ node }: { node: NodeType }) => {
 
 const EdgePropertiesView = ({ edge }: { edge: EdgeType }) => {
   const { t } = useTranslation()
+  const sourceEntity = edge.sourceNode?.labels?.[0] ?? edge.source
+  const targetEntity = edge.targetNode?.labels?.[0] ?? edge.target
+
+  const handleDeleteRelation = async () => {
+    const result = await deleteRelation(sourceEntity, targetEntity)
+    if (result.status !== 'success') {
+      throw new Error(result.message)
+    }
+    toast.success(t('graphPanel.propertiesView.success.relationDeleted', { defaultValue: 'Relation deleted' }))
+    useGraphStore.getState().setSelectedEdge(null)
+    useGraphStore.getState().incrementGraphDataVersion()
+  }
+
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-md pl-1 font-bold tracking-wide text-violet-700">{t('graphPanel.propertiesView.edge.title')}</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-md pl-1 font-bold tracking-wide text-violet-700">{t('graphPanel.propertiesView.edge.title')}</h3>
+        <DeletionButton
+          tooltip={t('graphPanel.propertiesView.edge.deleteEdge', { defaultValue: 'Delete relation' })}
+          confirmTitle={t('graphPanel.propertiesView.edge.deleteTitle', { defaultValue: 'Delete relation' })}
+          confirmDescription={t('graphPanel.propertiesView.edge.deleteDescription', {
+            defaultValue: 'Remove the relationship between "{{source}}" and "{{target}}".',
+            source: sourceEntity,
+            target: targetEntity
+          })}
+          onConfirm={handleDeleteRelation}
+        />
+      </div>
       <div className="bg-primary/5 max-h-96 overflow-auto rounded p-1">
         <PropertyRow name={t('graphPanel.propertiesView.edge.id')} value={edge.id} />
         {edge.type && <PropertyRow name={t('graphPanel.propertiesView.edge.type')} value={edge.type} />}

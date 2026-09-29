@@ -8,12 +8,13 @@ import { errorMessage } from '@/lib/utils'
 import { useSettingsStore } from '@/stores/settings'
 import { useDebounce } from '@/hooks/useDebounce'
 import QuerySettings from '@/components/retrieval/QuerySettings'
+import RetrievalDataPanel from '@/components/retrieval/RetrievalDataPanel'
 import { ChatMessage, MessageWithError } from '@/components/retrieval/ChatMessage'
-import { EraserIcon, SendIcon, CopyIcon } from 'lucide-react'
+import { EraserIcon, SendIcon, CopyIcon, LoaderIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { copyToClipboard } from '@/utils/clipboard'
-import type { QueryMode } from '@/api/lightrag'
+import type { QueryMode, QueryProgressFrame, QueryRequest } from '@/api/lightrag'
 
 // Helper function to generate unique IDs with browser compatibility
 const generateUniqueId = () => {
@@ -101,6 +102,36 @@ const parseCOTContent = (content: string) => {
   }
 }
 
+// Retrieval stages reported by `/query/stream` as {"type":"progress"} frames, in the order
+// the backend emits them.
+const numericProgressKeys = [
+  'entities',
+  'relations',
+  'chunks',
+  'merged_chunks',
+  'final_chunks',
+  'from',
+  'kept',
+  'context_chars'
+]
+
+const formatProgress = (
+  frame: QueryProgressFrame,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string => {
+  const stage = t(`retrievePanel.retrieval.progressStages.${frame.stage}`, {
+    defaultValue: frame.stage
+  })
+  const detail = frame.detail ?? {}
+  const parts = numericProgressKeys
+    .filter((key) => typeof detail[key] === 'number')
+    .map((key) => `${key}=${detail[key]}`)
+  if (frame.status) {
+    parts.unshift(frame.status)
+  }
+  return parts.length > 0 ? `${stage} (${parts.join(', ')})` : stage
+}
+
 export default function RetrievalTesting() {
   const { t } = useTranslation()
   // Get current tab to determine if this tab is active (for performance optimization)
@@ -140,6 +171,7 @@ export default function RetrievalTesting() {
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [inputError, setInputError] = useState('') // Error message for input
+  const [retrievalProgress, setRetrievalProgress] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
 
   // Smart switching logic: use Input for single line, Textarea for multi-line
@@ -345,17 +377,32 @@ export default function RetrievalTesting() {
         state.addUserPromptToHistory(state.querySettings.user_prompt.trim())
       }
 
+      // Apply a metadata-only patch (references, warnings) to the assistant message
+      const patchAssistantMessage = (patch: Partial<MessageWithError>) => {
+        Object.assign(assistantMessage, patch)
+        setMessages((prev) => {
+          const newMessages = [...prev]
+          const lastMessage = newMessages[newMessages.length - 1]
+          if (lastMessage && lastMessage.id === assistantMessage.id) {
+            Object.assign(lastMessage, patch)
+          }
+          return newMessages
+        })
+      }
+
       // Determine the effective mode
       const effectiveMode = modeOverride || state.querySettings.mode
 
-      // Determine effective history turns with bypass override
-      const configuredHistoryTurns = state.querySettings.history_turns || 0
+      // Determine effective history turns with bypass override. history_turns steers how many
+      // turns we pack into conversation_history; the backend has no such field.
+      const { history_turns: configuredHistoryTurns = 0, ...settingsForRequest } =
+        state.querySettings
       const effectiveHistoryTurns = (effectiveMode === 'bypass' && configuredHistoryTurns === 0)
         ? 3
         : configuredHistoryTurns
 
-      const queryParams = {
-        ...state.querySettings,
+      const queryParams: QueryRequest = {
+        ...settingsForRequest,
         query: actualQuery,
         response_type: 'Multiple Paragraphs',
         conversation_history: effectiveHistoryTurns > 0
@@ -370,18 +417,27 @@ export default function RetrievalTesting() {
       try {
         // Run query
         if (state.querySettings.stream) {
-          let errorMessage = ''
-          await queryTextStream(queryParams, updateAssistantMessage, (error) => {
-            errorMessage += error
+          let streamError = ''
+          await queryTextStream(queryParams, {
+            onChunk: (chunk) => updateAssistantMessage(chunk),
+            onError: (error) => {
+              streamError += error
+            },
+            onReferences: (references) => patchAssistantMessage({ references }),
+            onWarnings: (warnings) => patchAssistantMessage({
+              warnings: [...(assistantMessage.warnings ?? []), ...warnings]
+            }),
+            onProgress: (frame) => setRetrievalProgress(formatProgress(frame, t))
           })
-          if (errorMessage) {
+          if (streamError) {
             if (assistantMessage.content) {
-              errorMessage = assistantMessage.content + '\n' + errorMessage
+              streamError = assistantMessage.content + '\n' + streamError
             }
-            updateAssistantMessage(errorMessage, true)
+            updateAssistantMessage(streamError, true)
           }
         } else {
           const response = await queryText(queryParams)
+          patchAssistantMessage({ references: response.references, warnings: response.warnings })
           updateAssistantMessage(response.response)
         }
       } catch (err) {
@@ -390,6 +446,7 @@ export default function RetrievalTesting() {
       } finally {
         // Clear loading and add messages to state
         setIsLoading(false)
+        setRetrievalProgress(null)
         isReceivingResponseRef.current = false
 
         // Enhanced cleanup with error handling to prevent memory leaks
@@ -742,6 +799,12 @@ export default function RetrievalTesting() {
           </div>
         </div>
 
+        {isLoading && retrievalProgress && (
+          <div className="text-muted-foreground flex items-center gap-2 px-1 text-xs">
+            <LoaderIcon className="size-3 animate-spin" />
+            <span>{retrievalProgress}</span>
+          </div>
+        )}
         <form
           onSubmit={handleSubmit}
           className="flex shrink-0 items-center gap-2"
@@ -817,6 +880,7 @@ export default function RetrievalTesting() {
             {t('retrievePanel.retrieval.send')}
           </Button>
         </form>
+        <RetrievalDataPanel getInputQuery={() => inputValue} />
       </div>
       <QuerySettings />
     </div>

@@ -183,6 +183,19 @@ class QueryRequest(BaseModel):
         "支持多个外部知识库并行检索。",
     )
 
+    llm_profile_id: Optional[str] = Field(
+        default=None,
+        description="ID of a stored model profile (kind=llm) to run this query with. "
+        "Resolves to the llm_binding/llm_model/llm_binding_host/llm_binding_api_key "
+        "override fields server-side, so the API key never travels from the client.",
+    )
+
+    external_kb_ids: Optional[List[str]] = Field(
+        default=None,
+        description="IDs of registered external knowledge bases to query alongside the "
+        "inline external_kbs entries.",
+    )
+
     @model_validator(mode="after")
     def validate_llm_override(self):
         """Validate LLM override fields: if any LLM field is provided, llm_binding, llm_model, and llm_binding_host must all be present."""
@@ -251,7 +264,9 @@ class QueryRequest(BaseModel):
                 "llm_binding_host",
                 "llm_binding_api_key",
                 "llm_default_headers",
+                "llm_profile_id",
                 "external_kbs",
+                "external_kb_ids",
             },
         )
 
@@ -328,8 +343,44 @@ def create_query_routes(
     llm_timeout: int = 120,
     default_llm_api_key: Optional[str] = None,
     binding_model_kwargs: Optional[Dict[str, dict]] = None,
+    model_store=None,
+    external_kb_store=None,
 ):
     combined_auth = get_combined_auth_dependency(api_key)
+
+    def _apply_registry_selections(request: QueryRequest) -> None:
+        """Expand llm_profile_id / external_kb_ids into the inline request fields.
+
+        Resolving server-side keeps stored secrets out of the browser while leaving the
+        inline override fields working for API callers that have no registry.
+        """
+        if request.llm_profile_id:
+            if model_store is None:
+                raise HTTPException(status_code=400, detail="Model profiles are not available")
+            profile = model_store.get(request.llm_profile_id)
+            if profile is None:
+                raise HTTPException(status_code=404, detail=f"Model profile '{request.llm_profile_id}' not found")
+            if profile.get("kind") != "llm":
+                raise HTTPException(status_code=400, detail=f"Model profile '{profile.get('name')}' is not an LLM profile")
+            if profile.get("enabled") is False:
+                raise HTTPException(status_code=400, detail=f"Model profile '{profile.get('name')}' is disabled")
+            request.llm_binding = profile["binding"]
+            request.llm_model = profile["model"]
+            request.llm_binding_host = profile["host"]
+            request.llm_binding_api_key = profile.get("api_key") or None
+
+        if request.external_kb_ids:
+            if external_kb_store is None:
+                raise HTTPException(status_code=400, detail="External knowledge bases are not available")
+            configs = list(request.external_kbs or [])
+            for kb_id in request.external_kb_ids:
+                entry = external_kb_store.get(kb_id)
+                if entry is None:
+                    raise HTTPException(status_code=404, detail=f"External knowledge base '{kb_id}' not found")
+                if entry.get("enabled") is False:
+                    continue
+                configs.append(ExternalKBConfig(**external_kb_store.to_query_config(entry)))
+            request.external_kbs = configs or None
 
     def _build_dynamic_model_func(request: QueryRequest):
         """Build a dynamic LLM function from query-time override parameters, or return None."""
@@ -565,6 +616,7 @@ def create_query_routes(
                 - 500: Internal processing error (e.g., LLM service unavailable)
         """
         try:
+            _apply_registry_selections(request)
             param = request.to_query_params(
                 False
             )  # Ensure stream=False for non-streaming endpoint
@@ -849,6 +901,7 @@ def create_query_routes(
             Use streaming mode for real-time interfaces and non-streaming for batch processing.
         """
         try:
+            _apply_registry_selections(request)
             # Use the stream parameter from the request, defaulting to True if not specified
             stream_mode = request.stream if request.stream is not None else True
             param = request.to_query_params(stream_mode)
@@ -1425,6 +1478,7 @@ def create_query_routes(
             as structured data analysis typically requires source attribution.
         """
         try:
+            _apply_registry_selections(request)
             param = request.to_query_params(False)  # No streaming for data endpoint
 
             # Inject dynamic LLM function if override parameters are provided

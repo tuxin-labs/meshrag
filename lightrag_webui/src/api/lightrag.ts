@@ -78,14 +78,6 @@ export type LightragStatus = {
   webui_description?: string
 }
 
-export type LightragDocumentsScanProgress = {
-  is_scanning: boolean
-  current_file: string
-  indexed_count: number
-  total_files: number
-  progress: number
-}
-
 /**
  * Specifies the retrieval mode:
  * - "naive": Performs a basic search without advanced techniques.
@@ -103,6 +95,94 @@ export type Message = {
   thinkingContent?: string
   displayContent?: string
   thinkingTime?: number | null
+}
+
+/** External knowledge base kind accepted by `/query*` endpoints. */
+export type ExternalKBType = 'retrieval' | 'rag'
+
+export type ExternalKBConfig = {
+  /** 'retrieval' returns text chunks for the local LLM to answer; 'rag' returns a finished answer. */
+  type: ExternalKBType
+  url: string
+  api_key?: string
+  /** Only used by 'retrieval' type, 1..50. */
+  top_k?: number
+}
+
+export type ModelKind = 'llm' | 'embedding' | 'rerank'
+
+export type ModelBinding =
+  | 'openai'
+  | 'ollama'
+  | 'azure_openai'
+  | 'gemini'
+  | 'aws_bedrock'
+  | 'lollms'
+
+export const supportedModelBindings: ModelBinding[] = [
+  'openai',
+  'ollama',
+  'azure_openai',
+  'gemini',
+  'aws_bedrock',
+  'lollms'
+]
+
+/** A stored model profile. The API key never reaches the browser. */
+export type ModelProfile = {
+  id: string
+  name: string
+  kind: ModelKind
+  binding: ModelBinding
+  model: string
+  host: string
+  enabled: boolean
+  embedding_dim?: number
+  has_api_key: boolean
+  api_key_tail: string
+}
+
+export type ModelProfileInput = {
+  name: string
+  kind: ModelKind
+  binding: ModelBinding
+  model: string
+  host: string
+  /** Omit to keep the stored key; send '' to clear it. */
+  api_key?: string
+  embedding_dim?: number
+  enabled: boolean
+}
+
+export type ConnectionTestResult = {
+  id: string
+  name: string
+  reachable: boolean
+  model_available: boolean
+  message: string
+  latency_ms: number
+  detail?: Record<string, any>
+}
+
+/** A registered external knowledge base (retrieval- or RAG-service type). */
+export type ExternalKBRecord = {
+  id: string
+  name: string
+  type: ExternalKBType
+  url: string
+  top_k: number
+  enabled: boolean
+  has_api_key: boolean
+  api_key_tail: string
+}
+
+export type ExternalKBInput = {
+  name: string
+  type: ExternalKBType
+  url: string
+  api_key?: string
+  top_k: number
+  enabled: boolean
 }
 
 export type QueryRequest = {
@@ -127,23 +207,78 @@ export type QueryRequest = {
   max_relation_tokens?: number
   /** Maximum total tokens budget for the entire query context (entities + relations + chunks + system prompt). */
   max_total_tokens?: number
+  /** High-level keywords to steer retrieval. */
+  hl_keywords?: string[]
+  /** Low-level keywords to steer retrieval. */
+  ll_keywords?: string[]
   /**
    * Stores past conversation history to maintain context.
    * Format: [{"role": "user/assistant", "content": "message"}].
    */
   conversation_history?: Message[]
-  /** Number of complete conversation turns (user-assistant pairs) to consider in the response context. */
-  history_turns?: number
   /** User-provided prompt for the query. If provided, this will be used instead of the default value from prompt template. */
   user_prompt?: string
   /** Enable reranking for retrieved text chunks. If True but no rerank model is configured, a warning will be issued. Default is True. */
   enable_rerank?: boolean
+  /** If True, the response carries the reference list. Backend defaults to True. */
+  include_references?: boolean
+  /** If True, each reference carries its chunk texts. Requires include_references. */
+  include_chunk_content?: boolean
   /** Knowledge base IDs to query. If omitted, backend default applies. */
   kb_ids?: string[]
+  /** External knowledge bases queried together with the internal ones. */
+  external_kbs?: ExternalKBConfig[]
+  /** Stored model profile (kind=llm) to run this query with; resolves server-side. */
+  llm_profile_id?: string
+  /** Registered external knowledge bases to query, by id. */
+  external_kb_ids?: string[]
+  /**
+   * Per-request LLM override. Binding, model and host must always be supplied together.
+   * Supported bindings: openai, ollama, azure_openai, gemini, aws_bedrock, lollms.
+   */
+  llm_binding?: string
+  llm_model?: string
+  llm_binding_host?: string
+  llm_binding_api_key?: string
+  llm_default_headers?: Record<string, string>
+}
+
+export type ReferenceItem = {
+  reference_id: string
+  file_path: string
+  /** Present only when include_chunk_content was requested. */
+  content?: string[]
 }
 
 export type QueryResponse = {
   response: string
+  references?: ReferenceItem[]
+  /** Set by the backend when an external knowledge base call failed. */
+  warnings?: string[]
+}
+
+/** Retrieval-only result of `/query/data`. */
+export type QueryDataResponse = {
+  status: string
+  message: string
+  data: Record<string, any>
+  metadata: Record<string, any>
+}
+
+/** Progress frame emitted by `/query/stream` before the answer starts. */
+export type QueryProgressFrame = {
+  type: 'progress'
+  stage: string
+  status?: string
+  detail: Record<string, any>
+}
+
+export type QueryStreamCallbacks = {
+  onChunk: (chunk: string) => void
+  onError?: (error: string) => void
+  onReferences?: (references: ReferenceItem[]) => void
+  onWarnings?: (warnings: string[]) => void
+  onProgress?: (progress: QueryProgressFrame) => void
 }
 
 export type EntityUpdateResponse = {
@@ -165,11 +300,15 @@ export type DocActionResponse = {
   status: 'success' | 'partial_success' | 'failure' | 'duplicated'
   message: string
   track_id?: string
+  /** Existing document id reported when the inserted content duplicates an indexed document. */
+  doc_id?: string | null
+  /** Original file path of the duplicated document. */
+  original_file_path?: string | null
 }
 
 export type ScanResponse = {
   status: 'scanning_started'
-  message: string
+  message?: string
   track_id: string
 }
 
@@ -180,9 +319,87 @@ export type ReprocessFailedResponse = {
 }
 
 export type DeleteDocResponse = {
-  status: 'deletion_started' | 'busy' | 'not_allowed'
+  status:
+    | 'deletion_started'
+    | 'deletion_queued'
+    | 'busy'
+    | 'not_allowed'
+    | 'partial_not_found'
+    | 'not_found'
   message: string
   doc_id: string
+  not_found_ids: string[]
+}
+
+export type UpdateTextRequest = {
+  text: string
+  /** file_path / file_source used to locate the existing document. */
+  file_source: string
+  delete_llm_cache?: boolean
+}
+
+export type UpdateResponse = {
+  status: 'success' | 'unchanged' | 'not_found' | 'fail'
+  message: string
+  doc_id?: string | null
+  track_id?: string | null
+}
+
+export type UpdateItem = {
+  text: string
+  file_source: string
+}
+
+export type UpdateTextsRequest = {
+  items: UpdateItem[]
+  delete_llm_cache?: boolean
+}
+
+export type UpdateDetail = {
+  file_source: string
+  status: 'success' | 'unchanged' | 'not_found' | 'fail'
+  doc_id?: string | null
+  track_id?: string | null
+  message?: string | null
+}
+
+export type UpdateTextsResponse = {
+  status: 'success' | 'fail'
+  message: string
+  updated_count: number
+  unchanged_count: number
+  not_found_count: number
+  details: UpdateDetail[]
+}
+
+export type GraphMutationResponse = {
+  status: string
+  message: string
+  data: Record<string, any>
+}
+
+export type EntityCreateRequest = {
+  entity_name: string
+  entity_data: Record<string, any>
+}
+
+export type RelationCreateRequest = {
+  source_entity: string
+  target_entity: string
+  relation_data: Record<string, any>
+}
+
+export type EntityMergeRequest = {
+  entities_to_change: string[]
+  entity_to_change_into: string
+}
+
+export type DeletionResult = {
+  status: 'success' | 'not_found' | 'fail'
+  doc_id: string
+  message: string
+  status_code: number
+  file_path?: string | null
 }
 
 export type DocStatus = 'pending' | 'processing' | 'preprocessed' | 'processed' | 'failed'
@@ -242,11 +459,24 @@ export type StatusCountsResponse = {
 export type KnowledgeBaseListResponse = {
   status: 'success'
   knowledge_bases: string[]
+  /** The KB the backend refuses to delete and falls back to for queries. */
+  default_kb?: string
 }
 
 export type KnowledgeBaseMutationResponse = {
   status: 'success'
   kb_id: string
+}
+
+export type KnowledgeBaseDeleteResponse = {
+  status: 'success' | 'partial_success' | 'error'
+  kb_id: string
+  message: string
+  /** Present on partial_success: which storage backends failed to drop. */
+  storage_results?: {
+    failed: string[]
+    failed_details?: { storage: string; error: string }[]
+  }
 }
 
 export type AuthStatusResponse = {
@@ -312,10 +542,46 @@ const withSelectedKbBody = <T extends Record<string, any>>(body: T): T & { kb_id
   kb_id: getSelectedKbId()
 })
 
-const withSelectedKbIds = (request: QueryRequest): QueryRequest => ({
-  ...request,
-  kb_ids: request.kb_ids && request.kb_ids.length > 0 ? request.kb_ids : [getSelectedKbId()]
-})
+const isBlank = (value?: string) => !value || value.trim().length === 0
+
+/**
+ * Normalize the outgoing query payload.
+ * - Blank external KB entries are dropped, they would be rejected by the backend.
+ * - A per-request LLM override is only valid when binding, model and host are all set.
+ * - An unset kb_ids means "the currently selected knowledge base"; an explicit empty
+ *   array is a deliberate external-only query.
+ */
+export const prepareQueryRequest = (request: QueryRequest): QueryRequest => {
+  const { external_kbs, kb_ids, ...rest } = request
+  const prepared: QueryRequest = { ...rest }
+
+  const validExternalKbs = (external_kbs ?? []).filter((kb) => !isBlank(kb.url))
+  if (validExternalKbs.length > 0) {
+    prepared.external_kbs = validExternalKbs
+  }
+
+  if (!isBlank(request.llm_binding) && !isBlank(request.llm_model) && !isBlank(request.llm_binding_host)) {
+    prepared.llm_binding = request.llm_binding
+    prepared.llm_model = request.llm_model
+    prepared.llm_binding_host = request.llm_binding_host
+    if (!isBlank(request.llm_binding_api_key)) {
+      prepared.llm_binding_api_key = request.llm_binding_api_key
+    }
+    if (request.llm_default_headers && Object.keys(request.llm_default_headers).length > 0) {
+      prepared.llm_default_headers = request.llm_default_headers
+    }
+  }
+
+  // The backend treats an absent and an empty kb_ids the same (both fall back to
+  // external-only), so "use the current knowledge base" has to be sent explicitly.
+  if (kb_ids === undefined) {
+    prepared.kb_ids = [getSelectedKbId()]
+  } else if (kb_ids.length > 0) {
+    prepared.kb_ids = kb_ids
+  }
+
+  return prepared
+}
 
 // ========== Token Management ==========
 // Prevent multiple requests from triggering token refresh simultaneously
@@ -532,13 +798,6 @@ export const checkHealth = async (): Promise<
   }
 }
 
-export const getDocuments = async (): Promise<DocsStatusesResponse> => {
-  const response = await axiosInstance.get('/documents', {
-    params: withKbQueryParam()
-  })
-  return response.data
-}
-
 export const scanNewDocuments = async (): Promise<ScanResponse> => {
   const response = await axiosInstance.post('/documents/scan', null, {
     params: withKbQueryParam()
@@ -553,42 +812,122 @@ export const reprocessFailedDocuments = async (): Promise<ReprocessFailedRespons
   return response.data
 }
 
-export const getDocumentsScanProgress = async (): Promise<LightragDocumentsScanProgress> => {
-  const response = await axiosInstance.get('/documents/scan-progress', {
-    params: withKbQueryParam()
-  })
+export const queryText = async (request: QueryRequest): Promise<QueryResponse> => {
+  const response = await axiosInstance.post('/query', prepareQueryRequest(request))
   return response.data
 }
 
-export const queryText = async (request: QueryRequest): Promise<QueryResponse> => {
-  const response = await axiosInstance.post('/query', withSelectedKbIds(request))
+/** Retrieval-only variant: returns entities / relationships / chunks without LLM generation. */
+export const queryData = async (request: QueryRequest): Promise<QueryDataResponse> => {
+  const response = await axiosInstance.post('/query/data', prepareQueryRequest(request))
   return response.data
+}
+
+const queryStreamHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/x-ndjson'
+  }
+  const token = localStorage.getItem('LIGHTRAG-API-TOKEN')
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  const apiKey = useSettingsStore.getState().apiKey
+  if (apiKey) {
+    headers['X-API-Key'] = apiKey
+  }
+  headers['LIGHTRAG-KB'] = getSelectedKbId()
+  return headers
+}
+
+/**
+ * NDJSON frames from `/query/stream` are untyped on the wire. The backend interleaves four
+ * shapes: `{"type":"progress"}` retrieval events, a first frame carrying references/warnings,
+ * `{"response"}` answer deltas, and `{"error"}`.
+ */
+type RawStreamFrame = {
+  type?: string
+  stage?: string
+  status?: string
+  detail?: Record<string, any>
+  response?: string
+  references?: ReferenceItem[]
+  warnings?: string[]
+  error?: string
+}
+
+const dispatchStreamFrame = (frame: RawStreamFrame, callbacks: QueryStreamCallbacks) => {
+  if (frame.type === 'progress') {
+    callbacks.onProgress?.({
+      type: 'progress',
+      stage: frame.stage ?? '',
+      status: frame.status,
+      detail: frame.detail ?? {}
+    })
+    return
+  }
+  if (frame.references) {
+    callbacks.onReferences?.(frame.references)
+  }
+  if (frame.warnings) {
+    callbacks.onWarnings?.(frame.warnings)
+  }
+  if (frame.response) {
+    callbacks.onChunk(frame.response)
+  }
+  if (frame.error) {
+    callbacks.onError?.(frame.error)
+  }
+}
+
+const consumeQueryStream = async (response: Response, callbacks: QueryStreamCallbacks) => {
+  if (!response.body) {
+    throw new Error('Response body is null')
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  const consumeLine = (line: string) => {
+    if (!line.trim()) return
+    try {
+      dispatchStreamFrame(JSON.parse(line) as RawStreamFrame, callbacks)
+    } catch (error) {
+      console.error('Failed to parse stream frame:', line, error)
+      callbacks.onError?.(`Error parsing server response: ${line}`)
+    }
+  }
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    // stream: true keeps multi-byte characters that span chunk boundaries intact
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() || ''
+    lines.forEach(consumeLine)
+  }
+
+  if (buffer.trim()) {
+    consumeLine(buffer)
+  }
 }
 
 export const queryTextStream = async (
   request: QueryRequest,
-  onChunk: (chunk: string) => void,
-  onError?: (error: string) => void
+  callbacks: QueryStreamCallbacks
 ) => {
-  const apiKey = useSettingsStore.getState().apiKey;
-  const token = localStorage.getItem('LIGHTRAG-API-TOKEN');
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/x-ndjson',
-  };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  if (apiKey) {
-    headers['X-API-Key'] = apiKey;
-  }
-  headers['LIGHTRAG-KB'] = getSelectedKbId();
+  const { onError } = callbacks
+  const url = `${backendBaseUrl}/query/stream`
+  const body = JSON.stringify(prepareQueryRequest(request))
 
   try {
-    const response = await fetch(`${backendBaseUrl}/query/stream`, {
+    const response = await fetch(url, {
       method: 'POST',
-      headers: headers,
-      body: JSON.stringify(withSelectedKbIds(request)),
+      headers: queryStreamHeaders(),
+      body,
     });
 
     if (!response.ok) {
@@ -605,13 +944,10 @@ export const queryTextStream = async (
             const newToken = await silentRefreshGuestToken();
 
             // Retry stream request with new token
-            const retryHeaders = { ...headers };
-            retryHeaders['Authorization'] = `Bearer ${newToken}`;
-
-            const retryResponse = await fetch(`${backendBaseUrl}/query/stream`, {
+            const retryResponse = await fetch(url, {
               method: 'POST',
-              headers: retryHeaders,
-              body: JSON.stringify(withSelectedKbIds(request)),
+              headers: { ...queryStreamHeaders(), 'Authorization': `Bearer ${newToken}` },
+              body,
             });
 
             if (!retryResponse.ok) {
@@ -619,54 +955,7 @@ export const queryTextStream = async (
             }
 
             // Retry successful, process stream response
-            // Re-execute the stream processing logic with retryResponse
-            if (!retryResponse.body) {
-              throw new Error('Response body is null');
-            }
-
-            const reader = retryResponse.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split('\n');
-              buffer = lines.pop() || '';
-
-              for (const line of lines) {
-                if (line.trim()) {
-                  try {
-                    const parsed = JSON.parse(line);
-                    if (parsed.response) {
-                      onChunk(parsed.response);
-                    } else if (parsed.error) {
-                      onError?.(parsed.error);
-                    }
-                  } catch (parseError) {
-                    console.error('Failed to parse JSON:', parseError, 'Line:', line);
-                    onError?.(`JSON parse error: ${parseError}`);
-                  }
-                }
-              }
-            }
-
-            // Process any remaining data in buffer
-            if (buffer.trim()) {
-              try {
-                const parsed = JSON.parse(buffer);
-                if (parsed.response) {
-                  onChunk(parsed.response);
-                } else if (parsed.error) {
-                  onError?.(parsed.error);
-                }
-              } catch (parseError) {
-                console.error('Failed to parse final buffer:', parseError);
-              }
-            }
-
+            await consumeQueryStream(retryResponse, callbacks);
             return; // Successfully completed retry
           } catch (refreshError) {
             console.error('Failed to refresh guest token for streaming:', refreshError);
@@ -690,7 +979,6 @@ export const queryTextStream = async (
       } catch { /* ignore */ }
 
       // Format error message similar to axios interceptor for consistency
-      const url = `${backendBaseUrl}/query/stream`;
       throw new Error(
         `${response.status} ${response.statusText}\n${JSON.stringify(
           { error: errorBody }
@@ -698,58 +986,7 @@ export const queryTextStream = async (
       );
     }
 
-    if (!response.body) {
-      throw new Error('Response body is null');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break; // Stream finished
-      }
-
-      // Decode the chunk and add to buffer
-      buffer += decoder.decode(value, { stream: true }); // stream: true handles multi-byte chars split across chunks
-
-      // Process complete lines (NDJSON)
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || ''; // Keep potentially incomplete line in buffer
-
-      for (const line of lines) {
-        if (line.trim()) {
-          try {
-            const parsed = JSON.parse(line);
-            if (parsed.response) {
-              onChunk(parsed.response);
-            } else if (parsed.error && onError) {
-              onError(parsed.error);
-            }
-          } catch (error) {
-            console.error('Error parsing stream chunk:', line, error);
-            if (onError) onError(`Error parsing server response: ${line}`);
-          }
-        }
-      }
-    }
-
-    // Process any remaining data in the buffer after the stream ends
-    if (buffer.trim()) {
-      try {
-        const parsed = JSON.parse(buffer);
-        if (parsed.response) {
-          onChunk(parsed.response);
-        } else if (parsed.error && onError) {
-          onError(parsed.error);
-        }
-      } catch (error) {
-        console.error('Error parsing final chunk:', buffer, error);
-        if (onError) onError(`Error parsing final server response: ${buffer}`);
-      }
-    }
+    await consumeQueryStream(response, callbacks);
 
   } catch (error) {
     const message = errorMessage(error);
@@ -832,29 +1069,42 @@ export const queryTextStream = async (
   }
 };
 
-export const insertText = async (text: string): Promise<DocActionResponse> => {
-  const response = await axiosInstance.post('/documents/text', { text }, {
-    params: withKbQueryParam()
-  })
+export const insertText = async (
+  text: string,
+  fileSource?: string,
+  overwrite: boolean = false
+): Promise<DocActionResponse> => {
+  const response = await axiosInstance.post(
+    '/documents/text',
+    { text, file_source: fileSource },
+    { params: withKbQueryParam({ overwrite }) }
+  )
   return response.data
 }
 
-export const insertTexts = async (texts: string[]): Promise<DocActionResponse> => {
-  const response = await axiosInstance.post('/documents/texts', { texts }, {
-    params: withKbQueryParam()
-  })
+export const insertTexts = async (
+  texts: string[],
+  fileSources?: string[],
+  overwrite: boolean = false
+): Promise<DocActionResponse> => {
+  const response = await axiosInstance.post(
+    '/documents/texts',
+    { texts, file_sources: fileSources },
+    { params: withKbQueryParam({ overwrite }) }
+  )
   return response.data
 }
 
 export const uploadDocument = async (
   file: File,
-  onUploadProgress?: (percentCompleted: number) => void
+  onUploadProgress?: (percentCompleted: number) => void,
+  overwrite: boolean = false
 ): Promise<DocActionResponse> => {
   const formData = new FormData()
   formData.append('file', file)
 
   const response = await axiosInstance.post('/documents/upload', formData, {
-    params: withKbQueryParam(),
+    params: withKbQueryParam({ overwrite }),
     headers: {
       'Content-Type': 'multipart/form-data'
     },
@@ -872,18 +1122,47 @@ export const uploadDocument = async (
 
 export const batchUploadDocuments = async (
   files: File[],
-  onUploadProgress?: (fileName: string, percentCompleted: number) => void
+  onUploadProgress?: (fileName: string, percentCompleted: number) => void,
+  overwrite: boolean = false
 ): Promise<DocActionResponse[]> => {
   return await Promise.all(
     files.map(async (file) => {
       return await uploadDocument(file, (percentCompleted) => {
         onUploadProgress?.(file.name, percentCompleted)
-      })
+      }, overwrite)
     })
   )
 }
 
-export const clearDocuments = async (): Promise<DocActionResponse> => {
+export const updateDocumentText = async (
+  request: UpdateTextRequest
+): Promise<UpdateResponse> => {
+  const response = await axiosInstance.put('/documents/text/update', request, {
+    params: withKbQueryParam()
+  })
+  return response.data
+}
+
+export const updateDocumentTexts = async (
+  request: UpdateTextsRequest
+): Promise<UpdateTextsResponse> => {
+  const response = await axiosInstance.put('/documents/texts/update', request, {
+    params: withKbQueryParam()
+  })
+  return response.data
+}
+
+export const getDocumentByFilePath = async (filePath: string): Promise<DocStatusResponse> => {
+  const response = await axiosInstance.get('/documents/by_file_path', {
+    params: withKbQueryParam({ file_path: filePath })
+  })
+  return response.data
+}
+
+export const clearDocuments = async (): Promise<{
+  status: 'success' | 'partial_success' | 'busy' | 'fail'
+  message: string
+}> => {
   const response = await axiosInstance.delete('/documents', {
     params: withKbQueryParam()
   })
@@ -1034,12 +1313,52 @@ export const updateRelation = async (
   sourceEntity: string,
   targetEntity: string,
   updatedData: Record<string, any>
-): Promise<DocActionResponse> => {
+): Promise<GraphMutationResponse> => {
   const response = await axiosInstance.post('/graph/relation/edit', withSelectedKbBody({
     source_id: sourceEntity,
     target_id: targetEntity,
     updated_data: updatedData
   }))
+  return response.data
+}
+
+export const createEntity = async (
+  request: EntityCreateRequest
+): Promise<GraphMutationResponse> => {
+  const response = await axiosInstance.post('/graph/entity/create', withSelectedKbBody(request))
+  return response.data
+}
+
+export const createRelation = async (
+  request: RelationCreateRequest
+): Promise<GraphMutationResponse> => {
+  const response = await axiosInstance.post('/graph/relation/create', withSelectedKbBody(request))
+  return response.data
+}
+
+export const mergeEntities = async (
+  request: EntityMergeRequest
+): Promise<GraphMutationResponse> => {
+  const response = await axiosInstance.post('/graph/entities/merge', withSelectedKbBody(request))
+  return response.data
+}
+
+export const deleteEntity = async (entityName: string): Promise<DeletionResult> => {
+  const response = await axiosInstance.delete('/documents/delete_entity', {
+    params: withKbQueryParam(),
+    data: { entity_name: entityName }
+  })
+  return response.data
+}
+
+export const deleteRelation = async (
+  sourceEntity: string,
+  targetEntity: string
+): Promise<DeletionResult> => {
+  const response = await axiosInstance.delete('/documents/delete_relation', {
+    params: withKbQueryParam(),
+    data: { source_entity: sourceEntity, target_entity: targetEntity }
+  })
   return response.data
 }
 
@@ -1095,14 +1414,93 @@ export const getDocumentStatusCounts = async (): Promise<StatusCountsResponse> =
   return response.data
 }
 
-export const listKnowledgeBases = async (): Promise<string[]> => {
+export const listKnowledgeBases = async (): Promise<KnowledgeBaseListResponse> => {
   const response = await axiosInstance.get<KnowledgeBaseListResponse>('/knowledge_bases')
-  return response.data.knowledge_bases
+  return response.data
 }
 
 export const createKnowledgeBase = async (kbId: string): Promise<KnowledgeBaseMutationResponse> => {
   const response = await axiosInstance.post<KnowledgeBaseMutationResponse>('/knowledge_bases', {
     kb_id: kbId
   })
+  return response.data
+}
+
+/**
+ * Deletes a knowledge base and drops its storages. The backend refuses to delete the default
+ * KB (400) and answers 207 with status 'partial_success' when some backends could not be dropped.
+ */
+export const deleteKnowledgeBase = async (kbId: string): Promise<KnowledgeBaseDeleteResponse> => {
+  const response = await axiosInstance.delete<KnowledgeBaseDeleteResponse>(
+    `/knowledge_bases/${encodeURIComponent(kbId)}`
+  )
+  return response.data
+}
+
+// ========== Model profiles ==========
+export const listModelProfiles = async (): Promise<ModelProfile[]> => {
+  const response = await axiosInstance.get<ModelProfile[]>('/llm_models')
+  return response.data
+}
+
+export const createModelProfile = async (input: ModelProfileInput): Promise<ModelProfile> => {
+  const response = await axiosInstance.post<ModelProfile>('/llm_models', input)
+  return response.data
+}
+
+export const updateModelProfile = async (
+  profileId: string,
+  input: ModelProfileInput
+): Promise<ModelProfile> => {
+  const response = await axiosInstance.put<ModelProfile>(
+    `/llm_models/${encodeURIComponent(profileId)}`,
+    input
+  )
+  return response.data
+}
+
+export const deleteModelProfile = async (profileId: string): Promise<{ status: string; id: string }> => {
+  const response = await axiosInstance.delete(`/llm_models/${encodeURIComponent(profileId)}`)
+  return response.data
+}
+
+export const testModelProfile = async (profileId: string): Promise<ConnectionTestResult> => {
+  const response = await axiosInstance.post<ConnectionTestResult>(
+    `/llm_models/${encodeURIComponent(profileId)}/test`
+  )
+  return response.data
+}
+
+// ========== External knowledge bases ==========
+export const listExternalKBs = async (): Promise<ExternalKBRecord[]> => {
+  const response = await axiosInstance.get<ExternalKBRecord[]>('/external_kbs')
+  return response.data
+}
+
+export const createExternalKB = async (input: ExternalKBInput): Promise<ExternalKBRecord> => {
+  const response = await axiosInstance.post<ExternalKBRecord>('/external_kbs', input)
+  return response.data
+}
+
+export const updateExternalKB = async (
+  kbId: string,
+  input: ExternalKBInput
+): Promise<ExternalKBRecord> => {
+  const response = await axiosInstance.put<ExternalKBRecord>(
+    `/external_kbs/${encodeURIComponent(kbId)}`,
+    input
+  )
+  return response.data
+}
+
+export const deleteExternalKB = async (kbId: string): Promise<{ status: string; id: string }> => {
+  const response = await axiosInstance.delete(`/external_kbs/${encodeURIComponent(kbId)}`)
+  return response.data
+}
+
+export const testExternalKB = async (kbId: string): Promise<ConnectionTestResult> => {
+  const response = await axiosInstance.post<ConnectionTestResult>(
+    `/external_kbs/${encodeURIComponent(kbId)}/test`
+  )
   return response.data
 }

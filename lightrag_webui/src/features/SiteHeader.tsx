@@ -9,8 +9,8 @@ import { useGraphStore } from '@/stores/graph'
 import { cn, errorMessage } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { navigationService } from '@/services/navigation'
-import { createKnowledgeBase, listKnowledgeBases } from '@/api/lightrag'
-import { ZapIcon, GithubIcon, LogOutIcon, PlusIcon } from 'lucide-react'
+import { createKnowledgeBase, deleteKnowledgeBase, listKnowledgeBases } from '@/api/lightrag'
+import { ZapIcon, GithubIcon, LogOutIcon, PlusIcon, Trash2Icon, AlertTriangleIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 import {
@@ -60,6 +60,12 @@ function TabsNavigation() {
         <NavigationTab value="retrieval" currentTab={currentTab}>
           {t('header.retrieval')}
         </NavigationTab>
+        <NavigationTab value="models" currentTab={currentTab}>
+          {t('header.models', { defaultValue: 'Models' })}
+        </NavigationTab>
+        <NavigationTab value="external-kbs" currentTab={currentTab}>
+          {t('header.externalKbs', { defaultValue: 'External KBs' })}
+        </NavigationTab>
         <NavigationTab value="api" currentTab={currentTab}>
           {t('header.api')}
         </NavigationTab>
@@ -80,12 +86,19 @@ function KnowledgeBaseSwitcher() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [newKbId, setNewKbId] = useState('')
+  const [defaultKbId, setDefaultKbId] = useState<string | null>(null)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+
+  const isDefaultKb = !!defaultKbId && selectedKbId === defaultKbId
 
   useEffect(() => {
     const loadKnowledgeBases = async () => {
       try {
-        const kbIds = await listKnowledgeBases()
-        setAvailableKbIds(kbIds)
+        const response = await listKnowledgeBases()
+        setAvailableKbIds(response.knowledge_bases)
+        setDefaultKbId(response.default_kb ?? response.knowledge_bases[0] ?? null)
       } catch (error) {
         console.error('Failed to load knowledge bases:', error)
       }
@@ -94,12 +107,8 @@ function KnowledgeBaseSwitcher() {
     loadKnowledgeBases()
   }, [setAvailableKbIds])
 
-  const handleKbChange = (kbId: string) => {
-    if (kbId === selectedKbId) {
-      return
-    }
-
-    setSelectedKbId(kbId)
+  // Views that cache data of the previously selected knowledge base
+  const resetKbScopedViews = () => {
     setQueryLabel('*')
     setRetrievalHistory([])
     useGraphStore.getState().reset()
@@ -107,6 +116,15 @@ function KnowledgeBaseSwitcher() {
     useGraphStore.getState().setLabelsFetchAttempted(false)
     useBackendState.getState().setPipelineBusy(false)
     triggerSearchLabelDropdownRefresh()
+  }
+
+  const handleKbChange = (kbId: string) => {
+    if (kbId === selectedKbId) {
+      return
+    }
+
+    setSelectedKbId(kbId)
+    resetKbScopedViews()
   }
 
   const handleCreateKnowledgeBase = async () => {
@@ -128,6 +146,36 @@ function KnowledgeBaseSwitcher() {
       toast.error(errorMessage(error))
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  const handleDeleteKnowledgeBase = async () => {
+    const kbId = selectedKbId
+    setIsDeleting(true)
+    try {
+      const result = await deleteKnowledgeBase(kbId)
+      if (result.status === 'partial_success') {
+        toast.warning(
+          t('header.kbDeletePartial', {
+            defaultValue: 'Knowledge base deleted, but some storages failed: {{storages}}',
+            storages: result.storage_results?.failed?.join(', ') || ''
+          })
+        )
+      } else {
+        toast.success(t('header.kbDeleteSuccess', { defaultValue: 'Knowledge base deleted' }))
+      }
+
+      // setAvailableKbIds falls back to the first remaining knowledge base automatically.
+      const response = await listKnowledgeBases()
+      setAvailableKbIds(response.knowledge_bases)
+      setDefaultKbId(response.default_kb ?? response.knowledge_bases[0] ?? null)
+      resetKbScopedViews()
+      setIsDeleteOpen(false)
+      setDeleteConfirm('')
+    } catch (error) {
+      toast.error(errorMessage(error))
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -157,6 +205,18 @@ function KnowledgeBaseSwitcher() {
           onClick={() => setIsCreateOpen(true)}
         >
           <PlusIcon className="size-4" aria-hidden="true" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          side="bottom"
+          disabled={isDefaultKb}
+          tooltip={isDefaultKb
+            ? t('header.kbDeleteDefaultDisabled', { defaultValue: 'The default knowledge base cannot be deleted' })
+            : t('header.kbDelete', { defaultValue: 'Delete current knowledge base' })}
+          onClick={() => setIsDeleteOpen(true)}
+        >
+          <Trash2Icon className="size-4" aria-hidden="true" />
         </Button>
       </div>
 
@@ -190,6 +250,53 @@ function KnowledgeBaseSwitcher() {
             </Button>
             <Button onClick={handleCreateKnowledgeBase} disabled={isCreating}>
               {t('common.create', { defaultValue: 'Create' })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          if (!isDeleting) {
+            setIsDeleteOpen(open)
+            if (!open) {
+              setDeleteConfirm('')
+            }
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-500 dark:text-red-400">
+              <AlertTriangleIcon className="size-5" aria-hidden="true" />
+              {t('header.kbDeleteTitle', { defaultValue: 'Delete Knowledge Base' })}
+            </DialogTitle>
+            <DialogDescription>
+              {t('header.kbDeleteDescription', {
+                defaultValue: 'Delete "{{kbId}}" and drop all of its storages. This cannot be undone.',
+                kbId: selectedKbId
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={deleteConfirm}
+            onChange={(e) => setDeleteConfirm(e.target.value)}
+            placeholder={t('header.kbDeletePlaceholder', { defaultValue: 'Type "yes" to confirm' })}
+            disabled={isDeleting}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteOpen(false)} disabled={isDeleting}>
+              {t('common.cancel', { defaultValue: 'Cancel' })}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteKnowledgeBase}
+              disabled={isDeleting || deleteConfirm.toLowerCase() !== 'yes'}
+            >
+              {isDeleting
+                ? t('header.kbDeleting', { defaultValue: 'Deleting' })
+                : t('common.delete', { defaultValue: 'Delete' })}
             </Button>
           </DialogFooter>
         </DialogContent>

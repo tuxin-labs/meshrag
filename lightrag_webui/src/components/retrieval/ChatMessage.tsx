@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo, useRef, memo, useState } from 'react' // Import useMemo
-import { Message } from '@/api/lightrag'
+import { Message, ReferenceItem } from '@/api/lightrag'
 import useTheme from '@/hooks/useTheme'
 import { cn } from '@/lib/utils'
 
@@ -42,6 +42,10 @@ export type MessageWithError = Message & {
    * Used to prevent red error text during streaming of incomplete LaTeX formulas.
    */
   latexRendered?: boolean
+  /** Reference list returned by `/query` and `/query/stream`. */
+  references?: ReferenceItem[]
+  /** Non-fatal backend notices, e.g. an external knowledge base call that failed. */
+  warnings?: string[]
 }
 
 // Restore original component definition and export
@@ -258,6 +262,28 @@ export const ChatMessage = ({
               {finalDisplayContent}
             </ReactMarkdown>
           </div>
+        </div>
+      )}
+      {/* References and backend warnings returned by the query endpoints */}
+      {message.role === 'assistant' && (!!message.references?.length || !!message.warnings?.length) && (
+        <div className="mt-2 border-t border-border/60 pt-2 text-xs">
+          {!!message.warnings?.length && (
+            <ul className="space-y-0.5 text-amber-600 dark:text-amber-400">
+              {message.warnings.map((warning, index) => (
+                <li key={index}>{warning}</li>
+              ))}
+            </ul>
+          )}
+          {!!message.references?.length && (
+            <ol className="mt-1 space-y-0.5">
+              {message.references.map((reference) => (
+                <li key={reference.reference_id} className="flex gap-1.5 text-muted-foreground">
+                  <span className="shrink-0 font-medium text-primary">[{reference.reference_id}]</span>
+                  <span className="truncate" title={reference.file_path}>{reference.file_path}</span>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
       )}
       {/* Loading indicator - only show in active tab */}

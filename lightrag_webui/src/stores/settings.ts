@@ -3,10 +3,17 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { createSelectors } from '@/lib/utils'
 import { defaultQueryLabel } from '@/lib/constants'
 import { Message, QueryRequest } from '@/api/lightrag'
+import type { ExternalKBRecord, ModelProfile } from '@/api/lightrag'
 
 type Theme = 'dark' | 'light' | 'system'
 type Language = 'en' | 'zh' | 'fr' | 'ar' | 'zh_TW' | 'ru' | 'ja' | 'de' | 'uk' | 'ko' | 'vi'
-type Tab = 'documents' | 'knowledge-graph' | 'retrieval' | 'api'
+type Tab = 'documents' | 'knowledge-graph' | 'retrieval' | 'models' | 'external-kbs' | 'api'
+
+/**
+ * `history_turns` never reaches the backend, which has no such field: it only decides how many
+ * past turns the UI packs into `conversation_history`.
+ */
+export type RetrievalSettings = Omit<QueryRequest, 'query'> & { history_turns?: number }
 
 interface SettingsState {
   // Knowledge base selection (multi-KB)
@@ -16,6 +23,13 @@ interface SettingsState {
   // Loaded knowledge bases from backend (runtime only)
   availableKbIds: string[]
   setAvailableKbIds: (kbIds: string[]) => void
+
+  // Registered model profiles and external knowledge bases (runtime only)
+  availableModelProfiles: ModelProfile[]
+  setAvailableModelProfiles: (profiles: ModelProfile[]) => void
+
+  availableExternalKBs: ExternalKBRecord[]
+  setAvailableExternalKBs: (kbs: ExternalKBRecord[]) => void
 
   // Document manager settings
   showFileName: boolean
@@ -67,8 +81,8 @@ interface SettingsState {
   retrievalHistory: Message[]
   setRetrievalHistory: (history: Message[]) => void
 
-  querySettings: Omit<QueryRequest, 'query'>
-  updateQuerySettings: (settings: Partial<QueryRequest>) => void
+  querySettings: RetrievalSettings
+  updateQuerySettings: (settings: Partial<RetrievalSettings>) => void
 
   // Auth settings
   apiKey: string | null
@@ -97,6 +111,8 @@ const useSettingsStoreBase = create<SettingsState>()(
     (set) => ({
       selectedKbId: 'default',
       availableKbIds: ['default'],
+      availableModelProfiles: [],
+      availableExternalKBs: [],
       theme: 'system',
       language: 'en',
       showPropertyPanel: true,
@@ -167,6 +183,12 @@ const useSettingsStoreBase = create<SettingsState>()(
         })
       },
 
+      setAvailableModelProfiles: (availableModelProfiles: ModelProfile[]) =>
+        set({ availableModelProfiles: availableModelProfiles || [] }),
+
+      setAvailableExternalKBs: (availableExternalKBs: ExternalKBRecord[]) =>
+        set({ availableExternalKBs: availableExternalKBs || [] }),
+
       setTheme: (theme: Theme) => set({ theme }),
 
       setLanguage: (language: Language) => {
@@ -219,7 +241,7 @@ const useSettingsStoreBase = create<SettingsState>()(
 
       setRetrievalHistory: (history: Message[]) => set({ retrievalHistory: history }),
 
-      updateQuerySettings: (settings: Partial<QueryRequest>) => {
+      updateQuerySettings: (settings: Partial<RetrievalSettings>) => {
         // Filter out history_turns to prevent changes, always keep it as 0
         const filteredSettings = { ...settings }
         delete filteredSettings.history_turns
@@ -269,7 +291,7 @@ const useSettingsStoreBase = create<SettingsState>()(
     {
       name: 'settings-storage',
       storage: createJSONStorage(() => localStorage),
-      version: 21,
+      version: 23,
       migrate: (state: any, version: number) => {
         if (version < 2) {
           state.showEdgeLabel = false
@@ -384,6 +406,27 @@ const useSettingsStoreBase = create<SettingsState>()(
           }
           if (!state.selectedKbId || !state.availableKbIds.includes(state.selectedKbId)) {
             state.selectedKbId = state.availableKbIds[0]
+          }
+        }
+        if (version < 22) {
+          // Model and external-KB choices now reference server-side registries,
+          // so the old inline overrides are dropped.
+          if (state.querySettings) {
+            delete state.querySettings.external_kbs
+            delete state.querySettings.llm_binding
+            delete state.querySettings.llm_model
+            delete state.querySettings.llm_binding_host
+            delete state.querySettings.llm_binding_api_key
+            delete state.querySettings.llm_default_headers
+          }
+          if (!Array.isArray(state.availableModelProfiles)) state.availableModelProfiles = []
+          if (!Array.isArray(state.availableExternalKBs)) state.availableExternalKBs = []
+        }
+        if (version < 23) {
+          // Older builds could persist an empty kb_ids as a side effect of selecting an
+          // external source; that must not silently keep queries external-only.
+          if (Array.isArray(state.querySettings?.kb_ids) && state.querySettings.kb_ids.length === 0) {
+            delete state.querySettings.kb_ids
           }
         }
         return state

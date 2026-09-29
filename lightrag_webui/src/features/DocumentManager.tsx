@@ -17,6 +17,7 @@ import Checkbox from '@/components/ui/Checkbox'
 import UploadDocumentsDialog from '@/components/documents/UploadDocumentsDialog'
 import ClearDocumentsDialog from '@/components/documents/ClearDocumentsDialog'
 import DeleteDocumentsDialog from '@/components/documents/DeleteDocumentsDialog'
+import EditDocumentTextDialog from '@/components/documents/EditDocumentTextDialog'
 import PaginationControls from '@/components/ui/PaginationControls'
 
 import {
@@ -32,7 +33,7 @@ import { errorMessage } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useBackendState } from '@/stores/state'
 
-import { RefreshCwIcon, ActivityIcon, ArrowUpIcon, ArrowDownIcon, RotateCcwIcon, CheckSquareIcon, XIcon, AlertTriangle, Info } from 'lucide-react'
+import { RefreshCwIcon, ActivityIcon, ArrowUpIcon, ArrowDownIcon, RotateCcwIcon, CheckSquareIcon, XIcon, AlertTriangle, Info, PencilIcon } from 'lucide-react'
 import PipelineStatusDialog from '@/components/documents/PipelineStatusDialog'
 
 type StatusFilter = DocStatus | 'all';
@@ -252,6 +253,9 @@ export default function DocumentManager() {
 
   // State for document status filter
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  // Document selected for content update
+  const [editingDoc, setEditingDoc] = useState<DocStatusResponse | null>(null)
 
   // State to store page number for each status filter
   const [pageByStatus, setPageByStatus] = useState<Record<StatusFilter, number>>({
@@ -1385,6 +1389,9 @@ export default function DocumentManager() {
                             )}
                           </div>
                         </TableHead>
+                        <TableHead className="w-12 text-center">
+                          {t('documentPanel.documentManager.columns.actions', { defaultValue: 'Actions' })}
+                        </TableHead>
                         <TableHead className="w-16 text-center">
                           {t('documentPanel.documentManager.columns.select')}
                         </TableHead>
@@ -1477,6 +1484,18 @@ export default function DocumentManager() {
                             {new Date(doc.updated_at).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-center">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                              side="left"
+                              tooltip={t('documentPanel.editDocument.tooltip', { defaultValue: 'Update content' })}
+                              onClick={() => setEditingDoc(doc)}
+                            >
+                              <PencilIcon className="size-3.5" />
+                            </Button>
+                          </TableCell>
+                          <TableCell className="text-center">
                             <Checkbox
                               checked={selectedDocIds.includes(doc.id)}
                               onCheckedChange={(checked) => handleDocumentSelect(doc.id, checked === true)}
@@ -1493,6 +1512,13 @@ export default function DocumentManager() {
             )}
           </CardContent>
         </Card>
+        <EditDocumentTextDialog
+          document={editingDoc}
+          onOpenChange={(open) => {
+            if (!open) setEditingDoc(null)
+          }}
+          onUpdated={() => handleIntelligentRefresh()}
+        />
       </CardContent>
     </Card>
   )

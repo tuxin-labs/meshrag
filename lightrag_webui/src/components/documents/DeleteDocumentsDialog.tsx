@@ -64,8 +64,20 @@ export default function DeleteDocumentsDialog({ selectedDocIds, onDocumentsDelet
     try {
       const result = await deleteDocuments(selectedDocIds, deleteFile, deleteLLMCache)
 
+      // deletion_queued means the pipeline is busy and the deletion runs as soon as it settles.
+      const notFoundIds = result.not_found_ids?.join(', ') || ''
+
       if (result.status === 'deletion_started') {
         toast.success(t('documentPanel.deleteDocuments.success', { count: selectedDocIds.length }))
+      } else if (result.status === 'deletion_queued') {
+        toast.success(t('documentPanel.deleteDocuments.queued', { count: selectedDocIds.length }))
+      } else if (result.status === 'partial_not_found') {
+        toast.warning(t('documentPanel.deleteDocuments.partialNotFound', { ids: notFoundIds }))
+      } else if (result.status === 'not_found') {
+        toast.error(t('documentPanel.deleteDocuments.notFound', { ids: notFoundIds }))
+        setConfirmText('')
+        setIsDeleting(false)
+        return
       } else if (result.status === 'busy') {
         toast.error(t('documentPanel.deleteDocuments.busy'))
         setConfirmText('')

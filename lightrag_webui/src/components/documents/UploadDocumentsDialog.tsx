@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { FileRejection } from 'react-dropzone'
 import Button from '@/components/ui/Button'
+import Checkbox from '@/components/ui/Checkbox'
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ export default function UploadDocumentsDialog({ onDocumentsUploaded }: UploadDoc
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [overwrite, setOverwrite] = useState(false)
   const [progresses, setProgresses] = useState<Record<string, number>>({})
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({})
 
@@ -101,13 +103,19 @@ export default function UploadDocumentsDialog({ onDocumentsUploaded }: UploadDoc
                 ...pre,
                 [file.name]: percentCompleted
               }))
-            })
+            }, overwrite)
 
             if (result.status === 'duplicated') {
-              uploadErrors[file.name] = t('documentPanel.uploadDocuments.fileUploader.duplicateFile')
+              // The backend reports which indexed document holds the identical content.
+              const duplicateMsg = result.original_file_path
+                ? t('documentPanel.uploadDocuments.fileUploader.duplicateFileOf', {
+                  path: result.original_file_path
+                })
+                : t('documentPanel.uploadDocuments.fileUploader.duplicateFile')
+              uploadErrors[file.name] = duplicateMsg
               setFileErrors(prev => ({
                 ...prev,
-                [file.name]: t('documentPanel.uploadDocuments.fileUploader.duplicateFile')
+                [file.name]: duplicateMsg
               }))
             } else if (result.status !== 'success') {
               uploadErrors[file.name] = result.message
@@ -175,7 +183,7 @@ export default function UploadDocumentsDialog({ onDocumentsUploaded }: UploadDoc
         setIsUploading(false)
       }
     },
-    [setIsUploading, setProgresses, setFileErrors, t, onDocumentsUploaded]
+    [setIsUploading, setProgresses, setFileErrors, t, onDocumentsUploaded, overwrite]
   )
 
   return (
@@ -188,6 +196,7 @@ export default function UploadDocumentsDialog({ onDocumentsUploaded }: UploadDoc
         if (!open) {
           setProgresses({})
           setFileErrors({})
+          setOverwrite(false)
         }
         setOpen(open)
       }}
@@ -204,6 +213,18 @@ export default function UploadDocumentsDialog({ onDocumentsUploaded }: UploadDoc
             {t('documentPanel.uploadDocuments.description')}
           </DialogDescription>
         </DialogHeader>
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
+          <Checkbox
+            checked={overwrite}
+            onCheckedChange={(checked) => setOverwrite(checked === true)}
+            disabled={isUploading}
+          />
+          <span className="text-muted-foreground">
+            {t('documentPanel.uploadDocuments.overwrite', {
+              defaultValue: 'Replace the existing document with the same file source'
+            })}
+          </span>
+        </label>
         <FileUploader
           maxFileCount={Infinity}
           maxSize={200 * 1024 * 1024}

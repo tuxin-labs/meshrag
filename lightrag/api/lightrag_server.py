@@ -51,6 +51,8 @@ from lightrag.api.routers.document_routes import (
 )
 from lightrag.api.routers.query_routes import create_query_routes
 from lightrag.api.routers.graph_routes import create_graph_routes
+from lightrag.api.routers.registry_routes import create_registry_routes
+from lightrag.api.registry import ExternalKBStore, ModelProfileStore
 from lightrag.api.routers.ollama_api import OllamaAPI
 from lightrag.api.rag_manager import RAGManager
 
@@ -382,7 +384,7 @@ def create_app(args):
 
     # Initialize FastAPI
     base_description = (
-        "Providing API for LightRAG core, Web UI and Ollama Model Emulation"
+        "Providing API for MeshRAG core, Web UI and Ollama Model Emulation"
     )
     swagger_description = (
         base_description
@@ -390,7 +392,7 @@ def create_app(args):
         + "\n\n[View ReDoc documentation](/redoc)"
     )
     app_kwargs = {
-        "title": "LightRAG Server API",
+        "title": "MeshRAG Server API",
         "description": swagger_description,
         "version": __api_version__,
         "openapi_url": "/openapi.json",  # Explicitly set OpenAPI schema URL
@@ -1138,6 +1140,12 @@ def create_app(args):
         raise
 
     # Add routes
+    # Model profiles and external knowledge bases are maintained from the Web UI, so they
+    # get their own JSON registries beside the KB registry.
+    os.makedirs(args.working_dir, exist_ok=True)
+    model_store = ModelProfileStore(os.path.join(args.working_dir, "model_registry.json"))
+    external_kb_store = ExternalKBStore(os.path.join(args.working_dir, "external_kbs.json"))
+
     app.include_router(
         create_document_routes(
             rag_manager,
@@ -1145,6 +1153,7 @@ def create_app(args):
             api_key,
         )
     )
+    app.include_router(create_registry_routes(model_store, external_kb_store, api_key))
     app.include_router(
         create_query_routes(
             rag_manager,
@@ -1152,6 +1161,8 @@ def create_app(args):
             args.top_k,
             llm_timeout=llm_timeout,
             default_llm_api_key=args.llm_binding_api_key,
+            model_store=model_store,
+            external_kb_store=external_kb_store,
             # Pre-compute per-binding model kwargs so ANY requested binding inherits
             # the correct env defaults (e.g., Ollama num_ctx=32768), not just the
             # server's own binding.
@@ -1173,6 +1184,7 @@ def create_app(args):
         return {
             "status": "success",
             "knowledge_bases": rag_manager.list_knowledge_bases(),
+            "default_kb": rag_manager.default_kb,
         }
 
     @app.post("/knowledge_bases", tags=["Knowledge Base Management"])
@@ -1182,6 +1194,8 @@ def create_app(args):
 
     @app.delete("/knowledge_bases/{kb_id}", tags=["Knowledge Base Management"])
     async def delete_knowledge_base(kb_id: str):
+        # The status code must travel inside the response, a `(body, code)` tuple is
+        # serialized as a two element JSON array by FastAPI.
         try:
             result = await rag_manager.delete_knowledge_base(kb_id)
 
@@ -1192,27 +1206,38 @@ def create_app(args):
                     "message": result["message"],
                 }
             elif result["status"] == "partial_success":
-                return {
-                    "status": "partial_success",
-                    "kb_id": kb_id,
-                    "message": result["message"],
-                    "storage_results": result["storage_results"],
-                }, 207  # Multi-Status
+                return JSONResponse(
+                    status_code=207,  # Multi-Status
+                    content={
+                        "status": "partial_success",
+                        "kb_id": kb_id,
+                        "message": result["message"],
+                        "storage_results": result["storage_results"],
+                    },
+                )
             else:
-                return {
-                    "status": "error",
-                    "kb_id": kb_id,
-                    "message": result["message"],
-                }, 500
+                return JSONResponse(
+                    status_code=500,
+                    content={
+                        "status": "error",
+                        "kb_id": kb_id,
+                        "message": result["message"],
+                    },
+                )
 
         except ValueError as e:
-            return {"status": "error", "message": str(e)}, 400
+            return JSONResponse(
+                status_code=400, content={"status": "error", "message": str(e)}
+            )
         except Exception as e:
             logger.error(f"Error deleting knowledge base {kb_id}: {e}")
-            return {
-                "status": "error",
-                "message": f"Failed to delete knowledge base: {e}",
-            }, 500
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "status": "error",
+                    "message": f"Failed to delete knowledge base: {e}",
+                },
+            )
 
     # Add Ollama API routes
     # OllamaAPI now takes rag_manager to function correctly

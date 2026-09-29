@@ -17,7 +17,17 @@
     "themeToggle": {
       "switchToLight": "Switch to light theme",
       "switchToDark": "Switch to dark theme"
-    }
+    },
+    "kbDelete": "Delete current knowledge base",
+    "kbDeleteDefaultDisabled": "The default knowledge base cannot be deleted",
+    "kbDeleteTitle": "Delete Knowledge Base",
+    "kbDeleteDescription": "Delete \"{{kbId}}\" and drop all of its storages. This cannot be undone.",
+    "kbDeletePlaceholder": "Type \"yes\" to confirm",
+    "kbDeleteSuccess": "Knowledge base deleted",
+    "kbDeletePartial": "Knowledge base deleted, but some storages failed: {{storages}}",
+    "kbDeleting": "Deleting",
+    "models": "Models",
+    "externalKbs": "External KBs"
   },
   "login": {
     "description": "Please enter your account and password to log in to the system",
@@ -37,7 +47,11 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving...",
-    "saveFailed": "Save failed"
+    "saveFailed": "Save failed",
+    "delete": "Delete",
+    "refresh": "Refresh",
+    "edit": "Edit",
+    "saveSuccess": "Saved"
   },
   "documentPanel": {
     "clearDocuments": {
@@ -76,7 +90,10 @@
       "failed": "Delete Documents Failed:\n{{message}}",
       "error": "Delete Documents Failed:\n{{error}}",
       "busy": "Pipeline is busy, please try again later",
-      "notAllowed": "No permission to perform this operation"
+      "notAllowed": "No permission to perform this operation",
+      "queued": "Pipeline is busy; deletion of {{count}} document(s) queued",
+      "partialNotFound": "Deletion started, but these documents were not found: {{ids}}",
+      "notFound": "These documents no longer exist: {{ids}}"
     },
     "selectDocuments": {
       "selectCurrentPage": "Select Current Page ({{count}})",
@@ -110,8 +127,10 @@
         "dragAndDrop": "Drag and drop files here, or click to select files",
         "removeFile": "Remove file",
         "uploadDescription": "You can upload {{isMultiple ? 'multiple' : count}} files (up to {{maxSize}} each)",
-        "duplicateFile": "File name already exists in server cache"
-      }
+        "duplicateFile": "File name already exists in server cache",
+        "duplicateFileOf": "Same content as {{path}}"
+      },
+      "overwrite": "Replace the existing document with the same file source"
     },
     "documentManager": {
       "title": "Document Management",
@@ -134,7 +153,8 @@
         "created": "Created",
         "updated": "Updated",
         "metadata": "Metadata",
-        "select": "Select"
+        "select": "Select",
+        "actions": "Actions"
       },
       "status": {
         "all": "All",
@@ -178,6 +198,20 @@
       "errors": {
         "fetchFailed": "Failed to fetch pipeline status\n{{error}}"
       }
+    },
+    "editDocument": {
+      "tooltip": "Update content",
+      "title": "Update document",
+      "description": "Replace the content indexed for this file source.",
+      "placeholder": "Paste the new full text of the document",
+      "deleteCache": "Drop the LLM cache of this document",
+      "saving": "Saving",
+      "success": "Document update queued",
+      "unchanged": "Content unchanged",
+      "notFound": "No document found for this file source",
+      "failed": "Update failed",
+      "emptyText": "Text is required",
+      "noFileSource": "This document has no file source, so it cannot be updated"
     }
   },
   "graphPanel": {
@@ -313,7 +347,9 @@
       "success": {
         "entityUpdated": "Node updated successfully",
         "relationUpdated": "Relation updated successfully",
-        "entityMerged": "Nodes merged successfully"
+        "entityMerged": "Nodes merged successfully",
+        "entityDeleted": "Entity deleted",
+        "relationDeleted": "Relation deleted"
       },
       "mergeOptionLabel": "Automatically merge when a duplicate name is found",
       "mergeOptionDescription": "If enabled, renaming to an existing name will merge this node into the existing one instead of failing.",
@@ -346,7 +382,10 @@
           "file_path": "File",
           "keywords": "Keys",
           "weight": "Weight"
-        }
+        },
+        "deleteNode": "Delete entity",
+        "deleteTitle": "Delete entity",
+        "deleteDescription": "Remove \"{{name}}\" and all of its relationships from the knowledge graph."
       },
       "edge": {
         "title": "Relationship",
@@ -354,8 +393,12 @@
         "type": "Type",
         "source": "Source",
         "target": "Target",
-        "properties": "Properties"
-      }
+        "properties": "Properties",
+        "deleteEdge": "Delete relation",
+        "deleteTitle": "Delete relation",
+        "deleteDescription": "Remove the relationship between \"{{source}}\" and \"{{target}}\"."
+      },
+      "deleting": "Deleting"
     },
     "search": {
       "placeholder": "Search nodes in page...",
@@ -371,7 +414,38 @@
       "refreshCurrentLabelTooltip": "Refresh current page graph data",
       "refreshingTooltip": "Refreshing data..."
     },
-    "emptyGraph": "Empty(Try Reload Again)"
+    "emptyGraph": "Empty(Try Reload Again)",
+    "createEntity": {
+      "tooltip": "Create entity",
+      "title": "Create Entity",
+      "description": "Add a node to the knowledge graph of the current knowledge base.",
+      "namePlaceholder": "Entity name",
+      "typePlaceholder": "Entity type",
+      "descriptionPlaceholder": "Description",
+      "nameRequired": "Entity name is required",
+      "success": "Entity created"
+    },
+    "createRelation": {
+      "tooltip": "Create relation",
+      "title": "Create Relation",
+      "description": "Both entities must already exist in the knowledge graph.",
+      "keywordsPlaceholder": "Keywords",
+      "descriptionPlaceholder": "Description",
+      "entitiesRequired": "Both entities are required",
+      "success": "Relation created"
+    },
+    "mergeEntities": {
+      "tooltip": "Merge entities",
+      "title": "Merge Entities",
+      "description": "Relationships of the source entities move into the target entity, which is kept.",
+      "sourcesPlaceholder": "Entities to merge, separated by commas",
+      "targetPlaceholder": "Target entity",
+      "required": "Select at least one entity to merge and a target entity",
+      "targetIsSource": "The target entity cannot also be merged",
+      "merging": "Merging",
+      "confirm": "Merge",
+      "success": "{{count}} entities merged"
+    }
   },
   "retrievePanel": {
     "chatMessage": {
@@ -394,7 +468,25 @@
       "placeholder": "Enter your query (Support prefix: /<Query Mode>)",
       "error": "Error: Failed to get response",
       "queryModeError": "Only supports the following query modes: {{modes}}",
-      "queryModePrefixInvalid": "Invalid query mode prefix. Use: /<mode> [space] your query"
+      "queryModePrefixInvalid": "Invalid query mode prefix. Use: /<mode> [space] your query",
+      "queryTooShort": "Query is too short",
+      "fetchData": "Retrieval data",
+      "highLevelKeywords": "HL",
+      "lowLevelKeywords": "LL",
+      "progressStages": {
+        "keyword_extraction": "Extracting keywords",
+        "vector_search": "Searching graph and vectors",
+        "merge_chunks": "Merging chunks",
+        "context_built": "Building context",
+        "rerank": "Reranking",
+        "retrieval_done": "Retrieval finished"
+      },
+      "dataCounts": {
+        "entities": "Entities",
+        "relationships": "Relations",
+        "chunks": "Chunks",
+        "references": "References"
+      }
     },
     "querySettings": {
       "parametersTitle": "Parameters",
@@ -441,7 +533,36 @@
       "userPromptTooltip": "Provide additional response requirements to the LLM (unrelated to query content, only for output processing).",
       "userPromptPlaceholder": "Enter custom prompt (optional)",
       "enableRerank": "Enable Rerank",
-      "enableRerankTooltip": "Enable reranking for retrieved text chunks. If True but no rerank model is configured, a warning will be issued. Default is True."
+      "enableRerankTooltip": "Enable reranking for retrieved text chunks. If True but no rerank model is configured, a warning will be issued. Default is True.",
+      "includeReferences": "Include references",
+      "includeReferencesTooltip": "Return the reference list with the answer so citations can be resolved.",
+      "includeChunkContent": "Include chunk text",
+      "includeChunkContentTooltip": "Attach the retrieved chunk texts to each reference.",
+      "kbNoneExternalOnly": "None (external only)",
+      "externalKbs": "External knowledge bases",
+      "externalKbAdd": "Add external knowledge base",
+      "externalKbEmpty": "Query third-party retrieval or RAG services alongside the internal bases.",
+      "externalKbOnly": "Skip internal knowledge bases",
+      "externalKbRetrieval": "Retrieval",
+      "externalKbRag": "RAG service",
+      "externalKbUrl": "API url",
+      "externalKbApiKey": "API key (optional)",
+      "llmOverride": "Per-query LLM override",
+      "llmOverrideReset": "Back to server default LLM",
+      "llmOverrideEmpty": "Uses the server-configured LLM. Binding, model and host must all be set.",
+      "llmBinding": "Binding",
+      "llmModel": "Model",
+      "llmHost": "API base url",
+      "llmApiKey": "API key",
+      "llmHeaders": "Extra headers, one \"Name: value\" per line",
+      "externalKbNone": "None",
+      "externalKbsTooltip": "Registered third-party services queried together with the internal knowledge bases. Manage them on the External KBs tab.",
+      "externalKbsEmpty": "No external knowledge bases registered yet.",
+      "externalKbsReset": "Clear external sources",
+      "modelProfile": "Model",
+      "modelProfileTooltip": "Run this query with a registered model. The API key stays on the server.",
+      "modelProfileReset": "Use server default model",
+      "serverDefaultModel": "Server default"
     }
   },
   "apiSite": {
@@ -461,5 +582,64 @@
     "prevPage": "Previous Page",
     "nextPage": "Next Page",
     "lastPage": "Last Page"
+  },
+  "modelManager": {
+    "title": "Model Management",
+    "description": "Endpoints are stored on the server; API keys are never sent to the browser.",
+    "create": "Add model",
+    "createTitle": "Add Model Profile",
+    "editTitle": "Edit Model Profile",
+    "formDescription": "Embedding profiles also need the vector dimension their service returns.",
+    "empty": "No model profiles yet.",
+    "test": "Test connection",
+    "enabled": "Enabled",
+    "noKey": "none",
+    "fieldsRequired": "Name, model and host are required",
+    "deleted": "Model profile deleted",
+    "deleteTitle": "Delete model profile",
+    "deleteDescription": "Delete \"{{name}}\"? Queries selecting it will stop working.",
+    "namePlaceholder": "Display name",
+    "modelPlaceholder": "Model name",
+    "hostPlaceholder": "Base url, e.g. http://host:11434",
+    "keyPlaceholder": "API key (optional)",
+    "keyKeepPlaceholder": "API key — leave empty to keep current",
+    "dimPlaceholder": "Embedding dimension",
+    "columns": {
+      "name": "Name",
+      "kind": "Kind",
+      "binding": "Binding",
+      "model": "Model",
+      "host": "Host",
+      "apiKey": "Key",
+      "actions": "Actions"
+    }
+  },
+  "externalKBManager": {
+    "title": "External Knowledge Bases",
+    "description": "Registered services can be selected per query alongside internal knowledge bases.",
+    "create": "Add external KB",
+    "createTitle": "Add External Knowledge Base",
+    "editTitle": "Edit External Knowledge Base",
+    "formDescription": "retrieval returns text chunks for the local LLM; rag returns a finished answer.",
+    "empty": "No external knowledge bases registered.",
+    "test": "Test connection",
+    "enabled": "Enabled",
+    "noKey": "none",
+    "fieldsRequired": "Name and url are required",
+    "deleted": "External knowledge base deleted",
+    "deleteTitle": "Delete external knowledge base",
+    "deleteDescription": "Delete \"{{name}}\" from the system?",
+    "namePlaceholder": "Display name",
+    "urlPlaceholder": "https://service.example.com/api",
+    "keyPlaceholder": "API key (optional)",
+    "keyKeepPlaceholder": "API key — leave empty to keep current",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "url": "Url",
+      "topK": "Top K",
+      "apiKey": "Key",
+      "actions": "Actions"
+    }
   }
 }

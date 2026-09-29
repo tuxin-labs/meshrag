@@ -17,7 +17,17 @@
     "themeToggle": {
       "switchToLight": "切换到浅色主题",
       "switchToDark": "切换到深色主题"
-    }
+    },
+    "kbDelete": "删除当前知识库",
+    "kbDeleteDefaultDisabled": "默认知识库不可删除",
+    "kbDeleteTitle": "删除知识库",
+    "kbDeleteDescription": "将删除“{{kbId}}”并清空其全部存储，此操作不可恢复。",
+    "kbDeletePlaceholder": "输入“yes”以确认",
+    "kbDeleteSuccess": "知识库已删除",
+    "kbDeletePartial": "知识库已删除，但部分存储清理失败：{{storages}}",
+    "kbDeleting": "删除中",
+    "models": "模型管理",
+    "externalKbs": "外部知识库"
   },
   "login": {
     "description": "请输入您的账号和密码登录系统",
@@ -37,7 +47,11 @@
     "cancel": "取消",
     "save": "保存",
     "saving": "保存中...",
-    "saveFailed": "保存失败"
+    "saveFailed": "保存失败",
+    "delete": "删除",
+    "refresh": "刷新",
+    "edit": "编辑",
+    "saveSuccess": "已保存"
   },
   "documentPanel": {
     "clearDocuments": {
@@ -76,7 +90,10 @@
       "failed": "删除文档失败：\n{{message}}",
       "error": "删除文档失败：\n{{error}}",
       "busy": "流水线被占用，请稍后再试",
-      "notAllowed": "没有操作权限"
+      "notAllowed": "没有操作权限",
+      "queued": "管道正忙，已排队删除 {{count}} 个文档",
+      "partialNotFound": "已开始删除，但以下文档不存在：{{ids}}",
+      "notFound": "以下文档已不存在：{{ids}}"
     },
     "selectDocuments": {
       "selectCurrentPage": "全选当前页 ({{count}})",
@@ -110,8 +127,10 @@
         "dragAndDrop": "拖放文件到此处，或点击选择文件",
         "removeFile": "移除文件",
         "uploadDescription": "您可以上传{{isMultiple ? '多个' : count}}个文件（每个文件最大{{maxSize}}）",
-        "duplicateFile": "文件名与服务器上的缓存重复"
-      }
+        "duplicateFile": "文件名与服务器上的缓存重复",
+        "duplicateFileOf": "内容与 {{path}} 重复"
+      },
+      "overwrite": "覆盖同名来源的已有文档"
     },
     "documentManager": {
       "title": "文档管理",
@@ -134,7 +153,8 @@
         "created": "创建时间",
         "updated": "更新时间",
         "metadata": "元数据",
-        "select": "选择"
+        "select": "选择",
+        "actions": "操作"
       },
       "status": {
         "all": "全部",
@@ -178,6 +198,20 @@
       "errors": {
         "fetchFailed": "获取流水线状态失败\n{{error}}"
       }
+    },
+    "editDocument": {
+      "tooltip": "更新内容",
+      "title": "更新文档",
+      "description": "替换该文档来源已索引的内容。",
+      "placeholder": "粘贴文档的新全文",
+      "deleteCache": "同时清除该文档的 LLM 缓存",
+      "saving": "保存中",
+      "success": "文档更新已提交",
+      "unchanged": "内容未发生变化",
+      "notFound": "未找到该文档来源对应的文档",
+      "failed": "更新失败",
+      "emptyText": "文本内容不能为空",
+      "noFileSource": "该文档没有可用的文件来源，无法更新"
     }
   },
   "graphPanel": {
@@ -313,7 +347,9 @@
       "success": {
         "entityUpdated": "节点更新成功",
         "relationUpdated": "关系更新成功",
-        "entityMerged": "节点合并成功"
+        "entityMerged": "节点合并成功",
+        "entityDeleted": "实体已删除",
+        "relationDeleted": "关系已删除"
       },
       "mergeOptionLabel": "重名时自动合并",
       "mergeOptionDescription": "勾选后，重命名为已存在的名称会将当前节点自动合并过去，而不会报错。",
@@ -346,7 +382,10 @@
           "file_path": "文件",
           "keywords": "Keys",
           "weight": "权重"
-        }
+        },
+        "deleteNode": "删除实体",
+        "deleteTitle": "删除实体",
+        "deleteDescription": "将从图谱中删除“{{name}}”及其全部关系。"
       },
       "edge": {
         "title": "关系",
@@ -354,8 +393,12 @@
         "type": "类型",
         "source": "源节点",
         "target": "目标节点",
-        "properties": "属性"
-      }
+        "properties": "属性",
+        "deleteEdge": "删除关系",
+        "deleteTitle": "删除关系",
+        "deleteDescription": "将删除“{{source}}”与“{{target}}”之间的关系。"
+      },
+      "deleting": "删除中"
     },
     "search": {
       "placeholder": "页面内搜索节点...",
@@ -371,7 +414,38 @@
       "refreshCurrentLabelTooltip": "刷新当前页面图数据",
       "refreshingTooltip": "正在刷新数据..."
     },
-    "emptyGraph": "无数据(请重载图形数据)"
+    "emptyGraph": "无数据(请重载图形数据)",
+    "createEntity": {
+      "tooltip": "新建实体",
+      "title": "新建实体",
+      "description": "向当前知识库的图谱中添加一个节点。",
+      "namePlaceholder": "实体名称",
+      "typePlaceholder": "实体类型",
+      "descriptionPlaceholder": "描述",
+      "nameRequired": "实体名称不能为空",
+      "success": "实体已创建"
+    },
+    "createRelation": {
+      "tooltip": "新建关系",
+      "title": "新建关系",
+      "description": "两个实体需已存在于图谱中。",
+      "keywordsPlaceholder": "关键词",
+      "descriptionPlaceholder": "描述",
+      "entitiesRequired": "源实体与目标实体均需填写",
+      "success": "关系已创建"
+    },
+    "mergeEntities": {
+      "tooltip": "合并实体",
+      "title": "合并实体",
+      "description": "源实体的关系将并入并保留目标实体。",
+      "sourcesPlaceholder": "待合并实体，用逗号分隔",
+      "targetPlaceholder": "目标实体",
+      "required": "请至少选择一个待合并实体并指定目标实体",
+      "targetIsSource": "目标实体不能同时出现在待合并列表中",
+      "merging": "合并中",
+      "confirm": "合并",
+      "success": "已合并 {{count}} 个实体"
+    }
   },
   "retrievePanel": {
     "chatMessage": {
@@ -394,7 +468,25 @@
       "placeholder": "输入查询内容 (支持模式前缀: /<Query Mode>)",
       "error": "错误：获取响应失败",
       "queryModeError": "仅支持以下查询模式：{{modes}}",
-      "queryModePrefixInvalid": "无效的查询模式前缀。请使用：/<模式> [空格] 查询内容"
+      "queryModePrefixInvalid": "无效的查询模式前缀。请使用：/<模式> [空格] 查询内容",
+      "queryTooShort": "查询内容过短",
+      "fetchData": "检索数据",
+      "highLevelKeywords": "高层关键词",
+      "lowLevelKeywords": "低层关键词",
+      "progressStages": {
+        "keyword_extraction": "关键词抽取",
+        "vector_search": "图谱与向量检索",
+        "merge_chunks": "合并文本块",
+        "context_built": "构建上下文",
+        "rerank": "重排序",
+        "retrieval_done": "检索完成"
+      },
+      "dataCounts": {
+        "entities": "实体",
+        "relationships": "关系",
+        "chunks": "文本块",
+        "references": "引用"
+      }
     },
     "querySettings": {
       "parametersTitle": "参数",
@@ -441,7 +533,36 @@
       "userPromptTooltip": "向LLM提供额外的响应要求（与查询内容无关，仅用于处理输出）。",
       "userPromptPlaceholder": "输入自定义提示词（可选）",
       "enableRerank": "启用重排",
-      "enableRerankTooltip": "为检索到的文本块启用重排。如果为True但未配置重排模型，将发出警告。默认为True。"
+      "enableRerankTooltip": "为检索到的文本块启用重排。如果为True但未配置重排模型，将发出警告。默认为True。",
+      "includeReferences": "返回引用列表",
+      "includeReferencesTooltip": "在回答中一并返回引用列表，便于还原引用编号对应的文件。",
+      "includeChunkContent": "附带文本块内容",
+      "includeChunkContentTooltip": "为每条引用附上检索到的文本块内容。",
+      "kbNoneExternalOnly": "无（仅外部知识库）",
+      "externalKbs": "外部知识库",
+      "externalKbAdd": "添加外部知识库",
+      "externalKbEmpty": "可与内部知识库一起检索第三方的检索型或 RAG 服务型接口。",
+      "externalKbOnly": "不检索内部知识库",
+      "externalKbRetrieval": "检索型",
+      "externalKbRag": "RAG 服务型",
+      "externalKbUrl": "API 地址",
+      "externalKbApiKey": "API 密钥（可选）",
+      "llmOverride": "单次查询 LLM 覆盖",
+      "llmOverrideReset": "恢复使用服务端默认 LLM",
+      "llmOverrideEmpty": "默认使用服务端配置的 LLM。绑定、模型与地址需同时填写。",
+      "llmBinding": "绑定类型",
+      "llmModel": "模型",
+      "llmHost": "API 地址",
+      "llmApiKey": "API 密钥",
+      "llmHeaders": "附加请求头，每行一条“名称: 值”",
+      "externalKbNone": "无",
+      "externalKbsTooltip": "与内部知识库一起检索的已注册第三方服务，在“外部知识库”页维护。",
+      "externalKbsEmpty": "尚未注册外部知识库。",
+      "externalKbsReset": "清空外部来源",
+      "modelProfile": "模型",
+      "modelProfileTooltip": "用已注册的模型执行本次问答，API 密钥始终留在服务端。",
+      "modelProfileReset": "使用服务端默认模型",
+      "serverDefaultModel": "服务端默认"
     }
   },
   "apiSite": {
@@ -461,5 +582,64 @@
     "prevPage": "上一页",
     "nextPage": "下一页",
     "lastPage": "末页"
+  },
+  "modelManager": {
+    "title": "模型管理",
+    "description": "模型端点保存在服务端，API 密钥不会下发到浏览器。",
+    "create": "新增模型",
+    "createTitle": "新增模型配置",
+    "editTitle": "编辑模型配置",
+    "formDescription": "向量模型还需填写其服务返回的向量维度。",
+    "empty": "还没有模型配置。",
+    "test": "测试连接",
+    "enabled": "启用",
+    "noKey": "无",
+    "fieldsRequired": "名称、模型、地址均为必填",
+    "deleted": "模型配置已删除",
+    "deleteTitle": "删除模型配置",
+    "deleteDescription": "确定删除“{{name}}”？选用它的问答会失效。",
+    "namePlaceholder": "显示名称",
+    "modelPlaceholder": "模型名称",
+    "hostPlaceholder": "接口地址，如 http://host:11434",
+    "keyPlaceholder": "API 密钥（可选）",
+    "keyKeepPlaceholder": "API 密钥 — 留空表示保持不变",
+    "dimPlaceholder": "向量维度",
+    "columns": {
+      "name": "名称",
+      "kind": "用途",
+      "binding": "绑定",
+      "model": "模型",
+      "host": "地址",
+      "apiKey": "密钥",
+      "actions": "操作"
+    }
+  },
+  "externalKBManager": {
+    "title": "外部知识库",
+    "description": "已注册的服务可在问答时与内部知识库一起选用。",
+    "create": "新增外部知识库",
+    "createTitle": "新增外部知识库",
+    "editTitle": "编辑外部知识库",
+    "formDescription": "检索型返回文本块由本地 LLM 生成答案；RAG 服务型直接返回答案。",
+    "empty": "还没有注册外部知识库。",
+    "test": "测试连接",
+    "enabled": "启用",
+    "noKey": "无",
+    "fieldsRequired": "名称与地址为必填",
+    "deleted": "外部知识库已删除",
+    "deleteTitle": "删除外部知识库",
+    "deleteDescription": "确定从系统中删除“{{name}}”？",
+    "namePlaceholder": "显示名称",
+    "urlPlaceholder": "https://service.example.com/api",
+    "keyPlaceholder": "API 密钥（可选）",
+    "keyKeepPlaceholder": "API 密钥 — 留空表示保持不变",
+    "columns": {
+      "name": "名称",
+      "type": "类型",
+      "url": "地址",
+      "topK": "Top K",
+      "apiKey": "密钥",
+      "actions": "操作"
+    }
   }
 }
