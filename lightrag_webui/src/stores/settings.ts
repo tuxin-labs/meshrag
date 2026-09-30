@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { createSelectors } from '@/lib/utils'
 import { defaultQueryLabel } from '@/lib/constants'
 import { Message, QueryRequest } from '@/api/lightrag'
-import type { ExternalKBRecord, ModelProfile } from '@/api/lightrag'
+import type { ExternalKBRecord, KnowledgeBaseStats, ModelProfile } from '@/api/lightrag'
 
 type Theme = 'dark' | 'light' | 'system'
 type Language = 'en' | 'zh' | 'fr' | 'ar' | 'zh_TW' | 'ru' | 'ja' | 'de' | 'uk' | 'ko' | 'vi'
@@ -27,6 +27,10 @@ interface SettingsState {
   // Knowledge base the backend refuses to delete (runtime only)
   defaultKbId: string | null
   setDefaultKbId: (kbId: string | null) => void
+
+  // Per-base document/entity counts, shared by the switcher and the manager page
+  kbStatsById: Record<string, KnowledgeBaseStats>
+  setKbStatsById: (stats: Record<string, KnowledgeBaseStats>) => void
 
   // Registered model profiles and external knowledge bases (runtime only)
   availableModelProfiles: ModelProfile[]
@@ -120,6 +124,7 @@ const useSettingsStoreBase = create<SettingsState>()(
       selectedKbId: 'default',
       availableKbIds: ['default'],
       defaultKbId: null,
+      kbStatsById: {},
       availableModelProfiles: [],
       availableExternalKBs: [],
       theme: 'system',
@@ -193,6 +198,8 @@ const useSettingsStoreBase = create<SettingsState>()(
       },
 
       setDefaultKbId: (defaultKbId: string | null) => set({ defaultKbId }),
+
+      setKbStatsById: (kbStatsById: Record<string, KnowledgeBaseStats>) => set({ kbStatsById }),
 
       setAvailableModelProfiles: (availableModelProfiles: ModelProfile[]) =>
         set({ availableModelProfiles: availableModelProfiles || [] }),

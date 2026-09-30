@@ -31,7 +31,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/AlertDialog'
-import { listKnowledgeBaseStats } from '@/api/lightrag'
 import type { KnowledgeBaseStats } from '@/api/lightrag'
 import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
 import { useSettingsStore } from '@/stores/settings'
@@ -65,6 +64,17 @@ const countOf = (counts: Record<string, number>, ...keys: string[]) => {
   return 0
 }
 
+/** A base the stats endpoint did not report on, e.g. an older server without that route. */
+const emptyRow = (id: string): KbRow => ({
+  id,
+  total: null,
+  entities: null,
+  processed: 0,
+  processing: 0,
+  pending: 0,
+  failed: 0
+})
+
 const toRow = (stats: KnowledgeBaseStats): KbRow => ({
   id: stats.kb_id,
   total: stats.documents,
@@ -80,8 +90,13 @@ export default function KnowledgeBaseManager() {
   const selectedKbId = useSettingsStore.use.selectedKbId()
   const availableKbIds = useSettingsStore.use.availableKbIds()
   const defaultKbId = useSettingsStore.use.defaultKbId()
-  const { refreshKnowledgeBases, selectKnowledgeBase, createAndSelectKnowledgeBase, removeKnowledgeBase } =
-    useKnowledgeBase()
+  const {
+    refreshKnowledgeBases,
+    refreshKnowledgeBaseStats,
+    selectKnowledgeBase,
+    createAndSelectKnowledgeBase,
+    removeKnowledgeBase
+  } = useKnowledgeBase()
 
   const [rows, setRows] = useState<KbRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -95,24 +110,17 @@ export default function KnowledgeBaseManager() {
   const load = useCallback(async () => {
     setIsLoading(true)
     try {
-      const kbIds = await refreshKnowledgeBases()
-      // An older server has no stats route; the list still has to render without counts.
-      const statsResponse = await listKnowledgeBaseStats().catch((error) => {
-        console.error('Failed to load knowledge base stats:', error)
-        return null
-      })
-      const statsById = new Map((statsResponse?.knowledge_bases ?? []).map((s) => [s.kb_id, s]))
-      setRows(kbIds.map((id) =>
-        statsById.has(id) ? toRow(statsById.get(id)!) : {
-          id, total: null, entities: null, processed: 0, processing: 0, pending: 0, failed: 0
-        }
-      ))
+      const [kbIds, statsById] = await Promise.all([
+        refreshKnowledgeBases(),
+        refreshKnowledgeBaseStats()
+      ])
+      setRows(kbIds.map((id) => (statsById[id] ? toRow(statsById[id]) : emptyRow(id))))
     } catch (error) {
       toast.error(errorMessage(error))
     } finally {
       setIsLoading(false)
     }
-  }, [refreshKnowledgeBases])
+  }, [refreshKnowledgeBases, refreshKnowledgeBaseStats])
 
   useEffect(() => {
     load()

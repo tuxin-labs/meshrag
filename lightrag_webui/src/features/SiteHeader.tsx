@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import { SiteInfo, webuiPrefix } from '@/lib/constants'
 import AppSettings from '@/components/AppSettings'
@@ -7,8 +7,6 @@ import { useAuthStore } from '@/stores/state'
 import { useTranslation } from 'react-i18next'
 import { navigationService } from '@/services/navigation'
 import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
-import { listKnowledgeBaseStats } from '@/api/lightrag'
-import type { KnowledgeBaseStats } from '@/api/lightrag'
 import { ZapIcon, GithubIcon, LogOutIcon, DatabaseIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/Select'
@@ -17,8 +15,8 @@ function KnowledgeBaseSwitcher() {
   const { t } = useTranslation()
   const selectedKbId = useSettingsStore.use.selectedKbId()
   const availableKbIds = useSettingsStore.use.availableKbIds()
-  const { refreshKnowledgeBases, selectKnowledgeBase } = useKnowledgeBase()
-  const [statsById, setStatsById] = useState<Record<string, KnowledgeBaseStats>>({})
+  const kbStatsById = useSettingsStore.use.kbStatsById()
+  const { refreshKnowledgeBases, refreshKnowledgeBaseStats, selectKnowledgeBase } = useKnowledgeBase()
 
   useEffect(() => {
     refreshKnowledgeBases().catch((error) => {
@@ -26,19 +24,8 @@ function KnowledgeBaseSwitcher() {
     })
   }, [refreshKnowledgeBases])
 
-  const loadStats = useCallback(async () => {
-    try {
-      const response = await listKnowledgeBaseStats()
-      setStatsById(
-        Object.fromEntries(response.knowledge_bases.map((stats) => [stats.kb_id, stats]))
-      )
-    } catch (error) {
-      console.error('Failed to load knowledge base stats:', error)
-    }
-  }, [])
-
   const statsLabel = (kbId: string) => {
-    const stats = statsById[kbId]
+    const stats = kbStatsById[kbId]
     if (!stats || (stats.documents === null && stats.entities === null)) {
       return null
     }
@@ -55,7 +42,7 @@ function KnowledgeBaseSwitcher() {
       <Select
         value={selectedKbId}
         onValueChange={selectKnowledgeBase}
-        onOpenChange={(open) => open && void loadStats()}
+        onOpenChange={(open) => open && void refreshKnowledgeBaseStats()}
       >
         <SelectTrigger className="h-8 w-[180px]">
           {/* Radix echoes the selected item's children here, and those children carry the
