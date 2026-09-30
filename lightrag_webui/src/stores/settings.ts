@@ -7,7 +7,7 @@ import type { ExternalKBRecord, ModelProfile } from '@/api/lightrag'
 
 type Theme = 'dark' | 'light' | 'system'
 type Language = 'en' | 'zh' | 'fr' | 'ar' | 'zh_TW' | 'ru' | 'ja' | 'de' | 'uk' | 'ko' | 'vi'
-type Tab = 'documents' | 'knowledge-graph' | 'retrieval' | 'models' | 'external-kbs' | 'api'
+type Tab = 'documents' | 'knowledge-graph' | 'retrieval' | 'knowledge-bases' | 'models' | 'external-kbs' | 'api'
 
 /**
  * `history_turns` never reaches the backend, which has no such field: it only decides how many
@@ -23,6 +23,10 @@ interface SettingsState {
   // Loaded knowledge bases from backend (runtime only)
   availableKbIds: string[]
   setAvailableKbIds: (kbIds: string[]) => void
+
+  // Knowledge base the backend refuses to delete (runtime only)
+  defaultKbId: string | null
+  setDefaultKbId: (kbId: string | null) => void
 
   // Registered model profiles and external knowledge bases (runtime only)
   availableModelProfiles: ModelProfile[]
@@ -115,6 +119,7 @@ const useSettingsStoreBase = create<SettingsState>()(
     (set) => ({
       selectedKbId: 'default',
       availableKbIds: ['default'],
+      defaultKbId: null,
       availableModelProfiles: [],
       availableExternalKBs: [],
       theme: 'system',
@@ -186,6 +191,8 @@ const useSettingsStoreBase = create<SettingsState>()(
             : nextAvailableKbIds[0]
         })
       },
+
+      setDefaultKbId: (defaultKbId: string | null) => set({ defaultKbId }),
 
       setAvailableModelProfiles: (availableModelProfiles: ModelProfile[]) =>
         set({ availableModelProfiles: availableModelProfiles || [] }),
@@ -298,7 +305,7 @@ const useSettingsStoreBase = create<SettingsState>()(
     {
       name: 'settings-storage',
       storage: createJSONStorage(() => localStorage),
-      version: 24,
+      version: 25,
       migrate: (state: any, version: number) => {
         if (version < 2) {
           state.showEdgeLabel = false

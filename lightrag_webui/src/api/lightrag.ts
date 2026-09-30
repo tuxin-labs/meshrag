@@ -1404,12 +1404,13 @@ export const getDocumentsPaginated = async (request: DocumentsRequest): Promise<
 }
 
 /**
- * Get counts of documents by status
- * @returns Promise with status counts response
+ * Get counts of documents by status.
+ * @param kbId Optional knowledge base to inspect; defaults to the selected one.
  */
-export const getDocumentStatusCounts = async (): Promise<StatusCountsResponse> => {
+export const getDocumentStatusCounts = async (kbId?: string): Promise<StatusCountsResponse> => {
   const response = await axiosInstance.get('/documents/status_counts', {
-    params: withKbQueryParam()
+    // withKbQueryParam always pins the selected KB, so an explicit one bypasses it.
+    params: kbId ? { kb_id: kbId } : withKbQueryParam()
   })
   return response.data
 }

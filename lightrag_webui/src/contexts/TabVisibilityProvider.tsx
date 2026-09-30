@@ -22,6 +22,7 @@ export const TabVisibilityProvider: React.FC<TabVisibilityProviderProps> = ({ ch
     'retrieval': true,
     'models': true,
     'external-kbs': true,
+    'knowledge-bases': true,
     'api': true
   }));
 
@@ -34,6 +35,7 @@ export const TabVisibilityProvider: React.FC<TabVisibilityProviderProps> = ({ ch
       'retrieval': true,
       'models': true,
       'external-kbs': true,
+      'knowledge-bases': true,
       'api': true
     }));
   }, [currentTab]);

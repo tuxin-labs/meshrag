@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   BookOpenIcon,
   CpuIcon,
+  DatabaseIcon,
   FileTextIcon,
   MessageSquareTextIcon,
   NetworkIcon,
@@ -35,6 +36,7 @@ const navGroups: { key: string; fallback: string; items: NavItem[] }[] = [
     key: 'nav.configuration',
     fallback: 'Configuration',
     items: [
+      { value: 'knowledge-bases', icon: DatabaseIcon, labelKey: 'header.knowledgeBases', fallback: 'Knowledge Bases' },
       { value: 'models', icon: CpuIcon, labelKey: 'header.models', fallback: 'Models' },
       { value: 'external-kbs', icon: PlugIcon, labelKey: 'header.externalKbs', fallback: 'External KBs' },
       { value: 'api', icon: BookOpenIcon, labelKey: 'header.api', fallback: 'API' }

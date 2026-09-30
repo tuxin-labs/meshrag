@@ -40,7 +40,8 @@
     "kbCreateDescription": "创建一个相互隔离的知识库，并切换到它。",
     "kbCreatePlaceholder": "请输入知识库 ID",
     "kbCreateRequired": "知识库 ID 不能为空",
-    "kbCreateSuccess": "知识库已创建"
+    "kbCreateSuccess": "知识库已创建",
+    "knowledgeBases": "知识库"
   },
   "login": {
     "description": "请输入您的账号和密码登录系统",
@@ -231,6 +232,18 @@
       "emptyText": "文本内容不能为空",
       "noFileSource": "该文档没有可用的文件来源，无法更新",
       "error": "更新失败：{{error}}"
+    },
+    "insertText": {
+      "tooltip": "录入纯文本",
+      "button": "录入文本",
+      "title": "录入文本",
+      "description": "直接把文本提交到当前知识库进行索引。",
+      "sourcePlaceholder": "文件来源（可选，用于后续定位文档）",
+      "textPlaceholder": "粘贴要索引的文本",
+      "submitting": "提交中",
+      "confirm": "提交",
+      "success": "文本已提交索引",
+      "empty": "文本内容不能为空"
     }
   },
   "graphPanel": {
@@ -670,6 +683,26 @@
       "url": "地址",
       "topK": "Top K",
       "apiKey": "密钥",
+      "actions": "操作"
+    }
+  },
+  "kbManager": {
+    "title": "知识库管理",
+    "description": "每个知识库拥有独立的图谱、向量与文档数据。",
+    "create": "新建知识库",
+    "createDescription": "标识符会作为存储工作目录，请使用文件名安全的字符。",
+    "empty": "暂无知识库。",
+    "default": "默认",
+    "inUse": "使用中",
+    "switched": "当前",
+    "switch": "切换",
+    "delete": "删除知识库",
+    "deleteHasDocuments": "该知识库仍有 {{count}} 个文档。",
+    "duplicateId": "该知识库已存在",
+    "columns": {
+      "name": "名称",
+      "documents": "文档数",
+      "status": "状态",
       "actions": "操作"
     }
   }

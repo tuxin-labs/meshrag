@@ -40,7 +40,8 @@
     "kbCreateDescription": "Create a new isolated knowledge base and switch to it.",
     "kbCreatePlaceholder": "Enter knowledge base ID",
     "kbCreateRequired": "Knowledge base ID is required",
-    "kbCreateSuccess": "Knowledge base created"
+    "kbCreateSuccess": "Knowledge base created",
+    "knowledgeBases": "Knowledge Bases"
   },
   "login": {
     "description": "Please enter your account and password to log in to the system",
@@ -231,6 +232,18 @@
       "emptyText": "Text is required",
       "noFileSource": "This document has no file source, so it cannot be updated",
       "error": "Update failed: {{error}}"
+    },
+    "insertText": {
+      "tooltip": "Index plain text",
+      "button": "Add text",
+      "title": "Insert Text",
+      "description": "Submit text straight into the current knowledge base.",
+      "sourcePlaceholder": "File source (optional, used to locate the document later)",
+      "textPlaceholder": "Paste the text to index",
+      "submitting": "Submitting",
+      "confirm": "Submit",
+      "success": "Text submitted for indexing",
+      "empty": "Text is required"
     }
   },
   "graphPanel": {
@@ -670,6 +683,26 @@
       "url": "Url",
       "topK": "Top K",
       "apiKey": "Key",
+      "actions": "Actions"
+    }
+  },
+  "kbManager": {
+    "title": "Knowledge Bases",
+    "description": "Each base keeps its own graph, vectors and documents.",
+    "create": "New knowledge base",
+    "createDescription": "The identifier is used as the storage workspace, so keep it filesystem safe.",
+    "empty": "No knowledge bases found.",
+    "default": "default",
+    "inUse": "in use",
+    "switched": "Current",
+    "switch": "Use",
+    "delete": "Delete knowledge base",
+    "deleteHasDocuments": "This base still holds {{count}} document(s).",
+    "duplicateId": "That knowledge base already exists",
+    "columns": {
+      "name": "Name",
+      "documents": "Documents",
+      "status": "Status",
       "actions": "Actions"
     }
   }

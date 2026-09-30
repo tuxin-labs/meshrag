@@ -19,6 +19,7 @@ import DocumentManager from '@/features/DocumentManager'
 import RetrievalTesting from '@/features/RetrievalTesting'
 import ApiSite from '@/features/ApiSite'
 import ModelManager from '@/features/ModelManager'
+import KnowledgeBaseManager from '@/features/KnowledgeBaseManager'
 import ExternalKBManager from '@/features/ExternalKBManager'
 
 import { Tabs, TabsContent } from '@/components/ui/Tabs'
@@ -220,6 +221,9 @@ function App() {
                   </TabsContent>
                   <TabsContent value="retrieval" className="absolute top-0 right-0 bottom-0 left-0 overflow-hidden">
                     <RetrievalTesting />
+                  </TabsContent>
+                  <TabsContent value="knowledge-bases" className="absolute top-0 right-0 bottom-0 left-0 overflow-auto">
+                    <KnowledgeBaseManager />
                   </TabsContent>
                   <TabsContent value="models" className="absolute top-0 right-0 bottom-0 left-0 overflow-auto">
                     <ModelManager />

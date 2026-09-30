@@ -1134,6 +1134,7 @@ def create_app(args):
             default_kb=args.default_kb,
             registry_path=registry_path,
             kb_discovery=discover_knowledge_bases,
+            file_stats_dir=args.working_dir if is_file_based_storage else None,
         )
     except Exception as e:
         logger.error(f"Failed to initialize RAGManager: {e}")
@@ -1185,6 +1186,14 @@ def create_app(args):
             "status": "success",
             "knowledge_bases": rag_manager.list_knowledge_bases(),
             "default_kb": rag_manager.default_kb,
+        }
+
+    @app.get("/knowledge_bases/stats", tags=["Knowledge Base Management"])
+    async def knowledge_base_stats():
+        return {
+            "status": "success",
+            "default_kb": rag_manager.default_kb,
+            "knowledge_bases": await rag_manager.list_kb_stats(),
         }
 
     @app.post("/knowledge_bases", tags=["Knowledge Base Management"])

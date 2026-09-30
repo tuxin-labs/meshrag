@@ -34,6 +34,7 @@ class RAGManager:
         max_instances: int = 50,
         registry_path: Optional[str] = None,
         kb_discovery: Optional[Callable[[], List[str]]] = None,
+        file_stats_dir: Optional[str] = None,
     ):
         # LRU cache: oldest at beginning, newest at end
         self._instances: "OrderedDict[str, LightRAG]" = OrderedDict()
@@ -42,6 +43,8 @@ class RAGManager:
         self.max_instances = max_instances
         self._registry_path = registry_path
         self._kb_discovery = kb_discovery
+        # Workspace root of file-backed storages, used to count cold KBs on disk
+        self._file_stats_dir = file_stats_dir
         self._known_kbs: set[str] = set()
         self._lock = asyncio.Lock()
         self._load_known_kbs()
@@ -172,6 +175,104 @@ class RAGManager:
     def list_knowledge_bases(self) -> List[str]:
         """List all known knowledge bases, not only the ones loaded in memory."""
         return self._ordered_known_kbs()
+
+    def is_loaded(self, kb_id: str) -> bool:
+        """Whether the KB already has a RAG instance in memory."""
+        return kb_id in self._instances
+
+    async def get_kb_stats(self, kb_id: str) -> Dict[str, Any]:
+        """Count documents and entities of a knowledge base through its storages.
+
+        Entity counting uses ``get_all_labels()``, whose storage docs warn against
+        large graphs, so only call this for a KB that is already in memory.
+        """
+        rag = await self.get_rag(kb_id)
+        status_counts = await rag.doc_status.get_all_status_counts()
+        labels = await rag.chunk_entity_relation_graph.get_all_labels()
+        return {
+            "kb_id": kb_id,
+            "documents": int(status_counts.get("all", 0)),
+            "documents_by_status": {
+                status: int(count)
+                for status, count in status_counts.items()
+                if status != "all"
+            },
+            "entities": len(labels),
+        }
+
+    def _read_stats_from_files(self, kb_id: str) -> Dict[str, Any]:
+        """Read KB counters straight from the workspace files of a cold knowledge base.
+
+        Avoids initializing a LightRAG instance just to count things, which would
+        otherwise load every registered KB whenever the picker is opened.
+        """
+        entry: Dict[str, Any] = {
+            "kb_id": kb_id,
+            "documents": None,
+            "documents_by_status": {},
+            "entities": None,
+        }
+        if not self._file_stats_dir:
+            return entry
+
+        workspace_dir = os.path.join(self._file_stats_dir, kb_id)
+
+        doc_status_file = os.path.join(workspace_dir, "kv_store_doc_status.json")
+        if os.path.isfile(doc_status_file):
+            try:
+                with open(doc_status_file, "r", encoding="utf-8") as f:
+                    documents = json.load(f)
+                by_status: Dict[str, int] = {}
+                for record in documents.values():
+                    status = str(record.get("status", "unknown")) if isinstance(record, dict) else "unknown"
+                    by_status[status] = by_status.get(status, 0) + 1
+                entry["documents"] = sum(by_status.values())
+                entry["documents_by_status"] = by_status
+            except Exception as e:
+                logger.warning(f"Failed to read doc status file for KB {kb_id}: {e}")
+
+        graph_file = os.path.join(workspace_dir, "graph_chunk_entity_relation.graphml")
+        if os.path.isfile(graph_file):
+            try:
+                entry["entities"] = self._count_graphml_nodes(graph_file)
+            except Exception as e:
+                logger.warning(f"Failed to count graph nodes for KB {kb_id}: {e}")
+
+        return entry
+
+    @staticmethod
+    def _count_graphml_nodes(graphml_file: str) -> int:
+        """Count GraphML node tags while keeping only a chunk of the file in memory."""
+
+        token = b'<node id="'
+        carry = b""
+        total = 0
+        with open(graphml_file, "rb") as f:
+            while True:
+                chunk = f.read(1 << 20)
+                if not chunk:
+                    break
+                buffer = carry + chunk
+                total += buffer.count(token)
+                carry = buffer[-(len(token) - 1) :]
+        return total
+
+    async def list_kb_stats(self) -> List[Dict[str, Any]]:
+        """Document and entity counts for every known knowledge base."""
+        stats: List[Dict[str, Any]] = []
+        for kb_id in self.list_knowledge_bases():
+            loaded = self.is_loaded(kb_id)
+            entry: Optional[Dict[str, Any]] = None
+            if loaded:
+                try:
+                    entry = await asyncio.wait_for(self.get_kb_stats(kb_id), timeout=5.0)
+                except Exception as e:
+                    logger.warning(f"Failed to collect in-memory stats for KB {kb_id}: {e}")
+            if entry is None:
+                entry = await asyncio.to_thread(self._read_stats_from_files, kb_id)
+            entry["loaded"] = loaded
+            stats.append(entry)
+        return stats
 
     async def delete_knowledge_base(
         self, kb_id: str, drop_storage: bool = True
