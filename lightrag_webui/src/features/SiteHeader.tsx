@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Button from '@/components/ui/Button'
 import { SiteInfo, webuiPrefix } from '@/lib/constants'
 import AppSettings from '@/components/AppSettings'
@@ -7,15 +7,18 @@ import { useAuthStore } from '@/stores/state'
 import { useTranslation } from 'react-i18next'
 import { navigationService } from '@/services/navigation'
 import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
+import { listKnowledgeBaseStats } from '@/api/lightrag'
+import type { KnowledgeBaseStats } from '@/api/lightrag'
 import { ZapIcon, GithubIcon, LogOutIcon, DatabaseIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/Select'
 
 function KnowledgeBaseSwitcher() {
   const { t } = useTranslation()
   const selectedKbId = useSettingsStore.use.selectedKbId()
   const availableKbIds = useSettingsStore.use.availableKbIds()
   const { refreshKnowledgeBases, selectKnowledgeBase } = useKnowledgeBase()
+  const [statsById, setStatsById] = useState<Record<string, KnowledgeBaseStats>>({})
 
   useEffect(() => {
     refreshKnowledgeBases().catch((error) => {
@@ -23,17 +26,51 @@ function KnowledgeBaseSwitcher() {
     })
   }, [refreshKnowledgeBases])
 
+  const loadStats = useCallback(async () => {
+    try {
+      const response = await listKnowledgeBaseStats()
+      setStatsById(
+        Object.fromEntries(response.knowledge_bases.map((stats) => [stats.kb_id, stats]))
+      )
+    } catch (error) {
+      console.error('Failed to load knowledge base stats:', error)
+    }
+  }, [])
+
+  const statsLabel = (kbId: string) => {
+    const stats = statsById[kbId]
+    if (!stats || (stats.documents === null && stats.entities === null)) {
+      return null
+    }
+    return t('header.kbStatsHint', {
+      defaultValue: '{{documents}} docs · {{entities}} entities',
+      documents: stats.documents ?? '-',
+      entities: stats.entities ?? '-'
+    })
+  }
+
   return (
     <div className="ml-4 flex shrink-0 items-center gap-2">
       <DatabaseIcon className="size-3.5 shrink-0 text-gray-500 dark:text-gray-400" aria-hidden="true" />
-      <Select value={selectedKbId} onValueChange={selectKnowledgeBase}>
+      <Select
+        value={selectedKbId}
+        onValueChange={selectKnowledgeBase}
+        onOpenChange={(open) => open && void loadStats()}
+      >
         <SelectTrigger className="h-8 w-[180px]">
-          <SelectValue placeholder={t('header.kbSelect', { defaultValue: 'Select knowledge base' })} />
+          {/* Radix echoes the selected item's children here, and those children carry the
+              stats row, so the trigger renders the bare id from the store instead. */}
+          <span className="truncate">
+            {selectedKbId || t('header.kbSelect', { defaultValue: 'Select knowledge base' })}
+          </span>
         </SelectTrigger>
         <SelectContent>
           {availableKbIds.map((kbId) => (
             <SelectItem key={kbId} value={kbId}>
-              {kbId}
+              <span className="flex w-full items-center justify-between gap-3">
+                <span className="truncate">{kbId}</span>
+                <span className="text-muted-foreground text-xs">{statsLabel(kbId)}</span>
+              </span>
             </SelectItem>
           ))}
         </SelectContent>

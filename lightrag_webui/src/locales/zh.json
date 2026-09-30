@@ -41,7 +41,8 @@
     "kbCreatePlaceholder": "请输入知识库 ID",
     "kbCreateRequired": "知识库 ID 不能为空",
     "kbCreateSuccess": "知识库已创建",
-    "knowledgeBases": "知识库"
+    "knowledgeBases": "知识库",
+    "kbStatsHint": "{{documents}} 文档 · {{entities}} 实体"
   },
   "login": {
     "description": "请输入您的账号和密码登录系统",
@@ -703,7 +704,8 @@
       "name": "名称",
       "documents": "文档数",
       "status": "状态",
-      "actions": "操作"
+      "actions": "操作",
+      "entities": "实体"
     }
   }
 }

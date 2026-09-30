@@ -31,7 +31,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/AlertDialog'
-import { getDocumentStatusCounts } from '@/api/lightrag'
+import { listKnowledgeBaseStats } from '@/api/lightrag'
+import type { KnowledgeBaseStats } from '@/api/lightrag'
 import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
 import { useSettingsStore } from '@/stores/settings'
 import { errorMessage } from '@/lib/utils'
@@ -47,11 +48,11 @@ import {
 type KbRow = {
   id: string
   total: number | null
+  entities: number | null
   processed: number
   processing: number
   pending: number
   failed: number
-  loading: boolean
 }
 
 const countOf = (counts: Record<string, number>, ...keys: string[]) => {
@@ -63,6 +64,16 @@ const countOf = (counts: Record<string, number>, ...keys: string[]) => {
   }
   return 0
 }
+
+const toRow = (stats: KnowledgeBaseStats): KbRow => ({
+  id: stats.kb_id,
+  total: stats.documents,
+  entities: stats.entities,
+  processed: countOf(stats.documents_by_status, 'processed'),
+  processing: countOf(stats.documents_by_status, 'processing'),
+  pending: countOf(stats.documents_by_status, 'pending'),
+  failed: countOf(stats.documents_by_status, 'failed')
+})
 
 export default function KnowledgeBaseManager() {
   const { t } = useTranslation()
@@ -85,34 +96,17 @@ export default function KnowledgeBaseManager() {
     setIsLoading(true)
     try {
       const kbIds = await refreshKnowledgeBases()
-      setRows(kbIds.map((id) => ({
-        id,
-        total: null,
-        processed: 0,
-        processing: 0,
-        pending: 0,
-        failed: 0,
-        loading: true
-      })))
-
-      // Counts are per knowledge base, so each one needs its own status_counts call.
-      await Promise.all(kbIds.map(async (id) => {
-        try {
-          const { status_counts: counts } = await getDocumentStatusCounts(id)
-          setRows((prev) => prev.map((row) => row.id === id ? {
-            id,
-            total: countOf(counts, 'all'),
-            processed: countOf(counts, 'processed'),
-            processing: countOf(counts, 'processing'),
-            pending: countOf(counts, 'pending'),
-            failed: countOf(counts, 'failed'),
-            loading: false
-          } : row))
-        } catch (error) {
-          console.error(`Failed to load document counts for "${id}":`, error)
-          setRows((prev) => prev.map((row) => row.id === id ? { ...row, loading: false } : row))
+      // An older server has no stats route; the list still has to render without counts.
+      const statsResponse = await listKnowledgeBaseStats().catch((error) => {
+        console.error('Failed to load knowledge base stats:', error)
+        return null
+      })
+      const statsById = new Map((statsResponse?.knowledge_bases ?? []).map((s) => [s.kb_id, s]))
+      setRows(kbIds.map((id) =>
+        statsById.has(id) ? toRow(statsById.get(id)!) : {
+          id, total: null, entities: null, processed: 0, processing: 0, pending: 0, failed: 0
         }
-      }))
+      ))
     } catch (error) {
       toast.error(errorMessage(error))
     } finally {
@@ -204,6 +198,7 @@ export default function KnowledgeBaseManager() {
               <TableRow className="border-b">
                 <TableHead>{t('kbManager.columns.name', { defaultValue: 'Name' })}</TableHead>
                 <TableHead className="text-center">{t('kbManager.columns.documents', { defaultValue: 'Documents' })}</TableHead>
+                <TableHead className="text-center">{t('kbManager.columns.entities', { defaultValue: 'Entities' })}</TableHead>
                 <TableHead>{t('kbManager.columns.status', { defaultValue: 'Status' })}</TableHead>
                 <TableHead className="w-28 text-center">{t('kbManager.columns.actions', { defaultValue: 'Actions' })}</TableHead>
               </TableRow>
@@ -211,7 +206,7 @@ export default function KnowledgeBaseManager() {
             <TableBody className="text-sm">
               {rows.length === 0 && !isLoading && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-muted-foreground text-center py-8">
+                  <TableCell colSpan={5} className="text-muted-foreground text-center py-8">
                     {t('kbManager.empty', { defaultValue: 'No knowledge bases found.' })}
                   </TableCell>
                 </TableRow>
@@ -236,25 +231,30 @@ export default function KnowledgeBaseManager() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      {row.loading
-                        ? <LoaderIcon className="size-3.5 animate-spin inline" />
-                        : row.total ?? '-'}
+                      {isLoading ? '-' : row.total ?? '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {isLoading ? '-' : row.entities ?? '-'}
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
-                        <span className="text-green-600">
-                          {t('documentPanel.documentManager.status.completed')} {row.processed}
-                        </span>
-                        <span className="text-blue-600">
-                          {t('documentPanel.documentManager.status.processing')} {row.processing}
-                        </span>
-                        <span className="text-yellow-600">
-                          {t('documentPanel.documentManager.status.pending')} {row.pending}
-                        </span>
-                        <span className="text-red-600">
-                          {t('documentPanel.documentManager.status.failed')} {row.failed}
-                        </span>
-                      </div>
+                      {row.total === null ? (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+                          <span className="text-green-600">
+                            {t('documentPanel.documentManager.status.completed')} {row.processed}
+                          </span>
+                          <span className="text-blue-600">
+                            {t('documentPanel.documentManager.status.processing')} {row.processing}
+                          </span>
+                          <span className="text-yellow-600">
+                            {t('documentPanel.documentManager.status.pending')} {row.pending}
+                          </span>
+                          <span className="text-red-600">
+                            {t('documentPanel.documentManager.status.failed')} {row.failed}
+                          </span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">

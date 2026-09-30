@@ -1404,19 +1404,41 @@ export const getDocumentsPaginated = async (request: DocumentsRequest): Promise<
 }
 
 /**
- * Get counts of documents by status.
- * @param kbId Optional knowledge base to inspect; defaults to the selected one.
+ * Get counts of documents by status
+ * @returns Promise with status counts response
  */
-export const getDocumentStatusCounts = async (kbId?: string): Promise<StatusCountsResponse> => {
+export const getDocumentStatusCounts = async (): Promise<StatusCountsResponse> => {
   const response = await axiosInstance.get('/documents/status_counts', {
-    // withKbQueryParam always pins the selected KB, so an explicit one bypasses it.
-    params: kbId ? { kb_id: kbId } : withKbQueryParam()
+    params: withKbQueryParam()
   })
   return response.data
 }
 
 export const listKnowledgeBases = async (): Promise<KnowledgeBaseListResponse> => {
   const response = await axiosInstance.get<KnowledgeBaseListResponse>('/knowledge_bases')
+  return response.data
+}
+
+/**
+ * Per-KB counters in one round trip. `documents`/`entities` are null when the backend
+ * could not count that base, and `loaded` says whether it is resident in memory.
+ */
+export type KnowledgeBaseStats = {
+  kb_id: string
+  documents: number | null
+  documents_by_status: Record<string, number>
+  entities: number | null
+  loaded: boolean
+}
+
+export type KnowledgeBaseStatsResponse = {
+  status: 'success'
+  default_kb?: string
+  knowledge_bases: KnowledgeBaseStats[]
+}
+
+export const listKnowledgeBaseStats = async (): Promise<KnowledgeBaseStatsResponse> => {
+  const response = await axiosInstance.get<KnowledgeBaseStatsResponse>('/knowledge_bases/stats')
   return response.data
 }
 

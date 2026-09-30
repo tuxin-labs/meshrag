@@ -41,7 +41,8 @@
     "kbCreatePlaceholder": "Enter knowledge base ID",
     "kbCreateRequired": "Knowledge base ID is required",
     "kbCreateSuccess": "Knowledge base created",
-    "knowledgeBases": "Knowledge Bases"
+    "knowledgeBases": "Knowledge Bases",
+    "kbStatsHint": "{{documents}} docs · {{entities}} entities"
   },
   "login": {
     "description": "Please enter your account and password to log in to the system",
@@ -703,7 +704,8 @@
       "name": "Name",
       "documents": "Documents",
       "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "entities": "Entities"
     }
   }
 }

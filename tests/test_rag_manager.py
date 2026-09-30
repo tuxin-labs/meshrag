@@ -1567,3 +1567,130 @@ class TestMultiKbQueryPaths:
 
         with pytest.raises(ValueError, match="At least one kb_id or external_kbs"):
             await manager.multi_kb_query("query", [], mock_query_param)
+
+
+@pytest.mark.offline
+class TestKBStats:
+    """测试知识库统计（get_kb_stats、list_kb_stats 与文件回退）。"""
+
+    @pytest.mark.asyncio
+    async def test_loaded_kb_stats_use_storages(self):
+        """已加载的 KB 应通过存储服务统计文档与实体数。"""
+        from lightrag.api.rag_manager import RAGManager
+
+        mock_rag = MagicMock()
+        mock_rag.initialize_storages = AsyncMock()
+        mock_rag.check_and_migrate_data = AsyncMock()
+        mock_rag.doc_status.get_all_status_counts = AsyncMock(
+            return_value={"pending": 1, "processed": 2, "all": 3}
+        )
+        mock_rag.chunk_entity_relation_graph.get_all_labels = AsyncMock(
+            return_value=["A", "B"]
+        )
+
+        manager = RAGManager(rag_factory=lambda kb_id: mock_rag, default_kb="kb1")
+        stats = await manager.get_kb_stats("kb1")
+
+        assert stats["kb_id"] == "kb1"
+        assert stats["documents"] == 3
+        assert stats["entities"] == 2
+        assert stats["documents_by_status"] == {"pending": 1, "processed": 2}
+
+    @pytest.mark.asyncio
+    async def test_cold_kb_stats_read_files_without_initializing(self, tmp_path):
+        """未加载的 KB 应直接读工作区文件，不得创建 RAG 实例。"""
+        from lightrag.api.rag_manager import RAGManager
+
+        kb_dir = tmp_path / "cold"
+        kb_dir.mkdir()
+        (kb_dir / "kv_store_doc_status.json").write_text(
+            json.dumps({"doc-1": {"status": "processed"}, "doc-2": {"status": "failed"}}),
+            encoding="utf-8",
+        )
+        (kb_dir / "graph_chunk_entity_relation.graphml").write_text(
+            '<graphml><node id="A"/><node id="B"/></graphml>', encoding="utf-8"
+        )
+
+        def failing_factory(kb_id):
+            raise AssertionError("cold KB stats must not build a RAG instance")
+
+        manager = RAGManager(
+            rag_factory=failing_factory,
+            default_kb="cold",
+            kb_discovery=lambda: ["cold"],
+            file_stats_dir=str(tmp_path),
+        )
+
+        assert await manager.list_kb_stats() == [
+            {
+                "kb_id": "cold",
+                "documents": 2,
+                "documents_by_status": {"processed": 1, "failed": 1},
+                "entities": 2,
+                "loaded": False,
+            }
+        ]
+
+    @pytest.mark.asyncio
+    async def test_missing_workspace_files_yield_null_counts(self, tmp_path):
+        """工作区没有文档与图谱文件时应返回空计数而不是报错。"""
+        from lightrag.api.rag_manager import RAGManager
+
+        (tmp_path / "empty").mkdir()
+        manager = RAGManager(
+            rag_factory=lambda kb_id: MagicMock(),
+            default_kb="empty",
+            kb_discovery=lambda: ["empty"],
+            file_stats_dir=str(tmp_path),
+        )
+
+        stats = await manager.list_kb_stats()
+
+        assert stats[0]["documents"] is None
+        assert stats[0]["entities"] is None
+        assert stats[0]["documents_by_status"] == {}
+
+    @pytest.mark.asyncio
+    async def test_stats_fall_back_to_files_when_storage_fails(self, tmp_path):
+        """内存统计失败时应回退到文件统计，不丢这一行。"""
+        from lightrag.api.rag_manager import RAGManager
+
+        kb_dir = tmp_path / "broken"
+        kb_dir.mkdir()
+        (kb_dir / "kv_store_doc_status.json").write_text(
+            json.dumps({"doc-1": {"status": "processed"}}), encoding="utf-8"
+        )
+
+        mock_rag = MagicMock()
+        mock_rag.initialize_storages = AsyncMock()
+        mock_rag.check_and_migrate_data = AsyncMock()
+        mock_rag.doc_status.get_all_status_counts = AsyncMock(
+            side_effect=RuntimeError("backend down")
+        )
+
+        manager = RAGManager(
+            rag_factory=lambda kb_id: mock_rag,
+            default_kb="broken",
+            kb_discovery=lambda: ["broken"],
+            file_stats_dir=str(tmp_path),
+        )
+        await manager.get_rag("broken")
+
+        stats = await manager.list_kb_stats()
+
+        assert stats[0]["loaded"] is True
+        assert stats[0]["documents"] == 1
+        assert stats[0]["entities"] is None
+
+    def test_graphml_counter_spans_read_chunk_boundary(self, tmp_path):
+        """跨越读取块边界的 node 标签起始串也应被计入。"""
+        from lightrag.api.rag_manager import RAGManager
+
+        graph_file = tmp_path / "graph_chunk_entity_relation.graphml"
+        marker = '<node id="'
+        chunk_bytes = 1 << 20
+        padding = "<graphml>"
+        padding += "x" * (chunk_bytes - len(padding) - (len(marker) - 1))
+        graph_file.write_text(padding + '<node id="A"/><node id="B"/><graphml/>', encoding="utf-8")
+
+        assert RAGManager._count_graphml_nodes(str(graph_file)) == 2
