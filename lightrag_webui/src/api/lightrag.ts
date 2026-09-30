@@ -552,7 +552,16 @@ const isBlank = (value?: string) => !value || value.trim().length === 0
  *   array is a deliberate external-only query.
  */
 export const prepareQueryRequest = (request: QueryRequest): QueryRequest => {
-  const { external_kbs, kb_ids, ...rest } = request
+  const {
+    external_kbs,
+    kb_ids,
+    llm_binding,
+    llm_model,
+    llm_binding_host,
+    llm_binding_api_key,
+    llm_default_headers,
+    ...rest
+  } = request
   const prepared: QueryRequest = { ...rest }
 
   const validExternalKbs = (external_kbs ?? []).filter((kb) => !isBlank(kb.url))
@@ -560,15 +569,17 @@ export const prepareQueryRequest = (request: QueryRequest): QueryRequest => {
     prepared.external_kbs = validExternalKbs
   }
 
-  if (!isBlank(request.llm_binding) && !isBlank(request.llm_model) && !isBlank(request.llm_binding_host)) {
-    prepared.llm_binding = request.llm_binding
-    prepared.llm_model = request.llm_model
-    prepared.llm_binding_host = request.llm_binding_host
-    if (!isBlank(request.llm_binding_api_key)) {
-      prepared.llm_binding_api_key = request.llm_binding_api_key
+  // Only ever send the override as a whole: the backend rejects it unless binding, model and
+  // host all arrive together, so a partial override has to be dropped rather than forwarded.
+  if (!isBlank(llm_binding) && !isBlank(llm_model) && !isBlank(llm_binding_host)) {
+    prepared.llm_binding = llm_binding
+    prepared.llm_model = llm_model
+    prepared.llm_binding_host = llm_binding_host
+    if (!isBlank(llm_binding_api_key)) {
+      prepared.llm_binding_api_key = llm_binding_api_key
     }
-    if (request.llm_default_headers && Object.keys(request.llm_default_headers).length > 0) {
-      prepared.llm_default_headers = request.llm_default_headers
+    if (llm_default_headers && Object.keys(llm_default_headers).length > 0) {
+      prepared.llm_default_headers = llm_default_headers
     }
   }
 
