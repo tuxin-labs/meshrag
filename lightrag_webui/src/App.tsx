@@ -1,13 +1,16 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import ThemeProvider from '@/components/ThemeProvider'
 import TabVisibilityProvider from '@/contexts/TabVisibilityProvider'
 import ApiKeyAlert from '@/components/ApiKeyAlert'
 import StatusIndicator from '@/components/status/StatusIndicator'
 import { SiteInfo, webuiPrefix } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 import { useBackendState, useAuthStore } from '@/stores/state'
 import { useSettingsStore } from '@/stores/settings'
 import { getAuthStatus } from '@/api/lightrag'
 import SiteHeader from '@/features/SiteHeader'
+import SideNav from '@/features/SideNav'
 import { InvalidApiKeyError, RequireApiKeError } from '@/api/lightrag'
 import { ZapIcon } from 'lucide-react'
 
@@ -21,9 +24,11 @@ import ExternalKBManager from '@/features/ExternalKBManager'
 import { Tabs, TabsContent } from '@/components/ui/Tabs'
 
 function App() {
+  const { t } = useTranslation()
   const message = useBackendState.use.message()
   const enableHealthCheck = useSettingsStore.use.enableHealthCheck()
   const currentTab = useSettingsStore.use.currentTab()
+  const sidebarCollapsed = useSettingsStore.use.sidebarCollapsed()
   const [apiKeyAlertOpen, setApiKeyAlertOpen] = useState(false)
   const [initializing, setInitializing] = useState(true) // Add initializing state
   const versionCheckRef = useRef(false); // Prevent duplicate calls in Vite dev mode
@@ -168,31 +173,30 @@ function App() {
     <ThemeProvider>
       <TabVisibilityProvider>
         {initializing ? (
-          // Loading state while initializing with simplified header
-          <div className="flex h-screen w-screen flex-col">
-            {/* Simplified header during initialization - matches SiteHeader structure */}
-            <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 flex h-10 w-full border-b px-4 backdrop-blur">
-              <div className="min-w-[200px] w-auto flex items-center">
-                <a href={webuiPrefix} className="flex items-center gap-2">
-                  <ZapIcon className="size-4 text-emerald-400" aria-hidden="true" />
-                  <span className="font-bold md:inline-block">{SiteInfo.name}</span>
-                </a>
-              </div>
+          // Loading state mirroring the rail + header shell so hydration does not shift the layout
+          <div className="flex h-screen w-screen overflow-hidden">
+            <div
+              aria-hidden="true"
+              className={cn('bg-card border-r shrink-0', sidebarCollapsed ? 'w-14' : 'w-52')}
+            />
+            <div className="flex min-w-0 grow flex-col overflow-hidden">
+              <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 flex h-10 w-full shrink-0 border-b px-4 backdrop-blur">
+                <div className="flex min-w-0 flex-1 items-center">
+                  <a href={webuiPrefix} className="flex items-center gap-2">
+                    <ZapIcon className="size-4 text-emerald-400" aria-hidden="true" />
+                    <span className="font-bold md:inline-block">{SiteInfo.name}</span>
+                  </a>
+                </div>
+                <nav className="flex min-w-0 flex-1 items-center justify-end" />
+              </header>
 
-              {/* Empty middle section to maintain layout */}
-              <div className="flex h-10 flex-1 items-center justify-center">
-              </div>
-
-              {/* Empty right section to maintain layout */}
-              <nav className="w-[200px] flex items-center justify-end">
-              </nav>
-            </header>
-
-            {/* Loading indicator in content area */}
-            <div className="flex flex-1 items-center justify-center">
-              <div className="text-center">
-                <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
-                <p>Initializing...</p>
+              <div className="flex flex-1 items-center justify-center">
+                <div className="text-center">
+                  <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                  <p className="text-sm text-muted-foreground">
+                    {t('common.initializing', { defaultValue: 'Initializing...' })}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -201,29 +205,32 @@ function App() {
           <main className="flex h-screen w-screen overflow-hidden">
             <Tabs
               defaultValue={currentTab}
-              className="!m-0 flex grow flex-col !p-0 overflow-hidden"
+              className="!m-0 flex grow !p-0 overflow-hidden"
               onValueChange={handleTabChange}
             >
-              <SiteHeader />
-              <div className="relative grow">
-                <TabsContent value="documents" className="absolute top-0 right-0 bottom-0 left-0 overflow-auto">
-                  <DocumentManager />
-                </TabsContent>
-                <TabsContent value="knowledge-graph" className="absolute top-0 right-0 bottom-0 left-0 overflow-hidden">
-                  <GraphViewer />
-                </TabsContent>
-                <TabsContent value="retrieval" className="absolute top-0 right-0 bottom-0 left-0 overflow-hidden">
-                  <RetrievalTesting />
-                </TabsContent>
-                <TabsContent value="models" className="absolute top-0 right-0 bottom-0 left-0 overflow-auto">
-                  <ModelManager />
-                </TabsContent>
-                <TabsContent value="external-kbs" className="absolute top-0 right-0 bottom-0 left-0 overflow-auto">
-                  <ExternalKBManager />
-                </TabsContent>
-                <TabsContent value="api" className="absolute top-0 right-0 bottom-0 left-0 overflow-hidden">
-                  <ApiSite />
-                </TabsContent>
+              <SideNav />
+              <div className="flex min-w-0 grow flex-col overflow-hidden">
+                <SiteHeader />
+                <div className="relative grow">
+                  <TabsContent value="documents" className="absolute top-0 right-0 bottom-0 left-0 overflow-auto">
+                    <DocumentManager />
+                  </TabsContent>
+                  <TabsContent value="knowledge-graph" className="absolute top-0 right-0 bottom-0 left-0 overflow-hidden">
+                    <GraphViewer />
+                  </TabsContent>
+                  <TabsContent value="retrieval" className="absolute top-0 right-0 bottom-0 left-0 overflow-hidden">
+                    <RetrievalTesting />
+                  </TabsContent>
+                  <TabsContent value="models" className="absolute top-0 right-0 bottom-0 left-0 overflow-auto">
+                    <ModelManager />
+                  </TabsContent>
+                  <TabsContent value="external-kbs" className="absolute top-0 right-0 bottom-0 left-0 overflow-auto">
+                    <ExternalKBManager />
+                  </TabsContent>
+                  <TabsContent value="api" className="absolute top-0 right-0 bottom-0 left-0 overflow-hidden">
+                    <ApiSite />
+                  </TabsContent>
+                </div>
               </div>
             </Tabs>
             {enableHealthCheck && <StatusIndicator />}

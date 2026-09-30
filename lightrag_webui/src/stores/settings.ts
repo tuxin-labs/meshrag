@@ -101,6 +101,10 @@ interface SettingsState {
   currentTab: Tab
   setCurrentTab: (tab: Tab) => void
 
+  // Primary navigation rail
+  sidebarCollapsed: boolean
+  setSidebarCollapsed: (collapsed: boolean) => void
+
   // Search label dropdown refresh trigger (non-persistent, runtime only)
   searchLabelDropdownRefreshTrigger: number
   triggerSearchLabelDropdownRefresh: () => void
@@ -239,6 +243,9 @@ const useSettingsStoreBase = create<SettingsState>()(
 
       setCurrentTab: (tab: Tab) => set({ currentTab: tab }),
 
+      sidebarCollapsed: false,
+      setSidebarCollapsed: (sidebarCollapsed: boolean) => set({ sidebarCollapsed }),
+
       setRetrievalHistory: (history: Message[]) => set({ retrievalHistory: history }),
 
       updateQuerySettings: (settings: Partial<RetrievalSettings>) => {
@@ -291,7 +298,7 @@ const useSettingsStoreBase = create<SettingsState>()(
     {
       name: 'settings-storage',
       storage: createJSONStorage(() => localStorage),
-      version: 23,
+      version: 24,
       migrate: (state: any, version: number) => {
         if (version < 2) {
           state.showEdgeLabel = false
@@ -428,6 +435,9 @@ const useSettingsStoreBase = create<SettingsState>()(
           if (Array.isArray(state.querySettings?.kb_ids) && state.querySettings.kb_ids.length === 0) {
             delete state.querySettings.kb_ids
           }
+        }
+        if (version < 24) {
+          if (typeof state.sidebarCollapsed !== 'boolean') state.sidebarCollapsed = false
         }
         return state
       }

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { QueryMode, QueryRequest, listExternalKBs, listModelProfiles } from '@/api/lightrag'
-import { errorMessage } from '@/lib/utils'
+import { cn, errorMessage } from '@/lib/utils'
 // Removed unused import for Text component
 import Checkbox from '@/components/ui/Checkbox'
 import Input from '@/components/ui/Input'
@@ -19,6 +19,40 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, RotateCcw } from 'lucide-react'
+
+/** Collapsible group so the ~15 controls do not all compete for attention at once. */
+const Section = ({
+  title,
+  hint,
+  defaultOpen = false,
+  children
+}: {
+  title: string
+  hint?: string
+  defaultOpen?: boolean
+  children: ReactNode
+}) => {
+  const [open, setOpen] = useState(defaultOpen)
+
+  return (
+    <div className="border-border/60 border-b pb-2 last:border-b-0">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1.5 px-1 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
+      >
+        <ChevronDown className={cn('size-3 shrink-0 transition-transform', !open && '-rotate-90')} />
+        <span className="shrink-0">{title}</span>
+        {!open && hint && (
+          <span className="text-muted-foreground/80 ml-auto min-w-0 truncate text-right text-[11px] font-normal normal-case">
+            {hint}
+          </span>
+        )}
+      </button>
+      {open && <div className="flex flex-col gap-2 px-1 pt-1.5">{children}</div>}
+    </div>
+  )
+}
 
 export default function QuerySettings() {
   const { t } = useTranslation()
@@ -209,6 +243,11 @@ export default function QuerySettings() {
               </div>
             </>
 
+            <Section
+              defaultOpen
+              title={t('retrievePanel.querySettings.groupScope', { defaultValue: 'Retrieval scope' })}
+              hint={`${effectiveKbIds.length} · ${externalKbCount}`}
+            >
             {/* KB Selection */}
             <>
               <TooltipProvider>
@@ -336,6 +375,12 @@ export default function QuerySettings() {
               )}
             </>
 
+            </Section>
+
+            <Section
+              title={t('retrievePanel.querySettings.groupModel', { defaultValue: 'Model' })}
+              hint={selectedProfileLabel}
+            >
             {/* Model profile */}
             <>
               <TooltipProvider>
@@ -386,6 +431,12 @@ export default function QuerySettings() {
               <p className="text-muted-foreground ml-1 truncate text-[11px]">{selectedProfileLabel}</p>
             </>
 
+            </Section>
+
+            <Section
+              title={t('retrievePanel.querySettings.groupParams', { defaultValue: 'Retrieval parameters' })}
+              hint={querySettings.mode}
+            >
             {/* Query Mode */}
             <>
               <TooltipProvider>
@@ -629,6 +680,14 @@ export default function QuerySettings() {
               </div>
             </>
 
+            </Section>
+
+            <Section
+              title={t('retrievePanel.querySettings.groupOutput', { defaultValue: 'Output' })}
+              hint={querySettings.stream
+                ? t('retrievePanel.querySettings.streamOn', { defaultValue: 'streaming' })
+                : t('retrievePanel.querySettings.streamOff', { defaultValue: 'blocking' })}
+            >
             {/* Toggle Options */}
             <>
               <div className="flex items-center gap-2">
@@ -773,6 +832,7 @@ export default function QuerySettings() {
                 />
               </div>
             </>
+            </Section>
 
           </div>
         </div>

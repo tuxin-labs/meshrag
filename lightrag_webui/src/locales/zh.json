@@ -6,6 +6,12 @@
     "dark": "深色",
     "system": "系统"
   },
+  "nav": {
+    "workspace": "工作区",
+    "configuration": "配置",
+    "expand": "展开导航",
+    "collapse": "收起导航"
+  },
   "header": {
     "documents": "文档",
     "knowledgeGraph": "知识图谱",
@@ -27,7 +33,14 @@
     "kbDeletePartial": "知识库已删除，但部分存储清理失败：{{storages}}",
     "kbDeleting": "删除中",
     "models": "模型管理",
-    "externalKbs": "外部知识库"
+    "externalKbs": "外部知识库",
+    "kbSelect": "选择知识库",
+    "kbCreate": "新建知识库",
+    "kbCreateTitle": "新建知识库",
+    "kbCreateDescription": "创建一个相互隔离的知识库，并切换到它。",
+    "kbCreatePlaceholder": "请输入知识库 ID",
+    "kbCreateRequired": "知识库 ID 不能为空",
+    "kbCreateSuccess": "知识库已创建"
   },
   "login": {
     "description": "请输入您的账号和密码登录系统",
@@ -51,7 +64,9 @@
     "delete": "删除",
     "refresh": "刷新",
     "edit": "编辑",
-    "saveSuccess": "已保存"
+    "saveSuccess": "已保存",
+    "create": "创建",
+    "initializing": "正在初始化..."
   },
   "documentPanel": {
     "clearDocuments": {
@@ -93,7 +108,8 @@
       "notAllowed": "没有操作权限",
       "queued": "管道正忙，已排队删除 {{count}} 个文档",
       "partialNotFound": "已开始删除，但以下文档不存在：{{ids}}",
-      "notFound": "以下文档已不存在：{{ids}}"
+      "notFound": "以下文档已不存在：{{ids}}",
+      "deleting": "删除中"
     },
     "selectDocuments": {
       "selectCurrentPage": "全选当前页 ({{count}})",
@@ -128,7 +144,8 @@
         "removeFile": "移除文件",
         "uploadDescription": "您可以上传{{isMultiple ? '多个' : count}}个文件（每个文件最大{{maxSize}}）",
         "duplicateFile": "文件名与服务器上的缓存重复",
-        "duplicateFileOf": "内容与 {{path}} 重复"
+        "duplicateFileOf": "内容与 {{path}} 重复",
+        "invalidFileName": "文件名无效"
       },
       "overwrite": "覆盖同名来源的已有文档"
     },
@@ -197,7 +214,8 @@
       "cancelNotBusy": "流水线未运行，无需中断",
       "errors": {
         "fetchFailed": "获取流水线状态失败\n{{error}}"
-      }
+      },
+      "noActiveJob": "当前没有进行中的任务"
     },
     "editDocument": {
       "tooltip": "更新内容",
@@ -211,7 +229,8 @@
       "notFound": "未找到该文档来源对应的文档",
       "failed": "更新失败",
       "emptyText": "文本内容不能为空",
-      "noFileSource": "该文档没有可用的文件来源，无法更新"
+      "noFileSource": "该文档没有可用的文件来源，无法更新",
+      "error": "更新失败：{{error}}"
     }
   },
   "graphPanel": {
@@ -562,7 +581,19 @@
       "modelProfile": "模型",
       "modelProfileTooltip": "用已注册的模型执行本次问答，API 密钥始终留在服务端。",
       "modelProfileReset": "使用服务端默认模型",
-      "serverDefaultModel": "服务端默认"
+      "serverDefaultModel": "服务端默认",
+      "kbSelection": "知识库选择",
+      "kbSelectionTooltip": "为本次查询选择一个或多个知识库。",
+      "kbSelectionReset": "恢复为当前知识库",
+      "maxEntityTokensPlaceholder": "请输入实体最大 token 数",
+      "maxRelationTokensPlaceholder": "请输入关系最大 token 数",
+      "maxTotalTokensPlaceholder": "请输入总 token 上限",
+      "groupScope": "检索范围",
+      "groupModel": "模型",
+      "groupParams": "检索参数",
+      "groupOutput": "输出",
+      "streamOn": "流式返回",
+      "streamOff": "非流式返回"
     }
   },
   "apiSite": {

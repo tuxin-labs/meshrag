@@ -6,6 +6,12 @@
     "dark": "Dark",
     "system": "System"
   },
+  "nav": {
+    "workspace": "Workspace",
+    "configuration": "Configuration",
+    "expand": "Expand navigation",
+    "collapse": "Collapse navigation"
+  },
   "header": {
     "documents": "Documents",
     "knowledgeGraph": "Knowledge Graph",
@@ -27,7 +33,14 @@
     "kbDeletePartial": "Knowledge base deleted, but some storages failed: {{storages}}",
     "kbDeleting": "Deleting",
     "models": "Models",
-    "externalKbs": "External KBs"
+    "externalKbs": "External KBs",
+    "kbSelect": "Select knowledge base",
+    "kbCreate": "Create knowledge base",
+    "kbCreateTitle": "Create Knowledge Base",
+    "kbCreateDescription": "Create a new isolated knowledge base and switch to it.",
+    "kbCreatePlaceholder": "Enter knowledge base ID",
+    "kbCreateRequired": "Knowledge base ID is required",
+    "kbCreateSuccess": "Knowledge base created"
   },
   "login": {
     "description": "Please enter your account and password to log in to the system",
@@ -51,7 +64,9 @@
     "delete": "Delete",
     "refresh": "Refresh",
     "edit": "Edit",
-    "saveSuccess": "Saved"
+    "saveSuccess": "Saved",
+    "create": "Create",
+    "initializing": "Initializing..."
   },
   "documentPanel": {
     "clearDocuments": {
@@ -93,7 +108,8 @@
       "notAllowed": "No permission to perform this operation",
       "queued": "Pipeline is busy; deletion of {{count}} document(s) queued",
       "partialNotFound": "Deletion started, but these documents were not found: {{ids}}",
-      "notFound": "These documents no longer exist: {{ids}}"
+      "notFound": "These documents no longer exist: {{ids}}",
+      "deleting": "Deleting"
     },
     "selectDocuments": {
       "selectCurrentPage": "Select Current Page ({{count}})",
@@ -128,7 +144,8 @@
         "removeFile": "Remove file",
         "uploadDescription": "You can upload {{isMultiple ? 'multiple' : count}} files (up to {{maxSize}} each)",
         "duplicateFile": "File name already exists in server cache",
-        "duplicateFileOf": "Same content as {{path}}"
+        "duplicateFileOf": "Same content as {{path}}",
+        "invalidFileName": "Invalid file name"
       },
       "overwrite": "Replace the existing document with the same file source"
     },
@@ -197,7 +214,8 @@
       "cancelNotBusy": "Pipeline is not running, no need to cancel",
       "errors": {
         "fetchFailed": "Failed to fetch pipeline status\n{{error}}"
-      }
+      },
+      "noActiveJob": "No active job"
     },
     "editDocument": {
       "tooltip": "Update content",
@@ -211,7 +229,8 @@
       "notFound": "No document found for this file source",
       "failed": "Update failed",
       "emptyText": "Text is required",
-      "noFileSource": "This document has no file source, so it cannot be updated"
+      "noFileSource": "This document has no file source, so it cannot be updated",
+      "error": "Update failed: {{error}}"
     }
   },
   "graphPanel": {
@@ -562,7 +581,19 @@
       "modelProfile": "Model",
       "modelProfileTooltip": "Run this query with a registered model. The API key stays on the server.",
       "modelProfileReset": "Use server default model",
-      "serverDefaultModel": "Server default"
+      "serverDefaultModel": "Server default",
+      "kbSelection": "KB Selection",
+      "kbSelectionTooltip": "Select one or more knowledge bases for this query.",
+      "kbSelectionReset": "Reset to current KB",
+      "maxEntityTokensPlaceholder": "Enter max entity tokens",
+      "maxRelationTokensPlaceholder": "Enter max relation tokens",
+      "maxTotalTokensPlaceholder": "Enter max total tokens",
+      "groupScope": "Retrieval scope",
+      "groupModel": "Model",
+      "groupParams": "Retrieval parameters",
+      "groupOutput": "Output",
+      "streamOn": "streaming",
+      "streamOff": "blocking"
     }
   },
   "apiSite": {
