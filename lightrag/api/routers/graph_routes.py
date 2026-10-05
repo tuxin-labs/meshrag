@@ -109,7 +109,9 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
         try:
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
             return await rag.get_graph_labels()
         except HTTPException:
             raise
@@ -139,7 +141,9 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
         try:
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
             return await rag.chunk_entity_relation_graph.get_popular_labels(limit)
         except HTTPException:
             raise
@@ -171,7 +175,9 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
         try:
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
             return await rag.chunk_entity_relation_graph.search_labels(q, limit)
         except HTTPException:
             raise
@@ -213,7 +219,9 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
 
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
             return await rag.get_knowledge_graph(
                 node_label=label,
                 max_depth=max_depth,
@@ -247,7 +255,9 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
         try:
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
             exists = await rag.chunk_entity_relation_graph.has_node(name)
             return {"exists": exists}
         except HTTPException:

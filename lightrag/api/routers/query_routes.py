@@ -359,14 +359,25 @@ def create_query_routes(
         """
         if request.llm_profile_id:
             if model_store is None:
-                raise HTTPException(status_code=400, detail="Model profiles are not available")
+                raise HTTPException(
+                    status_code=400, detail="Model profiles are not available"
+                )
             profile = model_store.get(request.llm_profile_id)
             if profile is None:
-                raise HTTPException(status_code=404, detail=f"Model profile '{request.llm_profile_id}' not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Model profile '{request.llm_profile_id}' not found",
+                )
             if profile.get("kind") != "llm":
-                raise HTTPException(status_code=400, detail=f"Model profile '{profile.get('name')}' is not an LLM profile")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Model profile '{profile.get('name')}' is not an LLM profile",
+                )
             if profile.get("enabled") is False:
-                raise HTTPException(status_code=400, detail=f"Model profile '{profile.get('name')}' is disabled")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Model profile '{profile.get('name')}' is disabled",
+                )
             request.llm_binding = profile["binding"]
             request.llm_model = profile["model"]
             request.llm_binding_host = profile["host"]
@@ -374,15 +385,22 @@ def create_query_routes(
 
         if request.external_kb_ids:
             if external_kb_store is None:
-                raise HTTPException(status_code=400, detail="External knowledge bases are not available")
+                raise HTTPException(
+                    status_code=400, detail="External knowledge bases are not available"
+                )
             configs = list(request.external_kbs or [])
             for kb_id in request.external_kb_ids:
                 entry = external_kb_store.get(kb_id)
                 if entry is None:
-                    raise HTTPException(status_code=404, detail=f"External knowledge base '{kb_id}' not found")
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"External knowledge base '{kb_id}' not found",
+                    )
                 if entry.get("enabled") is False:
                     continue
-                configs.append(ExternalKBConfig(**external_kb_store.to_query_config(entry)))
+                configs.append(
+                    ExternalKBConfig(**external_kb_store.to_query_config(entry))
+                )
             request.external_kbs = configs or None
 
     def _build_dynamic_model_func(request: QueryRequest):

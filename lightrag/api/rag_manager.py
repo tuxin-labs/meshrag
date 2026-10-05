@@ -137,7 +137,11 @@ class RAGManager:
         """
         if not kb_id:
             return False
-        return kb_id == self.default_kb or kb_id in self._known_kbs or kb_id in self._instances
+        return (
+            kb_id == self.default_kb
+            or kb_id in self._known_kbs
+            or kb_id in self._instances
+        )
 
     async def get_rag_or_none(self, kb_id: str) -> Optional[LightRAG]:
         """Return the RAG instance for a known knowledge base, or None for unknown ids.
@@ -255,7 +259,11 @@ class RAGManager:
                     documents = json.load(f)
                 by_status: Dict[str, int] = {}
                 for record in documents.values():
-                    status = str(record.get("status", "unknown")) if isinstance(record, dict) else "unknown"
+                    status = (
+                        str(record.get("status", "unknown"))
+                        if isinstance(record, dict)
+                        else "unknown"
+                    )
                     by_status[status] = by_status.get(status, 0) + 1
                 entry["documents"] = sum(by_status.values())
                 entry["documents_by_status"] = by_status
@@ -296,9 +304,13 @@ class RAGManager:
             entry: Optional[Dict[str, Any]] = None
             if loaded:
                 try:
-                    entry = await asyncio.wait_for(self.get_kb_stats(kb_id), timeout=5.0)
+                    entry = await asyncio.wait_for(
+                        self.get_kb_stats(kb_id), timeout=5.0
+                    )
                 except Exception as e:
-                    logger.warning(f"Failed to collect in-memory stats for KB {kb_id}: {e}")
+                    logger.warning(
+                        f"Failed to collect in-memory stats for KB {kb_id}: {e}"
+                    )
             if entry is None:
                 entry = await asyncio.to_thread(self._read_stats_from_files, kb_id)
             entry["loaded"] = loaded
@@ -821,7 +833,9 @@ class RAGManager:
         # client queries with a stale knowledge-base id.
         unknown_kb_ids = [kb for kb in kb_ids if not self.has_knowledge_base(kb)]
         if unknown_kb_ids:
-            logger.warning(f"Ignoring unknown knowledge base ids in query: {unknown_kb_ids}")
+            logger.warning(
+                f"Ignoring unknown knowledge base ids in query: {unknown_kb_ids}"
+            )
             kb_ids = [kb for kb in kb_ids if self.has_knowledge_base(kb)]
 
         if not kb_ids and not retrieval_kbs and not rag_kbs:
@@ -1024,7 +1038,9 @@ class RAGManager:
         # client queries with a stale knowledge-base id.
         unknown_kb_ids = [kb for kb in kb_ids if not self.has_knowledge_base(kb)]
         if unknown_kb_ids:
-            logger.warning(f"Ignoring unknown knowledge base ids in query: {unknown_kb_ids}")
+            logger.warning(
+                f"Ignoring unknown knowledge base ids in query: {unknown_kb_ids}"
+            )
             kb_ids = [kb for kb in kb_ids if self.has_knowledge_base(kb)]
 
         if not kb_ids and not external_kbs:

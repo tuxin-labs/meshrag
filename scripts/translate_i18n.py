@@ -71,7 +71,10 @@ def translate_batch(target_lang, items):
     )
     resp = requests.post(
         API_URL,
-        headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json",
+        },
         json={
             "model": MODEL,
             "messages": [{"role": "user", "content": prompt}],

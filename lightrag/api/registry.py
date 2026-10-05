@@ -28,7 +28,10 @@ def mask_secret(value: Optional[str]) -> Dict[str, Any]:
     text = (value or "").strip()
     if not text:
         return {"has_api_key": False, "api_key_tail": ""}
-    return {"has_api_key": True, "api_key_tail": text[-4:] if len(text) >= 12 else "****"}
+    return {
+        "has_api_key": True,
+        "api_key_tail": text[-4:] if len(text) >= 12 else "****",
+    }
 
 
 def _require(value: Optional[str], field: str) -> str:
@@ -93,7 +96,9 @@ class JsonRecordStore:
             self._flush()
             return dict(stored)
 
-    def replace(self, record_id: str, patch: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def replace(
+        self, record_id: str, patch: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         with self._lock:
             for index, record in enumerate(self._records):
                 if record.get("id") != record_id:
@@ -125,12 +130,16 @@ class ModelProfileStore(JsonRecordStore):
     def public_all(self) -> List[Dict[str, Any]]:
         return [self.public(r) for r in self.all()]
 
-    def normalize(self, payload: Dict[str, Any], existing: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def normalize(
+        self, payload: Dict[str, Any], existing: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         kind = (payload.get("kind") or (existing or {}).get("kind") or "llm").strip()
         if kind not in MODEL_KINDS:
             raise ValueError(f"kind must be one of {', '.join(MODEL_KINDS)}")
 
-        binding = (payload.get("binding") or (existing or {}).get("binding") or "").strip()
+        binding = (
+            payload.get("binding") or (existing or {}).get("binding") or ""
+        ).strip()
         if binding not in LLM_BINDINGS:
             raise ValueError(f"binding must be one of {', '.join(LLM_BINDINGS)}")
 
@@ -172,13 +181,21 @@ class ExternalKBStore(JsonRecordStore):
     def public_all(self) -> List[Dict[str, Any]]:
         return [self.public(r) for r in self.all()]
 
-    def normalize(self, payload: Dict[str, Any], existing: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        kb_type = (payload.get("type") or (existing or {}).get("type") or "retrieval").strip()
+    def normalize(
+        self, payload: Dict[str, Any], existing: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        kb_type = (
+            payload.get("type") or (existing or {}).get("type") or "retrieval"
+        ).strip()
         if kb_type not in EXTERNAL_KB_TYPES:
             raise ValueError(f"type must be one of {', '.join(EXTERNAL_KB_TYPES)}")
 
         try:
-            top_k = int(payload.get("top_k") if payload.get("top_k") is not None else (existing or {}).get("top_k", 5))
+            top_k = int(
+                payload.get("top_k")
+                if payload.get("top_k") is not None
+                else (existing or {}).get("top_k", 5)
+            )
         except (TypeError, ValueError):
             raise ValueError("top_k must be an integer")
         if not 1 <= top_k <= 50:

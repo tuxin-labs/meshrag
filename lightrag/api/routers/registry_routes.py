@@ -19,14 +19,19 @@ PROBE_TIMEOUT_SECONDS = 20.0
 class ModelProfileRequest(BaseModel):
     name: str = Field(..., min_length=1, description="Display name of the profile")
     kind: str = Field("llm", description="llm | embedding | rerank")
-    binding: str = Field(..., description="openai | ollama | azure_openai | gemini | aws_bedrock | lollms")
+    binding: str = Field(
+        ...,
+        description="openai | ollama | azure_openai | gemini | aws_bedrock | lollms",
+    )
     model: str = Field(..., min_length=1)
     host: str = Field(..., min_length=1)
     api_key: Optional[str] = Field(
         None,
         description="Omit to keep the stored key, send an empty string to clear it.",
     )
-    embedding_dim: Optional[int] = Field(None, description="Required for kind=embedding")
+    embedding_dim: Optional[int] = Field(
+        None, description="Required for kind=embedding"
+    )
     enabled: bool = True
 
 
@@ -57,12 +62,16 @@ async def _probe_model(profile: Dict[str, Any]) -> Dict[str, Any]:
             response = await client.get(url, headers=headers)
         response.raise_for_status()
         names = [m.get("name") for m in response.json().get("models", [])]
-        matched = any(name == model or (name or "").split(":")[0] == model for name in names)
+        matched = any(
+            name == model or (name or "").split(":")[0] == model for name in names
+        )
         return {
             "reachable": True,
             "model_available": matched,
             "message": (
-                f"Model '{model}' found" if matched else f"Endpoint reachable, model '{model}' not listed"
+                f"Model '{model}' found"
+                if matched
+                else f"Endpoint reachable, model '{model}' not listed"
             ),
         }
 
@@ -70,11 +79,14 @@ async def _probe_model(profile: Dict[str, Any]) -> Dict[str, Any]:
         url = f"{host}/embeddings"
         async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_SECONDS) as client:
             response = await client.post(
-                url, headers={**headers, "Content-Type": "application/json"},
+                url,
+                headers={**headers, "Content-Type": "application/json"},
                 json={"model": model, "input": "connection probe"},
             )
         if response.status_code >= 400:
-            raise HTTPException(status_code=502, detail=f"{response.status_code} {response.text[:300]}")
+            raise HTTPException(
+                status_code=502, detail=f"{response.status_code} {response.text[:300]}"
+            )
         data = response.json().get("data") or []
         dim = len(data[0].get("embedding") or []) if data else 0
         configured = profile.get("embedding_dim") or 0
@@ -98,10 +110,16 @@ async def _probe_model(profile: Dict[str, Any]) -> Dict[str, Any]:
         response = await client.post(
             url,
             headers={**headers, "Content-Type": "application/json"},
-            json={"model": model, "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1},
+            json={
+                "model": model,
+                "messages": [{"role": "user", "content": "ping"}],
+                "max_tokens": 1,
+            },
         )
     if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail=f"{response.status_code} {response.text[:300]}")
+        raise HTTPException(
+            status_code=502, detail=f"{response.status_code} {response.text[:300]}"
+        )
     return {"reachable": True, "model_available": True, "message": "Chat completion OK"}
 
 
@@ -118,7 +136,9 @@ async def _probe_external_kb(entry: Dict[str, Any]) -> Dict[str, Any]:
     async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_SECONDS) as client:
         response = await client.post(url, headers=headers, json=payload)
     if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail=f"{response.status_code} {response.text[:300]}")
+        raise HTTPException(
+            status_code=502, detail=f"{response.status_code} {response.text[:300]}"
+        )
 
     try:
         body = response.json()
@@ -126,17 +146,27 @@ async def _probe_external_kb(entry: Dict[str, Any]) -> Dict[str, Any]:
         raise HTTPException(status_code=502, detail="Response is not JSON")
 
     if body.get("status") != "success":
-        return {"reachable": True, "model_available": False, "message": "Response is missing status='success'"}
+        return {
+            "reachable": True,
+            "model_available": False,
+            "message": "Response is missing status='success'",
+        }
     if entry.get("type") == "rag":
         ok = bool(body.get("answer"))
-        return {"reachable": True, "model_available": ok, "message": "RAG answer received" if ok else "Empty answer"}
+        return {
+            "reachable": True,
+            "model_available": ok,
+            "message": "RAG answer received" if ok else "Empty answer",
+        }
     results = body.get("results")
     ok = isinstance(results, list)
     return {
         "reachable": True,
         "model_available": ok,
         "detail": {"result_count": len(results) if ok else 0},
-        "message": f"Retrieval OK ({len(results) if ok else 0} results)" if ok else "Missing results array",
+        "message": f"Retrieval OK ({len(results) if ok else 0} results)"
+        if ok
+        else "Missing results array",
     }
 
 
@@ -148,11 +178,15 @@ def create_registry_routes(
     router = APIRouter()
     combined_auth = get_combined_auth_dependency(api_key)
 
-    @router.get("/llm_models", dependencies=[Depends(combined_auth)], tags=["Model Management"])
+    @router.get(
+        "/llm_models", dependencies=[Depends(combined_auth)], tags=["Model Management"]
+    )
     async def list_model_profiles() -> List[Dict[str, Any]]:
         return model_store.public_all()
 
-    @router.post("/llm_models", dependencies=[Depends(combined_auth)], tags=["Model Management"])
+    @router.post(
+        "/llm_models", dependencies=[Depends(combined_auth)], tags=["Model Management"]
+    )
     async def create_model_profile(request: ModelProfileRequest) -> Dict[str, Any]:
         try:
             record = model_store.normalize(request.model_dump())
@@ -160,8 +194,14 @@ def create_registry_routes(
             raise _bad_request(str(e))
         return model_store.public(model_store.add(record))
 
-    @router.put("/llm_models/{profile_id}", dependencies=[Depends(combined_auth)], tags=["Model Management"])
-    async def update_model_profile(profile_id: str, request: ModelProfileRequest) -> Dict[str, Any]:
+    @router.put(
+        "/llm_models/{profile_id}",
+        dependencies=[Depends(combined_auth)],
+        tags=["Model Management"],
+    )
+    async def update_model_profile(
+        profile_id: str, request: ModelProfileRequest
+    ) -> Dict[str, Any]:
         existing = model_store.get(profile_id)
         if existing is None:
             raise HTTPException(status_code=404, detail="Model profile not found")
@@ -172,7 +212,11 @@ def create_registry_routes(
         updated = model_store.replace(profile_id, patch)
         return model_store.public(updated)
 
-    @router.delete("/llm_models/{profile_id}", dependencies=[Depends(combined_auth)], tags=["Model Management"])
+    @router.delete(
+        "/llm_models/{profile_id}",
+        dependencies=[Depends(combined_auth)],
+        tags=["Model Management"],
+    )
     async def delete_model_profile(profile_id: str) -> Dict[str, Any]:
         if not model_store.remove(profile_id):
             raise HTTPException(status_code=404, detail="Model profile not found")
@@ -193,19 +237,31 @@ def create_registry_routes(
         try:
             outcome = await _probe_model(profile)
         except httpx.HTTPStatusError as e:
-            outcome = {"reachable": True, "model_available": False, "message": f"HTTP {e.response.status_code}"}
+            outcome = {
+                "reachable": True,
+                "model_available": False,
+                "message": f"HTTP {e.response.status_code}",
+            }
         except httpx.HTTPError as e:
-            outcome = {"reachable": False, "model_available": False, "message": f"Connection failed: {e}"}
+            outcome = {
+                "reachable": False,
+                "model_available": False,
+                "message": f"Connection failed: {e}",
+            }
         outcome["latency_ms"] = int((time.monotonic() - started) * 1000)
         outcome["id"] = profile_id
         outcome["name"] = profile.get("name")
         return outcome
 
-    @router.get("/external_kbs", dependencies=[Depends(combined_auth)], tags=["External KB"])
+    @router.get(
+        "/external_kbs", dependencies=[Depends(combined_auth)], tags=["External KB"]
+    )
     async def list_external_kbs() -> List[Dict[str, Any]]:
         return external_kb_store.public_all()
 
-    @router.post("/external_kbs", dependencies=[Depends(combined_auth)], tags=["External KB"])
+    @router.post(
+        "/external_kbs", dependencies=[Depends(combined_auth)], tags=["External KB"]
+    )
     async def create_external_kb(request: ExternalKBRequest) -> Dict[str, Any]:
         try:
             record = external_kb_store.normalize(request.model_dump())
@@ -213,35 +269,59 @@ def create_registry_routes(
             raise _bad_request(str(e))
         return external_kb_store.public(external_kb_store.add(record))
 
-    @router.put("/external_kbs/{kb_id}", dependencies=[Depends(combined_auth)], tags=["External KB"])
-    async def update_external_kb(kb_id: str, request: ExternalKBRequest) -> Dict[str, Any]:
+    @router.put(
+        "/external_kbs/{kb_id}",
+        dependencies=[Depends(combined_auth)],
+        tags=["External KB"],
+    )
+    async def update_external_kb(
+        kb_id: str, request: ExternalKBRequest
+    ) -> Dict[str, Any]:
         existing = external_kb_store.get(kb_id)
         if existing is None:
-            raise HTTPException(status_code=404, detail="External knowledge base not found")
+            raise HTTPException(
+                status_code=404, detail="External knowledge base not found"
+            )
         try:
             patch = external_kb_store.normalize(request.model_dump(), existing=existing)
         except ValueError as e:
             raise _bad_request(str(e))
         return external_kb_store.public(external_kb_store.replace(kb_id, patch))
 
-    @router.delete("/external_kbs/{kb_id}", dependencies=[Depends(combined_auth)], tags=["External KB"])
+    @router.delete(
+        "/external_kbs/{kb_id}",
+        dependencies=[Depends(combined_auth)],
+        tags=["External KB"],
+    )
     async def delete_external_kb(kb_id: str) -> Dict[str, Any]:
         if not external_kb_store.remove(kb_id):
-            raise HTTPException(status_code=404, detail="External knowledge base not found")
+            raise HTTPException(
+                status_code=404, detail="External knowledge base not found"
+            )
         return {"status": "success", "id": kb_id}
 
-    @router.post("/external_kbs/{kb_id}/test", dependencies=[Depends(combined_auth)], tags=["External KB"])
+    @router.post(
+        "/external_kbs/{kb_id}/test",
+        dependencies=[Depends(combined_auth)],
+        tags=["External KB"],
+    )
     async def test_external_kb(kb_id: str) -> Dict[str, Any]:
         entry = external_kb_store.get(kb_id)
         if entry is None:
-            raise HTTPException(status_code=404, detail="External knowledge base not found")
+            raise HTTPException(
+                status_code=404, detail="External knowledge base not found"
+            )
         import time
 
         started = time.monotonic()
         try:
             outcome = await _probe_external_kb(entry)
         except httpx.HTTPError as e:
-            outcome = {"reachable": False, "model_available": False, "message": f"Connection failed: {e}"}
+            outcome = {
+                "reachable": False,
+                "model_available": False,
+                "message": f"Connection failed: {e}",
+            }
         outcome["latency_ms"] = int((time.monotonic() - started) * 1000)
         outcome["id"] = kb_id
         outcome["name"] = entry.get("name")

@@ -49,7 +49,12 @@ def _shared_manager():
         return {
             "status": "success",
             "message": "",
-            "data": {"references": [], "entities": [], "relationships": [], "chunks": []},
+            "data": {
+                "references": [],
+                "entities": [],
+                "relationships": [],
+                "chunks": [],
+            },
             "metadata": {},
             "llm_response": {"content": "ok", "is_streaming": False},
         }
@@ -60,7 +65,12 @@ def _shared_manager():
         return {
             "status": "success",
             "message": "",
-            "data": {"entities": [], "relationships": [], "chunks": [], "references": []},
+            "data": {
+                "entities": [],
+                "relationships": [],
+                "chunks": [],
+                "references": [],
+            },
             "metadata": {},
         }
 
@@ -157,7 +167,8 @@ class TestApiKeyMode:
 
     def test_correct_key_is_accepted(self, api_key_client):
         resp = api_key_client.get(
-            "/documents/status_counts?kb_id=default", headers={"X-API-Key": "unit-test-key-42"}
+            "/documents/status_counts?kb_id=default",
+            headers={"X-API-Key": "unit-test-key-42"},
         )
         assert resp.status_code == 200
         assert resp.json()["status_counts"]["processed"] == 2
@@ -204,9 +215,7 @@ class TestJwtAccountMode:
         assert "Incorrect credentials" in resp.json()["detail"]
 
     def test_login_unknown_user(self, jwt_client):
-        resp = jwt_client.post(
-            "/login", data={"username": "ghost", "password": "x"}
-        )
+        resp = jwt_client.post("/login", data={"username": "ghost", "password": "x"})
         assert resp.status_code == 401
 
     def test_login_success_and_protected_call(self, jwt_client):

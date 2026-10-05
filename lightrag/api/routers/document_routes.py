@@ -3397,7 +3397,9 @@ def create_document_routes(
 
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
 
             pipeline_status = await get_namespace_data(
                 "pipeline_status", workspace=rag.workspace
@@ -3498,7 +3500,9 @@ def create_document_routes(
 
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
 
             tasks = [rag.get_docs_by_status(status) for status in statuses]
             results: List[Dict[str, DocProcessingStatus]] = await asyncio.gather(*tasks)
@@ -4047,7 +4051,9 @@ def create_document_routes(
         try:
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
 
             # 使用新方法获取文档 ID
             doc_id = await rag.doc_status.get_doc_id_by_file_path(file_path)
@@ -4144,7 +4150,9 @@ def create_document_routes(
 
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
             # Get documents by track_id
             docs_by_track_id = await rag.aget_docs_by_track_id(track_id)
 
@@ -4221,7 +4229,9 @@ def create_document_routes(
         try:
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
             # Get paginated documents and status counts in parallel
             docs_task = rag.doc_status.get_docs_paginated(
                 status_filter=request.status_filter,
@@ -4304,7 +4314,9 @@ def create_document_routes(
         try:
             rag = await rag_manager.get_rag_or_none(kb_id)
             if rag is None:
-                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+                )
             status_counts = await rag.doc_status.get_all_status_counts()
             return StatusCountsResponse(status_counts=status_counts)
 

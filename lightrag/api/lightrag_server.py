@@ -1144,8 +1144,12 @@ def create_app(args):
     # Model profiles and external knowledge bases are maintained from the Web UI, so they
     # get their own JSON registries beside the KB registry.
     os.makedirs(args.working_dir, exist_ok=True)
-    model_store = ModelProfileStore(os.path.join(args.working_dir, "model_registry.json"))
-    external_kb_store = ExternalKBStore(os.path.join(args.working_dir, "external_kbs.json"))
+    model_store = ModelProfileStore(
+        os.path.join(args.working_dir, "model_registry.json")
+    )
+    external_kb_store = ExternalKBStore(
+        os.path.join(args.working_dir, "external_kbs.json")
+    )
 
     app.include_router(
         create_document_routes(

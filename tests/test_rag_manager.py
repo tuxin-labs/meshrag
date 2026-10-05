@@ -1490,7 +1490,9 @@ class TestMultiKbQueryPaths:
         assert result["metadata"]["query_mode"] == "bypass"
 
     @pytest.mark.asyncio
-    async def test_multi_kb_query_unknown_kb_not_created(self, mock_query_param, mock_rag_factory):
+    async def test_multi_kb_query_unknown_kb_not_created(
+        self, mock_query_param, mock_rag_factory
+    ):
         """未知 kb_id 应被过滤且绝不惰性创建（防僵尸库复活）。"""
         from lightrag.api.rag_manager import RAGManager, UnknownKnowledgeBaseError
 
@@ -1504,7 +1506,9 @@ class TestMultiKbQueryPaths:
         # 混合场景：已知 KB 正常查询，未知 KB 被过滤掉
         await manager.get_rag("kb1")
         mock_query_param.mode = "naive"
-        result = await manager.multi_kb_query("query", ["kb1", "ghost_kb"], mock_query_param)
+        result = await manager.multi_kb_query(
+            "query", ["kb1", "ghost_kb"], mock_query_param
+        )
         assert result["status"] == "success"
         assert "ghost_kb" not in manager.list_knowledge_bases()
 
@@ -1626,7 +1630,9 @@ class TestKBStats:
         kb_dir = tmp_path / "cold"
         kb_dir.mkdir()
         (kb_dir / "kv_store_doc_status.json").write_text(
-            json.dumps({"doc-1": {"status": "processed"}, "doc-2": {"status": "failed"}}),
+            json.dumps(
+                {"doc-1": {"status": "processed"}, "doc-2": {"status": "failed"}}
+            ),
             encoding="utf-8",
         )
         (kb_dir / "graph_chunk_entity_relation.graphml").write_text(
@@ -1713,6 +1719,8 @@ class TestKBStats:
         chunk_bytes = 1 << 20
         padding = "<graphml>"
         padding += "x" * (chunk_bytes - len(padding) - (len(marker) - 1))
-        graph_file.write_text(padding + '<node id="A"/><node id="B"/><graphml/>', encoding="utf-8")
+        graph_file.write_text(
+            padding + '<node id="A"/><node id="B"/><graphml/>', encoding="utf-8"
+        )
 
         assert RAGManager._count_graphml_nodes(str(graph_file)) == 2

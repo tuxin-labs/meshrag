@@ -124,6 +124,12 @@ def server_client():
 
     mp.setattr(lightrag_server, "RAGManager", _ManagerFactory)
 
+    # The WebUI build output is gitignored, so its presence on disk must not
+    # change app behavior under test (root redirect, /auth-status flags).
+    # Pin the "frontend built" branch, which is how the server ships in
+    # Docker and PyPI artifacts.
+    mp.setattr(lightrag_server, "check_frontend_build", lambda: (True, False))
+
     initialize_share_data(workers=1)
     # The real server gets the default workspace from LightRAG.__post_init__; with
     # mock rags the namespace endpoints (/health, /documents/pipeline_status)
@@ -707,8 +713,16 @@ def test_external_kbs_validation(server_client):
     assert server_client.post("/external_kbs", json=bad_type).status_code == 400
 
     for bad_top_k in (0, 51):
-        payload = {"name": "x", "type": "retrieval", "url": "https://u", "top_k": bad_top_k}
-        assert server_client.post("/external_kbs", json=payload).status_code in (400, 422)
+        payload = {
+            "name": "x",
+            "type": "retrieval",
+            "url": "https://u",
+            "top_k": bad_top_k,
+        }
+        assert server_client.post("/external_kbs", json=payload).status_code in (
+            400,
+            422,
+        )
 
     missing_url = {"name": "x", "type": "retrieval"}
     assert server_client.post("/external_kbs", json=missing_url).status_code == 422
@@ -718,7 +732,11 @@ def test_external_kbs_validation(server_client):
 def test_external_kb_probes(server_client, fake_probe_http):
     retrieval = server_client.post(
         "/external_kbs",
-        json={"name": "ret probe", "type": "retrieval", "url": "https://ret.example.com"},
+        json={
+            "name": "ret probe",
+            "type": "retrieval",
+            "url": "https://ret.example.com",
+        },
     ).json()
     rag_kb = server_client.post(
         "/external_kbs",
@@ -727,9 +745,16 @@ def test_external_kb_probes(server_client, fake_probe_http):
 
     def handler(method, url):
         if "ret.example.com" in url:
-            return _response(method, url, 200, {"status": "success", "results": [{"content": "c"}] * 3})
+            return _response(
+                method,
+                url,
+                200,
+                {"status": "success", "results": [{"content": "c"}] * 3},
+            )
         if "rag.example.com" in url:
-            return _response(method, url, 200, {"status": "success", "answer": "the answer"})
+            return _response(
+                method, url, 200, {"status": "success", "answer": "the answer"}
+            )
 
     fake_probe_http.handler = staticmethod(handler)
     body = server_client.post(f"/external_kbs/{retrieval['id']}/test").json()
@@ -780,7 +805,12 @@ def test_query_resolves_llm_profile(server_client, monkeypatch):
         return {
             "status": "success",
             "message": "",
-            "data": {"references": [], "entities": [], "relationships": [], "chunks": []},
+            "data": {
+                "references": [],
+                "entities": [],
+                "relationships": [],
+                "chunks": [],
+            },
             "metadata": {},
             "llm_response": {"content": "ok", "is_streaming": False},
         }
@@ -815,12 +845,15 @@ def test_query_llm_profile_errors(server_client):
         },
     ).json()
     resp = server_client.post(
-        "/query", json={"query": "hello graph", "llm_profile_id": embedding_profile["id"]}
+        "/query",
+        json={"query": "hello graph", "llm_profile_id": embedding_profile["id"]},
     )
     assert resp.status_code == 400
     assert "not an LLM profile" in resp.json()["detail"]
 
-    resp = server_client.post("/query", json={"query": "hello graph", "llm_profile_id": "ghost"})
+    resp = server_client.post(
+        "/query", json={"query": "hello graph", "llm_profile_id": "ghost"}
+    )
     assert resp.status_code == 404
     assert "not found" in resp.json()["detail"].lower()
 
@@ -859,7 +892,12 @@ def test_query_resolves_external_kb_ids(server_client, monkeypatch):
     ).json()
     disabled = server_client.post(
         "/external_kbs",
-        json={"name": "disabled ext", "type": "rag", "url": "https://ext.example.com/g", "enabled": False},
+        json={
+            "name": "disabled ext",
+            "type": "rag",
+            "url": "https://ext.example.com/g",
+            "enabled": False,
+        },
     ).json()
 
     calls = []
@@ -869,7 +907,12 @@ def test_query_resolves_external_kb_ids(server_client, monkeypatch):
         return {
             "status": "success",
             "message": "",
-            "data": {"references": [], "entities": [], "relationships": [], "chunks": []},
+            "data": {
+                "references": [],
+                "entities": [],
+                "relationships": [],
+                "chunks": [],
+            },
             "metadata": {},
             "llm_response": {"content": "ok", "is_streaming": False},
         }
@@ -891,7 +934,11 @@ def test_query_resolves_external_kb_ids(server_client, monkeypatch):
     # explicit kb_ids keep internal scope and merge the external KB (hybrid)
     resp = server_client.post(
         "/query",
-        json={"query": "hybrid search", "kb_ids": ["default"], "external_kb_ids": [ext["id"]]},
+        json={
+            "query": "hybrid search",
+            "kb_ids": ["default"],
+            "external_kb_ids": [ext["id"]],
+        },
     )
     assert resp.status_code == 200
     assert calls[-1]["kb_ids"] == ["default"]
@@ -906,7 +953,9 @@ def test_query_resolves_external_kb_ids(server_client, monkeypatch):
     assert calls[-1]["kb_ids"] == ["default"]
 
     # unknown id -> 404
-    resp = server_client.post("/query", json={"query": "hybrid search", "external_kb_ids": ["ghost"]})
+    resp = server_client.post(
+        "/query", json={"query": "hybrid search", "external_kb_ids": ["ghost"]}
+    )
     assert resp.status_code == 404
     assert "not found" in resp.json()["detail"].lower()
 
@@ -980,7 +1029,9 @@ def test_ollama_chat_non_stream_routes_through_rag(server_client):
         "/api/chat",
         json={
             "model": "meshrag:latest",
-            "messages": [{"role": "user", "content": "/local what is entity extraction"}],
+            "messages": [
+                {"role": "user", "content": "/local what is entity extraction"}
+            ],
             "stream": False,
         },
     )
@@ -1099,7 +1150,10 @@ def test_documents_batch_texts(server_client, mock_doc_store):
     rag = _mock_rag()
     resp = server_client.post(
         "/documents/texts?kb_id=default",
-        json={"texts": ["alpha beta gamma", "delta epsilon zeta"], "file_sources": ["a.txt", "b.txt"]},
+        json={
+            "texts": ["alpha beta gamma", "delta epsilon zeta"],
+            "file_sources": ["a.txt", "b.txt"],
+        },
     )
     assert resp.status_code == 200, resp.text
     body = resp.json()
@@ -1188,10 +1242,14 @@ def test_delete_entity_success_and_not_found(server_client, mock_doc_store):
     rag.adelete_by_entity.assert_awaited_once_with(entity_name="地球")
 
     rag.adelete_by_entity = AsyncMock(
-        return_value=DeletionResult(status="not_found", doc_id="", message="no such entity")
+        return_value=DeletionResult(
+            status="not_found", doc_id="", message="no such entity"
+        )
     )
     resp = server_client.request(
-        "DELETE", "/documents/delete_entity?kb_id=default", json={"entity_name": "ghost"}
+        "DELETE",
+        "/documents/delete_entity?kb_id=default",
+        json={"entity_name": "ghost"},
     )
     assert resp.status_code == 404
 
@@ -1235,13 +1293,22 @@ def test_readonly_endpoints_reject_unknown_kb(server_client):
     for method, path, kwargs in [
         ("get", "/documents/status_counts?kb_id=ghost_kb", {}),
         ("get", "/documents/pipeline_status?kb_id=ghost_kb", {}),
-        ("post", "/documents/paginated?kb_id=ghost_kb", {"json": {"page": 1, "page_size": 10}}),
+        (
+            "post",
+            "/documents/paginated?kb_id=ghost_kb",
+            {"json": {"page": 1, "page_size": 10}},
+        ),
         ("get", "/documents/track_status/t1?kb_id=ghost_kb", {}),
         ("get", "/graph/label/list?kb_id=ghost_kb", {}),
         ("get", "/graphs?kb_id=ghost_kb&label=x", {}),
     ]:
         resp = getattr(server_client, method)(path, **kwargs)
-        assert resp.status_code == 404, (method, path, resp.status_code, resp.text[:120])
+        assert resp.status_code == 404, (
+            method,
+            path,
+            resp.status_code,
+            resp.text[:120],
+        )
         assert "not found" in resp.json()["detail"].lower()
 
     # the unknown id must NOT have been registered by any of the polls above

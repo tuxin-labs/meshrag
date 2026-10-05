@@ -62,7 +62,9 @@ def _wait_pipeline_done(kb_id: str, timeout: int = 300) -> bool:
         )
         counts = r.json().get("status_counts", {})
         busy = counts.get("pending", 0) + counts.get("processing", 0)
-        if busy == 0 and (counts.get("processed", 0) > 0 or counts.get("failed", 0) > 0):
+        if busy == 0 and (
+            counts.get("processed", 0) > 0 or counts.get("failed", 0) > 0
+        ):
             return counts.get("processed", 0) > 0
         time.sleep(3)
     return False
@@ -83,7 +85,9 @@ def ingested_kbs(live_server):
         requests.delete(f"{live_server}/knowledge_bases/{kb}", timeout=30)
 
     for kb in (KB_A, KB_B):
-        r = requests.post(f"{live_server}/knowledge_bases", json={"kb_id": kb}, timeout=60)
+        r = requests.post(
+            f"{live_server}/knowledge_bases", json={"kb_id": kb}, timeout=60
+        )
         assert r.status_code == 200, r.text
 
     r = requests.post(
@@ -148,7 +152,11 @@ class TestLiveQueryModes:
     def test_query_naive(self, ingested_kbs):
         r = requests.post(
             f"{ingested_kbs}/query",
-            json={"query": "火星为什么被称为红色星球", "mode": "naive", "kb_ids": [KB_A]},
+            json={
+                "query": "火星为什么被称为红色星球",
+                "mode": "naive",
+                "kb_ids": [KB_A],
+            },
             timeout=180,
         )
         assert r.status_code == 200, r.text
@@ -166,7 +174,11 @@ class TestLiveQueryModes:
     def test_query_global(self, ingested_kbs):
         r = requests.post(
             f"{ingested_kbs}/query",
-            json={"query": "太阳系中有哪些重要的天体", "mode": "global", "kb_ids": [KB_A]},
+            json={
+                "query": "太阳系中有哪些重要的天体",
+                "mode": "global",
+                "kb_ids": [KB_A],
+            },
             timeout=180,
         )
         assert r.status_code == 200
@@ -222,9 +234,7 @@ class TestLiveQueryModes:
         assert r.status_code == 200
         body = r.json()
         assert body["response"]
-        ref_files = {
-            ref.get("file_path", "") for ref in body.get("references") or []
-        }
+        ref_files = {ref.get("file_path", "") for ref in body.get("references") or []}
         # references may be grouped; at least one should come from each KB
         assert any("hongshaorou" in f for f in ref_files), ref_files
 
@@ -376,9 +386,7 @@ class TestLiveExternalKBs:
 class TestLiveGraphAPI:
     def test_graph_labels_and_subgraph(self, ingested_kbs):
         base = ingested_kbs
-        r = requests.get(
-            f"{base}/graph/label/list", params={"kb_id": KB_A}, timeout=30
-        )
+        r = requests.get(f"{base}/graph/label/list", params={"kb_id": KB_A}, timeout=30)
         labels = r.json()
         assert isinstance(labels, list) and labels, "no graph labels"
 
@@ -411,7 +419,9 @@ class TestLiveOllamaCompat:
             f"{ingested_kbs}/api/chat",
             json={
                 "model": "meshrag:latest",
-                "messages": [{"role": "user", "content": "/bypass 用一个词回答：天空是什么颜色"}],
+                "messages": [
+                    {"role": "user", "content": "/bypass 用一个词回答：天空是什么颜色"}
+                ],
                 "stream": False,
             },
             timeout=120,
@@ -479,7 +489,10 @@ class TestLiveDocumentManagement:
         r = requests.post(
             f"{base}/documents/text",
             params={"kb_id": KB_A},
-            json={"text": "临时文档：冥王星曾被视为第九大行星，2006年被重新归类为矮行星。", "file_source": "disposable.txt"},
+            json={
+                "text": "临时文档：冥王星曾被视为第九大行星，2006年被重新归类为矮行星。",
+                "file_source": "disposable.txt",
+            },
             timeout=30,
         )
         assert r.status_code == 200
@@ -487,7 +500,9 @@ class TestLiveDocumentManagement:
         assert _wait_pipeline_done(KB_A, timeout=240)
 
         r = requests.get(
-            f"{base}/documents/track_status/{track_id}", params={"kb_id": KB_A}, timeout=15
+            f"{base}/documents/track_status/{track_id}",
+            params={"kb_id": KB_A},
+            timeout=15,
         )
         assert r.status_code == 200
         body = r.json()
