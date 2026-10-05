@@ -9,10 +9,9 @@ from typing import Any, Dict, List, Literal, Optional
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field, field_validator, model_validator
 from lightrag.base import QueryParam
+from lightrag.api.rag_manager import UnknownKnowledgeBaseError
 from lightrag.api.utils_api import get_combined_auth_dependency
 from lightrag.utils import logger
-
-router = APIRouter(tags=["query"])
 
 
 class ExternalKBConfig(BaseModel):
@@ -346,6 +345,10 @@ def create_query_routes(
     model_store=None,
     external_kb_store=None,
 ):
+    # Per-call router: a module-level singleton would leak closures across app
+    # instances (route table pollution between RAG instances).
+    router = APIRouter(tags=["query"])
+
     combined_auth = get_combined_auth_dependency(api_key)
 
     def _apply_registry_selections(request: QueryRequest) -> None:
@@ -690,6 +693,13 @@ def create_query_routes(
                 return QueryResponse(
                     response=response_content, references=None, warnings=warnings
                 )
+        except HTTPException:
+            # Validation errors (unknown model profile / external KB, unknown
+            # knowledge base ids) keep their 4xx status instead of a blanket 500.
+            raise
+        except UnknownKnowledgeBaseError as e:
+            # The query scoped only to knowledge-base ids that do not exist.
+            raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
             logger.error(f"Error processing query: {str(e)}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))
@@ -1074,6 +1084,13 @@ def create_query_routes(
                     "X-Accel-Buffering": "no",  # Ensure proper handling of streaming response when proxied by Nginx
                 },
             )
+        except HTTPException:
+            # Validation errors (unknown model profile / external KB, unknown
+            # knowledge base ids) keep their 4xx status instead of a blanket 500.
+            raise
+        except UnknownKnowledgeBaseError as e:
+            # The query scoped only to knowledge-base ids that do not exist.
+            raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
             logger.error(f"Error processing streaming query: {str(e)}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))
@@ -1510,6 +1527,13 @@ def create_query_routes(
                     message="Invalid response type",
                     data={},
                 )
+        except HTTPException:
+            # Validation errors (unknown model profile / external KB, unknown
+            # knowledge base ids) keep their 4xx status instead of a blanket 500.
+            raise
+        except UnknownKnowledgeBaseError as e:
+            # The query scoped only to knowledge-base ids that do not exist.
+            raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
             logger.error(f"Error processing data query: {str(e)}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))

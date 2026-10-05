@@ -143,9 +143,11 @@ class ModelProfileStore(JsonRecordStore):
             "enabled": payload.get("enabled", (existing or {}).get("enabled", True)),
         }
 
-        # An absent key field keeps the stored secret; an empty string clears it.
-        if "api_key" in payload:
-            record["api_key"] = (payload.get("api_key") or "").strip()
+        # The API contract is "omit to keep the stored secret, empty string to
+        # clear it". Pydantic's model_dump always includes api_key=None when the
+        # field was omitted, so None must mean "keep", not "clear".
+        if payload.get("api_key") is not None:
+            record["api_key"] = payload["api_key"].strip()
         elif existing:
             record["api_key"] = existing.get("api_key", "")
 
@@ -189,8 +191,10 @@ class ExternalKBStore(JsonRecordStore):
             "top_k": top_k,
             "enabled": payload.get("enabled", (existing or {}).get("enabled", True)),
         }
-        if "api_key" in payload:
-            record["api_key"] = (payload.get("api_key") or "").strip()
+        # Same contract as ModelProfileStore: None keeps the stored secret,
+        # an empty string clears it.
+        if payload.get("api_key") is not None:
+            record["api_key"] = payload["api_key"].strip()
         elif existing:
             record["api_key"] = existing.get("api_key", "")
         return record

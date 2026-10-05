@@ -24,6 +24,14 @@ from lightrag.constants import (
 EXTERNAL_KB_PREFIX = "__ext_"
 
 
+class UnknownKnowledgeBaseError(ValueError):
+    """A query referenced only knowledge-base ids that do not exist.
+
+    Raised instead of lazily recreating deleted workspaces; the API layer maps
+    it to HTTP 404.
+    """
+
+
 class RAGManager:
     """Manages multiple LightRAG instances, each representing a distinct knowledge base."""
 
@@ -120,6 +128,29 @@ class RAGManager:
             return None
         kb_id, rag = self._instances.popitem(last=False)
         return kb_id, rag
+
+    def has_knowledge_base(self, kb_id: str) -> bool:
+        """Whether the knowledge base is known (registered or loaded in memory).
+
+        Read-only endpoints use this to refuse unknown ids instead of letting
+        pollers resurrect deleted knowledge bases via lazy creation.
+        """
+        if not kb_id:
+            return False
+        return kb_id == self.default_kb or kb_id in self._known_kbs or kb_id in self._instances
+
+    async def get_rag_or_none(self, kb_id: str) -> Optional[LightRAG]:
+        """Return the RAG instance for a known knowledge base, or None for unknown ids.
+
+        Unlike :meth:`get_rag` this never lazily creates a knowledge base: pollers
+        holding a stale id must not resurrect deleted workspaces.
+        """
+        if not self.has_knowledge_base(kb_id):
+            return None
+        try:
+            return await self.get_rag(kb_id)
+        except Exception:
+            return None
 
     async def get_rag(self, kb_id: str) -> LightRAG:
         """
@@ -786,7 +817,18 @@ class RAGManager:
         ]
         rag_kbs = [kb for kb in (external_kbs or []) if kb.get("type") == "rag"]
 
+        # Drop unknown ids instead of lazily recreating deleted workspaces when a
+        # client queries with a stale knowledge-base id.
+        unknown_kb_ids = [kb for kb in kb_ids if not self.has_knowledge_base(kb)]
+        if unknown_kb_ids:
+            logger.warning(f"Ignoring unknown knowledge base ids in query: {unknown_kb_ids}")
+            kb_ids = [kb for kb in kb_ids if self.has_knowledge_base(kb)]
+
         if not kb_ids and not retrieval_kbs and not rag_kbs:
+            if unknown_kb_ids:
+                raise UnknownKnowledgeBaseError(
+                    f"All requested knowledge bases are unknown: {unknown_kb_ids}"
+                )
             raise ValueError("At least one kb_id or external_kbs must be specified.")
 
         has_external = bool(retrieval_kbs)
@@ -978,7 +1020,18 @@ class RAGManager:
             }
         注意：此返回格式与路由层（query_routes.py）约定一致，修改时需确保兼容。
         """
+        # Drop unknown ids instead of lazily recreating deleted workspaces when a
+        # client queries with a stale knowledge-base id.
+        unknown_kb_ids = [kb for kb in kb_ids if not self.has_knowledge_base(kb)]
+        if unknown_kb_ids:
+            logger.warning(f"Ignoring unknown knowledge base ids in query: {unknown_kb_ids}")
+            kb_ids = [kb for kb in kb_ids if self.has_knowledge_base(kb)]
+
         if not kb_ids and not external_kbs:
+            if unknown_kb_ids:
+                raise UnknownKnowledgeBaseError(
+                    f"All requested knowledge bases are unknown: {unknown_kb_ids}"
+                )
             raise ValueError("At least one kb_id or external_kbs must be specified.")
 
         # ─── Step 1: 按 type 分组外部 KB ───

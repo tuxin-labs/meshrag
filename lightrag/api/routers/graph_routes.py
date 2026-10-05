@@ -10,8 +10,6 @@ from pydantic import BaseModel, Field
 from lightrag.utils import logger
 from ..utils_api import get_combined_auth_dependency
 
-router = APIRouter(tags=["graph"])
-
 
 class EntityUpdateRequest(BaseModel):
     kb_id: str = Field(..., description="Knowledge base ID")
@@ -92,6 +90,10 @@ class RelationCreateRequest(BaseModel):
 
 
 def create_graph_routes(rag_manager, api_key: Optional[str] = None):
+    # Per-call router: a module-level singleton would leak closures across app
+    # instances (route table pollution between RAG instances).
+    router = APIRouter(tags=["graph"])
+
     combined_auth = get_combined_auth_dependency(api_key)
 
     @router.get("/graph/label/list", dependencies=[Depends(combined_auth)])
@@ -105,8 +107,12 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
             List[str]: List of graph labels
         """
         try:
-            rag = await rag_manager.get_rag(kb_id)
+            rag = await rag_manager.get_rag_or_none(kb_id)
+            if rag is None:
+                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
             return await rag.get_graph_labels()
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"Error getting graph labels for KB {kb_id}: {str(e)}")
             logger.error(traceback.format_exc())
@@ -131,8 +137,12 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
             List[str]: List of popular labels sorted by degree (highest first)
         """
         try:
-            rag = await rag_manager.get_rag(kb_id)
+            rag = await rag_manager.get_rag_or_none(kb_id)
+            if rag is None:
+                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
             return await rag.chunk_entity_relation_graph.get_popular_labels(limit)
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"Error getting popular labels for KB {kb_id}: {str(e)}")
             logger.error(traceback.format_exc())
@@ -159,8 +169,12 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
             List[str]: List of matching labels sorted by relevance
         """
         try:
-            rag = await rag_manager.get_rag(kb_id)
+            rag = await rag_manager.get_rag_or_none(kb_id)
+            if rag is None:
+                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
             return await rag.chunk_entity_relation_graph.search_labels(q, limit)
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(
                 f"Error searching labels in KB {kb_id} with query '{q}': {str(e)}"
@@ -197,12 +211,16 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
                 f"get_knowledge_graph in KB {kb_id} called with label: '{label}' (length: {len(label)}, repr: {repr(label)})"
             )
 
-            rag = await rag_manager.get_rag(kb_id)
+            rag = await rag_manager.get_rag_or_none(kb_id)
+            if rag is None:
+                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
             return await rag.get_knowledge_graph(
                 node_label=label,
                 max_depth=max_depth,
                 max_nodes=max_nodes,
             )
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(
                 f"Error getting knowledge graph from KB {kb_id} for label '{label}': {str(e)}"
@@ -227,9 +245,13 @@ def create_graph_routes(rag_manager, api_key: Optional[str] = None):
             Dict[str, bool]: Dictionary with 'exists' key indicating if entity exists
         """
         try:
-            rag = await rag_manager.get_rag(kb_id)
+            rag = await rag_manager.get_rag_or_none(kb_id)
+            if rag is None:
+                raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_id}' not found")
             exists = await rag.chunk_entity_relation_graph.has_node(name)
             return {"exists": exists}
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(
                 f"Error checking entity existence for '{name}' in KB {kb_id}: {str(e)}"

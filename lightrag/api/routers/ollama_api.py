@@ -253,8 +253,16 @@ class OllamaAPI:
             kb_id = request.headers.get("LIGHTRAG-KB", "").strip() or None
         if not kb_id:
             kb_id = self._rag_manager.default_kb
+            return await self._rag_manager.get_rag(kb_id)
 
-        return await self._rag_manager.get_rag(kb_id)
+        # An explicit header must name a real knowledge base: pollers and chat
+        # clients holding a stale id must not resurrect deleted workspaces.
+        rag = await self._rag_manager.get_rag_or_none(kb_id)
+        if rag is None:
+            raise HTTPException(
+                status_code=404, detail=f"Knowledge base '{kb_id}' not found"
+            )
+        return rag
 
     async def _get_ollama_server_infos(self, request: Request | None = None):
         rag = await self._get_rag(request)
@@ -493,6 +501,10 @@ class OllamaAPI:
                         "eval_count": completion_tokens,
                         "eval_duration": eval_time,
                     }
+            except HTTPException:
+                # Validation errors keep their own status code instead of being
+                # masked as 500 by the generic handler below.
+                raise
             except Exception as e:
                 logger.error(f"Ollama generate error: {str(e)}", exc_info=True)
                 raise HTTPException(status_code=500, detail=str(e))
@@ -756,6 +768,11 @@ class OllamaAPI:
                         "eval_count": completion_tokens,
                         "eval_duration": eval_time,
                     }
+            except HTTPException:
+                # Validation errors ("No messages provided", "Last message must
+                # be from user role") keep their own status code instead of being
+                # masked as 500 by the generic handler below.
+                raise
             except Exception as e:
                 logger.error(f"Ollama chat error: {str(e)}", exc_info=True)
                 raise HTTPException(status_code=500, detail=str(e))
