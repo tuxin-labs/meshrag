@@ -6,6 +6,12 @@
     "dark": "深色",
     "system": "系統"
   },
+  "nav": {
+    "workspace": "工作區",
+    "configuration": "設定",
+    "expand": "展開導覽",
+    "collapse": "收合導覽"
+  },
   "header": {
     "documents": "文件",
     "knowledgeGraph": "知識圖譜",
@@ -17,7 +23,26 @@
     "themeToggle": {
       "switchToLight": "切換至淺色主題",
       "switchToDark": "切換至深色主題"
-    }
+    },
+    "kbDelete": "刪除目前的知識庫",
+    "kbDeleteDefaultDisabled": "預設知識庫無法刪除",
+    "kbDeleteTitle": "刪除知識庫",
+    "kbDeleteDescription": "刪除「{{kbId}}」及其所有儲存空間，此動作無法復原。",
+    "kbDeletePlaceholder": "輸入「yes」以確認",
+    "kbDeleteSuccess": "知識庫已刪除",
+    "kbDeletePartial": "知識庫已刪除，但部分儲存空間失敗：{{storages}}",
+    "kbDeleting": "刪除中",
+    "models": "模型",
+    "externalKbs": "外部知識庫",
+    "kbSelect": "選擇知識庫",
+    "kbCreate": "建立知識庫",
+    "kbCreateTitle": "建立知識庫",
+    "kbCreateDescription": "建立新的獨立知識庫並切換至該知識庫。",
+    "kbCreatePlaceholder": "輸入知識庫ID",
+    "kbCreateRequired": "知識庫ID為必填",
+    "kbCreateSuccess": "知識庫已建立",
+    "knowledgeBases": "知識庫",
+    "kbStatsHint": "{{documents}} 份文件 · {{entities}} 個實體"
   },
   "login": {
     "description": "請輸入您的帳號和密碼登入系統",
@@ -37,7 +62,13 @@
     "cancel": "取消",
     "save": "儲存",
     "saving": "儲存中...",
-    "saveFailed": "儲存失敗"
+    "saveFailed": "儲存失敗",
+    "delete": "刪除",
+    "refresh": "重新整理",
+    "edit": "編輯",
+    "saveSuccess": "已儲存",
+    "create": "建立",
+    "initializing": "初始化中..."
   },
   "documentPanel": {
     "clearDocuments": {
@@ -76,7 +107,11 @@
       "failed": "刪除文件失敗：\n{{message}}",
       "error": "刪除文件失敗：\n{{error}}",
       "busy": "pipeline 被佔用，請稍後再試",
-      "notAllowed": "沒有操作權限"
+      "notAllowed": "沒有操作權限",
+      "queued": "管線忙碌中；已將 {{count}} 份文件的刪除動作排入佇列",
+      "partialNotFound": "已開始刪除，但找不到以下文件：{{ids}}",
+      "notFound": "以下文件已不存在：{{ids}}",
+      "deleting": "刪除中"
     },
     "selectDocuments": {
       "selectCurrentPage": "全選當前頁 ({{count}})",
@@ -110,8 +145,11 @@
         "dragAndDrop": "拖放檔案至此處，或點擊選擇檔案",
         "removeFile": "移除檔案",
         "uploadDescription": "您可以上傳{{isMultiple ? '多個' : count}}個檔案（每個檔案最大{{maxSize}}）",
-        "duplicateFile": "檔案名稱與伺服器上的快取重複"
-      }
+        "duplicateFile": "檔案名稱與伺服器上的快取重複",
+        "duplicateFileOf": "與 {{path}} 內容相同",
+        "invalidFileName": "無效的檔案名稱"
+      },
+      "overwrite": "取代來源相同的現有文件"
     },
     "documentManager": {
       "title": "文件管理",
@@ -134,7 +172,8 @@
         "created": "建立時間",
         "updated": "更新時間",
         "metadata": "元資料",
-        "select": "選擇"
+        "select": "選擇",
+        "actions": "操作"
       },
       "status": {
         "all": "全部",
@@ -177,7 +216,35 @@
       "cancelNotBusy": "流水線未運行，無需中斷",
       "errors": {
         "fetchFailed": "獲取流水線狀態失敗\n{{error}}"
-      }
+      },
+      "noActiveJob": "無作用中的工作"
+    },
+    "editDocument": {
+      "tooltip": "更新內容",
+      "title": "更新文件",
+      "description": "替換此檔案來源的索引內容",
+      "placeholder": "貼上文件的完整新內容",
+      "deleteCache": "刪除此文件的LLM快取",
+      "saving": "儲存中",
+      "success": "文件更新已排入佇列",
+      "unchanged": "內容未變更",
+      "notFound": "找不到此檔案來源對應的文件",
+      "failed": "更新失敗",
+      "emptyText": "必須輸入文字",
+      "noFileSource": "此文件無檔案來源，無法更新",
+      "error": "更新失敗：{{error}}"
+    },
+    "insertText": {
+      "tooltip": "索引純文字",
+      "button": "新增文字",
+      "title": "插入文字",
+      "description": "直接將文字提交至目前的知識庫",
+      "sourcePlaceholder": "檔案來源（選填，用於後續定位文件）",
+      "textPlaceholder": "貼上要索引的文字",
+      "submitting": "提交中",
+      "confirm": "提交",
+      "success": "文字已提交進行索引",
+      "empty": "必須輸入文字"
     }
   },
   "graphPanel": {
@@ -313,7 +380,9 @@
       "success": {
         "entityUpdated": "節點更新成功",
         "relationUpdated": "關係更新成功",
-        "entityMerged": "節點合併成功"
+        "entityMerged": "節點合併成功",
+        "entityDeleted": "實體已刪除",
+        "relationDeleted": "關係已刪除"
       },
       "mergeOptionLabel": "遇到重名時自動合併",
       "mergeOptionDescription": "勾選後，重新命名為既有名稱時會自動將當前節點合併過去，不再報錯。",
@@ -346,7 +415,10 @@
           "file_path": "檔案",
           "keywords": "Keys",
           "weight": "權重"
-        }
+        },
+        "deleteNode": "刪除實體",
+        "deleteTitle": "刪除實體",
+        "deleteDescription": "從知識圖中移除「{{name}}」及其所有關係"
       },
       "edge": {
         "title": "關係",
@@ -354,8 +426,12 @@
         "type": "類型",
         "source": "來源節點",
         "target": "目標節點",
-        "properties": "屬性"
-      }
+        "properties": "屬性",
+        "deleteEdge": "刪除關係",
+        "deleteTitle": "刪除關係",
+        "deleteDescription": "移除「{{source}}」與「{{target}}」之間的關係"
+      },
+      "deleting": "刪除中"
     },
     "search": {
       "placeholder": "頁面內搜尋節點...",
@@ -371,7 +447,38 @@
       "refreshCurrentLabelTooltip": "重新整理目前頁面圖形資料",
       "refreshingTooltip": "正在重新整理資料..."
     },
-    "emptyGraph": "無數據(請重載圖形數據)"
+    "emptyGraph": "無數據(請重載圖形數據)",
+    "createEntity": {
+      "tooltip": "建立實體",
+      "title": "建立實體",
+      "description": "將節點新增至目前知識庫的知識圖中",
+      "namePlaceholder": "實體名稱",
+      "typePlaceholder": "實體類型",
+      "descriptionPlaceholder": "描述",
+      "nameRequired": "必須輸入實體名稱",
+      "success": "實體已建立"
+    },
+    "createRelation": {
+      "tooltip": "建立關係",
+      "title": "建立關係",
+      "description": "兩個實體都必須已存在於知識圖中",
+      "keywordsPlaceholder": "關鍵詞",
+      "descriptionPlaceholder": "描述",
+      "entitiesRequired": "兩個實體皆為必填",
+      "success": "關係已建立"
+    },
+    "mergeEntities": {
+      "tooltip": "合併實體",
+      "title": "合併實體",
+      "description": "來源實體的關係會移動至保留的目標實體中",
+      "sourcesPlaceholder": "要合併的實體，以逗號分隔",
+      "targetPlaceholder": "目標實體",
+      "required": "至少需選擇一個要合併的實體與一個目標實體",
+      "targetIsSource": "目標實體不得同時被合併",
+      "merging": "合併中",
+      "confirm": "合併",
+      "success": "已合併 {{count}} 個實體"
+    }
   },
   "retrievePanel": {
     "chatMessage": {
@@ -394,7 +501,26 @@
       "placeholder": "輸入查詢內容 (支援模式前綴：/<Query Mode>)",
       "error": "錯誤：取得回應失敗",
       "queryModeError": "僅支援以下查詢模式：{{modes}}",
-      "queryModePrefixInvalid": "無效的查詢模式前綴。請使用：/<模式> [空格] 查詢內容"
+      "queryModePrefixInvalid": "無效的查詢模式前綴。請使用：/<模式> [空格] 查詢內容",
+      "queryTooShort": "查詢過短",
+      "fetchData": "擷取資料",
+      "dataHint": "用上方輸入框的內容試跑一次擷取，只預覽命中的實體、關係和區塊，不呼叫大模型產生回答。",
+      "highLevelKeywords": "HL",
+      "lowLevelKeywords": "LL",
+      "progressStages": {
+        "keyword_extraction": "擷取關鍵詞中",
+        "vector_search": "搜尋圖與向量中",
+        "merge_chunks": "合併區塊中",
+        "context_built": "建構上下文",
+        "rerank": "重新排序中",
+        "retrieval_done": "擷取完成"
+      },
+      "dataCounts": {
+        "entities": "實體",
+        "relationships": "關係",
+        "chunks": "區塊",
+        "references": "參考資料"
+      }
     },
     "querySettings": {
       "parametersTitle": "參數",
@@ -422,6 +548,12 @@
       "chunkTopK": "文本區塊 Top K",
       "chunkTopKTooltip": "文本區塊檢索數量，適用於所有模式。",
       "chunkTopKPlaceholder": "輸入文本區塊 chunk_top_k 值",
+      "maxEntityTokens": "實體令牌數上限",
+      "maxEntityTokensTooltip": "統一令牌控制系統中分配給實體上下文的最大令牌數",
+      "maxRelationTokens": "關係令牌數上限",
+      "maxRelationTokensTooltip": "統一令牌控制系統中分配給關係上下文的最大令牌數",
+      "maxTotalTokens": "總令牌數上限",
+      "maxTotalTokensTooltip": "整個查詢上下文的最大總令牌預算（實體+關係+文檔塊+系統提示）",
       "historyTurns": "歷史輪次",
       "historyTurnsTooltip": "回應上下文中考慮的完整對話輪次（使用者-助手對）數量",
       "historyTurnsPlaceholder": "歷史輪次數",
@@ -436,12 +568,47 @@
       "userPromptPlaceholder": "輸入自定義提示詞（可選）",
       "enableRerank": "啟用重排",
       "enableRerankTooltip": "為檢索到的文本塊啟用重排。如果為True但未配置重排模型，將發出警告。默認為True。",
-      "maxEntityTokens": "實體令牌數上限",
-      "maxEntityTokensTooltip": "統一令牌控制系統中分配給實體上下文的最大令牌數",
-      "maxRelationTokens": "關係令牌數上限",
-      "maxRelationTokensTooltip": "統一令牌控制系統中分配給關係上下文的最大令牌數",
-      "maxTotalTokens": "總令牌數上限",
-      "maxTotalTokensTooltip": "整個查詢上下文的最大總令牌預算（實體+關係+文檔塊+系統提示）"
+      "includeReferences": "包含參考資料",
+      "includeReferencesTooltip": "隨答案傳回參考清單，以便解析引用來源",
+      "includeChunkContent": "包含區塊文字",
+      "includeChunkContentTooltip": "將擷取到的區塊文字附加至每個參考資料",
+      "kbNoneExternalOnly": "無（僅外部）",
+      "externalKbs": "外部知識庫",
+      "externalKbAdd": "新增外部知識庫",
+      "externalKbEmpty": "與內部知識庫一併查詢第三方擷取或RAG服務",
+      "externalKbOnly": "略過內部知識庫",
+      "externalKbRetrieval": "擷取",
+      "externalKbRag": "RAG服務",
+      "externalKbUrl": "API 網址",
+      "externalKbApiKey": "API 金鑰 (選填)",
+      "llmOverride": "單次查詢 LLM 覆寫",
+      "llmOverrideReset": "回到伺服器預設 LLM",
+      "llmOverrideEmpty": "使用伺服器設定的 LLM。必須同時設定繫結、模型與主機。",
+      "llmBinding": "繫結",
+      "llmModel": "模型",
+      "llmHost": "API 基礎網址",
+      "llmApiKey": "API 金鑰",
+      "llmHeaders": "額外標頭，每行一組「名稱: 值」",
+      "externalKbNone": "無",
+      "externalKbsTooltip": "已註冊的第三方服務，會與內部知識庫一併查詢。可在「外部知識庫」分頁管理。",
+      "externalKbsEmpty": "尚未註冊任何外部知識庫。",
+      "externalKbsReset": "清除外部來源",
+      "modelProfile": "模型",
+      "modelProfileTooltip": "使用已註冊的模型執行此查詢。API 金鑰會保留在伺服器上。",
+      "modelProfileReset": "使用伺服器預設模型",
+      "serverDefaultModel": "伺服器預設",
+      "kbSelection": "知識庫選擇",
+      "kbSelectionTooltip": "為此查詢選擇一或多個知識庫。",
+      "kbSelectionReset": "重設為目前知識庫",
+      "maxEntityTokensPlaceholder": "輸入實體最大 token 數",
+      "maxRelationTokensPlaceholder": "輸入關係最大 token 數",
+      "maxTotalTokensPlaceholder": "輸入總 token 數上限",
+      "groupScope": "檢索範圍",
+      "groupModel": "模型",
+      "groupParams": "檢索參數",
+      "groupOutput": "輸出",
+      "streamOn": "串流",
+      "streamOff": "封鎖"
     }
   },
   "apiSite": {
@@ -461,5 +628,85 @@
     "prevPage": "上一頁",
     "nextPage": "下一頁",
     "lastPage": "最後一頁"
+  },
+  "modelManager": {
+    "title": "模型管理",
+    "description": "端點儲存於伺服器；API 金鑰絕不會傳送至瀏覽器。",
+    "create": "新增模型",
+    "createTitle": "新增模型設定檔",
+    "editTitle": "編輯模型設定檔",
+    "formDescription": "嵌入設定檔還需要其服務回傳的向量維度。",
+    "empty": "尚未有任何模型設定檔。",
+    "test": "測試連線",
+    "enabled": "已啟用",
+    "noKey": "無",
+    "fieldsRequired": "名稱、模型與主機為必填",
+    "deleted": "模型設定檔已刪除",
+    "deleteTitle": "刪除模型設定檔",
+    "deleteDescription": "確定要刪除「{{name}}」嗎？選取它的查詢將無法運作",
+    "namePlaceholder": "顯示名稱",
+    "modelPlaceholder": "模型名稱",
+    "hostPlaceholder": "基礎網址，例如 http://host:11434",
+    "keyPlaceholder": "API金鑰（選填）",
+    "keyKeepPlaceholder": "API金鑰 — 留空以保留現有金鑰",
+    "dimPlaceholder": "嵌入維度",
+    "columns": {
+      "name": "名稱",
+      "kind": "類型",
+      "binding": "繫結",
+      "model": "模型",
+      "host": "主機",
+      "apiKey": "金鑰",
+      "actions": "操作"
+    }
+  },
+  "externalKBManager": {
+    "title": "外部知識庫",
+    "description": "已註冊的服務可與內部知識庫一起，依查詢需求選用",
+    "create": "新增外部知識庫",
+    "createTitle": "新增外部知識庫",
+    "editTitle": "編輯外部知識庫",
+    "formDescription": "檢索會為本地LLM傳回文字區塊；RAG會傳回完整答案",
+    "empty": "尚未註冊任何外部知識庫",
+    "test": "測試連線",
+    "enabled": "已啟用",
+    "noKey": "無",
+    "fieldsRequired": "名稱與網址為必填",
+    "deleted": "外部知識庫已刪除",
+    "deleteTitle": "刪除外部知識庫",
+    "deleteDescription": "確定要從系統中刪除「{{name}}」嗎？",
+    "namePlaceholder": "顯示名稱",
+    "urlPlaceholder": "https://service.example.com/api",
+    "keyPlaceholder": "API金鑰（選填）",
+    "keyKeepPlaceholder": "API金鑰 — 留空以保留現有金鑰",
+    "columns": {
+      "name": "名稱",
+      "type": "類型",
+      "url": "網址",
+      "topK": "前K項",
+      "apiKey": "金鑰",
+      "actions": "動作"
+    }
+  },
+  "kbManager": {
+    "title": "知識庫",
+    "description": "每個知識庫會保留各自的圖、向量與文件",
+    "create": "新增知識庫",
+    "createDescription": "識別碼會作為儲存工作區，請確保符合檔案系統命名規則",
+    "empty": "未找到任何知識庫",
+    "default": "預設",
+    "inUse": "使用中",
+    "switched": "目前",
+    "switch": "切換使用",
+    "delete": "刪除知識庫",
+    "deleteHasDocuments": "此知識庫仍有 {{count}} 份文件",
+    "duplicateId": "該知識庫已存在",
+    "columns": {
+      "name": "名稱",
+      "documents": "文件數",
+      "status": "狀態",
+      "actions": "動作",
+      "entities": "實體"
+    }
   }
 }

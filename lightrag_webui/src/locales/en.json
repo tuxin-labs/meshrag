@@ -64,6 +64,7 @@
     "saving": "Saving...",
     "saveFailed": "Save failed",
     "delete": "Delete",
+    "actions": "Actions",
     "refresh": "Refresh",
     "edit": "Edit",
     "saveSuccess": "Saved",
@@ -504,6 +505,7 @@
       "queryModePrefixInvalid": "Invalid query mode prefix. Use: /<mode> [space] your query",
       "queryTooShort": "Query is too short",
       "fetchData": "Retrieval data",
+      "dataHint": "Dry-run retrieval on the query-box content: preview the entities, relationships and chunks it hits, without asking the model for an answer.",
       "highLevelKeywords": "HL",
       "lowLevelKeywords": "LL",
       "progressStages": {
@@ -607,7 +609,9 @@
       "groupParams": "Retrieval parameters",
       "groupOutput": "Output",
       "streamOn": "streaming",
-      "streamOff": "blocking"
+      "streamOff": "blocking",
+      "collapse": "Collapse panel",
+      "expand": "Show parameters"
     }
   },
   "apiSite": {

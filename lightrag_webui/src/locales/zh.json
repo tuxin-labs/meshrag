@@ -64,6 +64,7 @@
     "saving": "保存中...",
     "saveFailed": "保存失败",
     "delete": "删除",
+    "actions": "操作",
     "refresh": "刷新",
     "edit": "编辑",
     "saveSuccess": "已保存",
@@ -504,6 +505,7 @@
       "queryModePrefixInvalid": "无效的查询模式前缀。请使用：/<模式> [空格] 查询内容",
       "queryTooShort": "查询内容过短",
       "fetchData": "检索数据",
+      "dataHint": "用上方输入框的内容试跑一次检索，只预览命中的实体、关系和文本块，不调用大模型生成回答。",
       "highLevelKeywords": "高层关键词",
       "lowLevelKeywords": "低层关键词",
       "progressStages": {
@@ -607,7 +609,9 @@
       "groupParams": "检索参数",
       "groupOutput": "输出",
       "streamOn": "流式返回",
-      "streamOff": "非流式返回"
+      "streamOff": "非流式返回",
+      "collapse": "收起面板",
+      "expand": "显示参数"
     }
   },
   "apiSite": {

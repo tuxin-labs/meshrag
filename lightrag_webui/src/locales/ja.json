@@ -6,6 +6,12 @@
     "dark": "ダーク",
     "system": "システム"
   },
+  "nav": {
+    "workspace": "ワークスペース",
+    "configuration": "設定",
+    "expand": "ナビゲーションを展開",
+    "collapse": "ナビゲーションを折りたたむ"
+  },
   "header": {
     "documents": "ドキュメント",
     "knowledgeGraph": "ナレッジグラフ",
@@ -17,7 +23,26 @@
     "themeToggle": {
       "switchToLight": "ライトテーマに切り替え",
       "switchToDark": "ダークテーマに切り替え"
-    }
+    },
+    "kbDelete": "現在のナレッジベースを削除",
+    "kbDeleteDefaultDisabled": "デフォルトのナレッジベースは削除できません",
+    "kbDeleteTitle": "ナレッジベースを削除",
+    "kbDeleteDescription": "{{kbId}} を削除し、そのすべてのストレージを破棄します。この操作は元に戻せません。",
+    "kbDeletePlaceholder": "確認のために「yes」と入力してください",
+    "kbDeleteSuccess": "ナレッジベースを削除しました",
+    "kbDeletePartial": "ナレッジベースは削除されましたが、一部のストレージで失敗しました: {{storages}}",
+    "kbDeleting": "削除中",
+    "models": "モデル",
+    "externalKbs": "外部ナレッジベース",
+    "kbSelect": "ナレッジベースを選択",
+    "kbCreate": "ナレッジベースを作成",
+    "kbCreateTitle": "ナレッジベースを作成",
+    "kbCreateDescription": "新しい独立したナレッジベースを作成し、それに切り替えます。",
+    "kbCreatePlaceholder": "ナレッジベースIDを入力してください",
+    "kbCreateRequired": "ナレッジベースIDは必須です",
+    "kbCreateSuccess": "ナレッジベースを作成しました",
+    "knowledgeBases": "ナレッジベース",
+    "kbStatsHint": "{{documents}} 件のドキュメント · {{entities}} 件のエンティティ"
   },
   "login": {
     "description": "システムにログインするには、アカウントとパスワードを入力してください",
@@ -37,7 +62,13 @@
     "cancel": "キャンセル",
     "save": "保存",
     "saving": "保存中...",
-    "saveFailed": "保存に失敗しました"
+    "saveFailed": "保存に失敗しました",
+    "delete": "削除",
+    "refresh": "更新",
+    "edit": "編集",
+    "saveSuccess": "保存しました",
+    "create": "作成",
+    "initializing": "初期化中..."
   },
   "documentPanel": {
     "clearDocuments": {
@@ -76,7 +107,11 @@
       "failed": "ドキュメントの削除に失敗しました:\n{{message}}",
       "error": "ドキュメントの削除に失敗しました:\n{{error}}",
       "busy": "パイプラインがビジーです。後でもう一度お試しください",
-      "notAllowed": "この操作を実行する権限がありません"
+      "notAllowed": "この操作を実行する権限がありません",
+      "queued": "パイプラインが処理中のため、{{count}} 件のドキュメントの削除をキューに追加しました",
+      "partialNotFound": "削除を開始しましたが、以下のドキュメントは見つかりませんでした: {{ids}}",
+      "notFound": "以下のドキュメントは既に存在しません: {{ids}}",
+      "deleting": "削除中"
     },
     "selectDocuments": {
       "selectCurrentPage": "現在のページを選択 ({{count}})",
@@ -110,8 +145,11 @@
         "dragAndDrop": "ファイルをここにドラッグ&ドロップするか、クリックしてファイルを選択",
         "removeFile": "ファイルを削除",
         "uploadDescription": "{{isMultiple ? '複数' : count}}個のファイルをアップロードできます（それぞれ最大{{maxSize}}まで）",
-        "duplicateFile": "ファイル名がサーバーキャッシュに既に存在します"
-      }
+        "duplicateFile": "ファイル名がサーバーキャッシュに既に存在します",
+        "duplicateFileOf": "{{path}} と同じ内容です",
+        "invalidFileName": "無効なファイル名です"
+      },
+      "overwrite": "同じファイルソースの既存ドキュメントを置き換える"
     },
     "documentManager": {
       "title": "ドキュメント管理",
@@ -134,7 +172,8 @@
         "created": "作成日時",
         "updated": "更新日時",
         "metadata": "メタデータ",
-        "select": "選択"
+        "select": "選択",
+        "actions": "操作"
       },
       "status": {
         "all": "すべて",
@@ -177,7 +216,35 @@
       "cancelNotBusy": "パイプラインは実行されていないため、キャンセルする必要はありません",
       "errors": {
         "fetchFailed": "パイプラインステータスの取得に失敗しました\n{{error}}"
-      }
+      },
+      "noActiveJob": "アクティブなジョブはありません"
+    },
+    "editDocument": {
+      "tooltip": "内容を更新",
+      "title": "ドキュメントを更新",
+      "description": "このファイルソースに対してインデックスされたコンテンツを置き換えます",
+      "placeholder": "ドキュメントの新しい全文を貼り付けてください",
+      "deleteCache": "このドキュメントのLLMキャッシュを削除します",
+      "saving": "保存中",
+      "success": "ドキュメントの更新がキューに追加されました",
+      "unchanged": "コンテンツは変更されていません",
+      "notFound": "このファイルソースに対応するドキュメントが見つかりません",
+      "failed": "更新に失敗しました",
+      "emptyText": "テキストが必要です",
+      "noFileSource": "このドキュメントはファイルソースを持たないため、更新できません",
+      "error": "更新に失敗しました: {{error}}"
+    },
+    "insertText": {
+      "tooltip": "プレーンテキストをインデックス",
+      "button": "テキストを追加",
+      "title": "テキストを挿入",
+      "description": "テキストを現在のナレッジベースに直接送信します",
+      "sourcePlaceholder": "ファイルソース（任意、後でドキュメントを特定するために使用）",
+      "textPlaceholder": "インデックスするテキストを貼り付けてください",
+      "submitting": "送信中",
+      "confirm": "送信",
+      "success": "テキストのインデックスが送信されました",
+      "empty": "テキストが必要です"
     }
   },
   "graphPanel": {
@@ -313,7 +380,9 @@
       "success": {
         "entityUpdated": "ノードが正常に更新されました",
         "relationUpdated": "関係が正常に更新されました",
-        "entityMerged": "ノードが正常にマージされました"
+        "entityMerged": "ノードが正常にマージされました",
+        "entityDeleted": "エンティティが削除されました",
+        "relationDeleted": "リレーションが削除されました"
       },
       "mergeOptionLabel": "重複名が見つかった場合に自動的にマージ",
       "mergeOptionDescription": "有効にすると、既存の名前に名前を変更すると、失敗する代わりにこのノードが既存のノードにマージされます。",
@@ -346,7 +415,10 @@
           "file_path": "ファイル",
           "keywords": "キー",
           "weight": "重み"
-        }
+        },
+        "deleteNode": "エンティティを削除",
+        "deleteTitle": "エンティティの削除",
+        "deleteDescription": "ナレッジグラフから「{{name}}」とそのすべてのリレーションシップを削除します"
       },
       "edge": {
         "title": "関係",
@@ -354,8 +426,12 @@
         "type": "タイプ",
         "source": "ソース",
         "target": "ターゲット",
-        "properties": "プロパティ"
-      }
+        "properties": "プロパティ",
+        "deleteEdge": "リレーションを削除",
+        "deleteTitle": "リレーションの削除",
+        "deleteDescription": "「{{source}}」と「{{target}}」の間のリレーションシップを削除します"
+      },
+      "deleting": "削除中"
     },
     "search": {
       "placeholder": "ページ内のノードを検索...",
@@ -371,7 +447,38 @@
       "refreshCurrentLabelTooltip": "現在のページのグラフデータを更新",
       "refreshingTooltip": "データを更新中..."
     },
-    "emptyGraph": "空（再読み込みをお試しください）"
+    "emptyGraph": "空（再読み込みをお試しください）",
+    "createEntity": {
+      "tooltip": "エンティティを作成",
+      "title": "エンティティを作成",
+      "description": "現在のナレッジベースのナレッジグラフにノードを追加します",
+      "namePlaceholder": "エンティティ名",
+      "typePlaceholder": "エンティティタイプ",
+      "descriptionPlaceholder": "説明",
+      "nameRequired": "エンティティ名が必要です",
+      "success": "エンティティが作成されました"
+    },
+    "createRelation": {
+      "tooltip": "リレーションを作成",
+      "title": "リレーションを作成",
+      "description": "両エンティティは既にナレッジグラフに存在する必要があります",
+      "keywordsPlaceholder": "キーワード",
+      "descriptionPlaceholder": "説明",
+      "entitiesRequired": "両エンティティが必要です",
+      "success": "リレーションを作成しました"
+    },
+    "mergeEntities": {
+      "tooltip": "エンティティをマージ",
+      "title": "エンティティのマージ",
+      "description": "ソースエンティティのリレーションは保持されるターゲットエンティティに移動します",
+      "sourcesPlaceholder": "マージするエンティティ（カンマ区切り）",
+      "targetPlaceholder": "ターゲットエンティティ",
+      "required": "マージするエンティティを1つ以上とターゲットエンティティを選択してください",
+      "targetIsSource": "ターゲットエンティティはマージ対象にできません",
+      "merging": "マージ中",
+      "confirm": "マージ",
+      "success": "{{count}} 個のエンティティをマージしました"
+    }
   },
   "retrievePanel": {
     "chatMessage": {
@@ -394,7 +501,26 @@
       "placeholder": "クエリを入力（プレフィックス対応: /<クエリモード>）",
       "error": "エラー: 応答の取得に失敗しました",
       "queryModeError": "次のクエリモードのみサポートされています: {{modes}}",
-      "queryModePrefixInvalid": "無効なクエリモードプレフィックス。使用: /<mode> [スペース] クエリ"
+      "queryModePrefixInvalid": "無効なクエリモードプレフィックス。使用: /<mode> [スペース] クエリ",
+      "queryTooShort": "クエリが短すぎます",
+      "fetchData": "取得データ",
+      "dataHint": "上の入力欄の内容で取得のみを実行します。ヒットしたエンティティ・リレーション・チャンクを確認でき、LLM による回答は生成しません。",
+      "highLevelKeywords": "HL",
+      "lowLevelKeywords": "LL",
+      "progressStages": {
+        "keyword_extraction": "キーワード抽出中",
+        "vector_search": "グラフとベクトルを検索中",
+        "merge_chunks": "チャンクをマージ中",
+        "context_built": "コンテキスト構築中",
+        "rerank": "リランク中",
+        "retrieval_done": "取得完了"
+      },
+      "dataCounts": {
+        "entities": "エンティティ",
+        "relationships": "リレーション",
+        "chunks": "チャンク",
+        "references": "参照"
+      }
     },
     "querySettings": {
       "parametersTitle": "パラメータ",
@@ -441,7 +567,48 @@
       "userPromptTooltip": "LLMに追加の応答要件を提供します（クエリコンテンツとは無関係で、出力処理のみに使用）。",
       "userPromptPlaceholder": "カスタムプロンプトを入力（オプション）",
       "enableRerank": "リランクを有効化",
-      "enableRerankTooltip": "取得されたテキストチャンクのリランクを有効にします。Trueに設定してもリランクモデルが設定されていない場合、警告が発行されます。デフォルトはTrueです。"
+      "enableRerankTooltip": "取得されたテキストチャンクのリランクを有効にします。Trueに設定してもリランクモデルが設定されていない場合、警告が発行されます。デフォルトはTrueです。",
+      "includeReferences": "参照を含める",
+      "includeReferencesTooltip": "回答と共に参照リストを返し、引用元を解決できるようにします",
+      "includeChunkContent": "チャンクテキストを含める",
+      "includeChunkContentTooltip": "各参照に取得したチャンクテキストを添付します",
+      "kbNoneExternalOnly": "なし（外部のみ）",
+      "externalKbs": "外部ナレッジベース",
+      "externalKbAdd": "外部ナレッジベースを追加",
+      "externalKbEmpty": "内部ベースに加えてサードパーティの検索またはRAGサービスをクエリします",
+      "externalKbOnly": "内部ナレッジベースをスキップ",
+      "externalKbRetrieval": "検索",
+      "externalKbRag": "RAGサービス",
+      "externalKbUrl": "API URL",
+      "externalKbApiKey": "APIキー（任意）",
+      "llmOverride": "クエリごとのLLMオーバーライド",
+      "llmOverrideReset": "サーバーデフォルトのLLMに戻す",
+      "llmOverrideEmpty": "サーバー設定済みのLLMを使用します。バインディング、モデル、ホストのすべてが設定されている必要があります",
+      "llmBinding": "バインディング",
+      "llmModel": "モデル",
+      "llmHost": "APIベースURL",
+      "llmApiKey": "APIキー",
+      "llmHeaders": "追加ヘッダー。1行に「名前: 値」の形式で記述してください",
+      "externalKbNone": "なし",
+      "externalKbsTooltip": "内部ナレッジベースと共にクエリを実行する登録済みサードパーティサービスです。外部KBタブで管理してください",
+      "externalKbsEmpty": "外部ナレッジベースがまだ登録されていません",
+      "externalKbsReset": "外部ソースをクリア",
+      "modelProfile": "モデル",
+      "modelProfileTooltip": "登録済みモデルでこのクエリを実行します。APIキーはサーバーに保持されます",
+      "modelProfileReset": "サーバーデフォルトモデルを使用",
+      "serverDefaultModel": "サーバーデフォルト",
+      "kbSelection": "KB選択",
+      "kbSelectionTooltip": "このクエリで使用するナレッジベースを1つ以上選択してください",
+      "kbSelectionReset": "現在のKBにリセット",
+      "maxEntityTokensPlaceholder": "最大エンティティトークン数を入力",
+      "maxRelationTokensPlaceholder": "最大リレーショントークン数を入力",
+      "maxTotalTokensPlaceholder": "最大合計トークン数を入力",
+      "groupScope": "検索スコープ",
+      "groupModel": "モデル",
+      "groupParams": "検索パラメータ",
+      "groupOutput": "出力",
+      "streamOn": "ストリーミング",
+      "streamOff": "ブロッキング"
     }
   },
   "apiSite": {
@@ -461,5 +628,85 @@
     "prevPage": "前のページ",
     "nextPage": "次のページ",
     "lastPage": "最後のページ"
+  },
+  "modelManager": {
+    "title": "モデル管理",
+    "description": "エンドポイントはサーバーに保存され、APIキーはブラウザに送信されません",
+    "create": "モデルを追加",
+    "createTitle": "モデルプロファイルを追加",
+    "editTitle": "モデルプロファイルを編集",
+    "formDescription": "エンベディングプロファイルには、サービスが返すベクトル次元も必要です",
+    "empty": "モデルプロファイルがまだありません",
+    "test": "接続テスト",
+    "enabled": "有効",
+    "noKey": "なし",
+    "fieldsRequired": "名前、モデル、ホストは必須です",
+    "deleted": "モデルプロファイルを削除しました",
+    "deleteTitle": "モデルプロファイルの削除",
+    "deleteDescription": "{{name}} を削除しますか？それを選択するクエリは動作しなくなります",
+    "namePlaceholder": "表示名",
+    "modelPlaceholder": "モデル名",
+    "hostPlaceholder": "ベースURL (例: http://host:11434)",
+    "keyPlaceholder": "APIキー (任意)",
+    "keyKeepPlaceholder": "APIキー — 現在のものを保持する場合は空のままにしてください",
+    "dimPlaceholder": "埋め込み次元",
+    "columns": {
+      "name": "名前",
+      "kind": "種別",
+      "binding": "バインディング",
+      "model": "モデル",
+      "host": "ホスト",
+      "apiKey": "キー",
+      "actions": "操作"
+    }
+  },
+  "externalKBManager": {
+    "title": "外部ナレッジベース",
+    "description": "登録済みのサービスは、内部ナレッジベースと共にクエリごとに選択できます",
+    "create": "外部KBを追加",
+    "createTitle": "外部ナレッジベースを追加",
+    "editTitle": "外部ナレッジベースを編集",
+    "formDescription": "検索はローカルLLM用のテキストチャンクを返し、RAGは完成した回答を返します",
+    "empty": "外部ナレッジベースが登録されていません",
+    "test": "接続テスト",
+    "enabled": "有効",
+    "noKey": "なし",
+    "fieldsRequired": "名前とURLは必須です",
+    "deleted": "外部ナレッジベースを削除しました",
+    "deleteTitle": "外部ナレッジベースの削除",
+    "deleteDescription": "{{name}} をシステムから削除しますか？",
+    "namePlaceholder": "表示名",
+    "urlPlaceholder": "https://service.example.com/api",
+    "keyPlaceholder": "APIキー (任意)",
+    "keyKeepPlaceholder": "APIキー — 現在のものを保持する場合は空のままにしてください",
+    "columns": {
+      "name": "名前",
+      "type": "種別",
+      "url": "URL",
+      "topK": "Top K",
+      "apiKey": "キー",
+      "actions": "操作"
+    }
+  },
+  "kbManager": {
+    "title": "ナレッジベース",
+    "description": "各ベースは独自のグラフ、ベクトル、ドキュメントを保持します。",
+    "create": "新規ナレッジベース",
+    "createDescription": "識別子はストレージワークスペースとして使用されるため、ファイルシステムで安全な形式にしてください。",
+    "empty": "ナレッジベースが見つかりませんでした。",
+    "default": "デフォルト",
+    "inUse": "使用中",
+    "switched": "現在",
+    "switch": "利用",
+    "delete": "ナレッジベースを削除",
+    "deleteHasDocuments": "このベースにはまだ {{count}} 件のドキュメントが含まれています。",
+    "duplicateId": "そのナレッジベースは既に存在します。",
+    "columns": {
+      "name": "名前",
+      "documents": "ドキュメント",
+      "status": "ステータス",
+      "actions": "操作",
+      "entities": "エンティティ"
+    }
   }
 }

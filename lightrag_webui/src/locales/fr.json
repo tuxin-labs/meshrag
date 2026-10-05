@@ -6,6 +6,12 @@
     "dark": "Sombre",
     "system": "Système"
   },
+  "nav": {
+    "workspace": "Espace de travail",
+    "configuration": "Configuration",
+    "expand": "Développer la navigation",
+    "collapse": "Réduire la navigation"
+  },
   "header": {
     "documents": "Documents",
     "knowledgeGraph": "Graphe de connaissances",
@@ -17,7 +23,26 @@
     "themeToggle": {
       "switchToLight": "Passer au thème clair",
       "switchToDark": "Passer au thème sombre"
-    }
+    },
+    "kbDelete": "Supprimer la base de connaissances actuelle",
+    "kbDeleteDefaultDisabled": "La base de connaissances par défaut ne peut pas être supprimée",
+    "kbDeleteTitle": "Supprimer la base de connaissances",
+    "kbDeleteDescription": "Supprimer \"{{kbId}}\" et supprimer tous ses stockages. Cette action est irréversible.",
+    "kbDeletePlaceholder": "Saisissez \"yes\" pour confirmer",
+    "kbDeleteSuccess": "Base de connaissances supprimée",
+    "kbDeletePartial": "Base de connaissances supprimée, mais certains stockages ont échoué : {{storages}}",
+    "kbDeleting": "Suppression en cours",
+    "models": "Modèles",
+    "externalKbs": "Bases de connaissances externes",
+    "kbSelect": "Sélectionner une base de connaissances",
+    "kbCreate": "Créer une base de connaissances",
+    "kbCreateTitle": "Créer une base de connaissances",
+    "kbCreateDescription": "Créer une nouvelle base de connaissances isolée et y basculer.",
+    "kbCreatePlaceholder": "Saisissez l'ID de la base de connaissances",
+    "kbCreateRequired": "L'ID de la base de connaissances est obligatoire",
+    "kbCreateSuccess": "Base de connaissances créée",
+    "knowledgeBases": "Bases de connaissances",
+    "kbStatsHint": "{{documents}} docs · {{entities}} entités"
   },
   "login": {
     "description": "Veuillez entrer votre compte et mot de passe pour vous connecter au système",
@@ -37,7 +62,13 @@
     "cancel": "Annuler",
     "save": "Sauvegarder",
     "saving": "Sauvegarde en cours...",
-    "saveFailed": "Échec de la sauvegarde"
+    "saveFailed": "Échec de la sauvegarde",
+    "delete": "Supprimer",
+    "refresh": "Actualiser",
+    "edit": "Modifier",
+    "saveSuccess": "Enregistré",
+    "create": "Créer",
+    "initializing": "Initialisation en cours..."
   },
   "documentPanel": {
     "clearDocuments": {
@@ -76,7 +107,11 @@
       "failed": "Échec de la suppression des documents :\n{{message}}",
       "error": "Échec de la suppression des documents :\n{{error}}",
       "busy": "Le pipeline est occupé, veuillez réessayer plus tard",
-      "notAllowed": "Aucune autorisation pour effectuer cette opération"
+      "notAllowed": "Aucune autorisation pour effectuer cette opération",
+      "queued": "Le pipeline est occupé ; la suppression de {{count}} document(s) est en file d'attente",
+      "partialNotFound": "La suppression a commencé, mais ces documents n'ont pas été trouvés : {{ids}}",
+      "notFound": "Ces documents n'existent plus : {{ids}}",
+      "deleting": "Suppression en cours"
     },
     "selectDocuments": {
       "selectCurrentPage": "Sélectionner la page actuelle ({{count}})",
@@ -110,8 +145,11 @@
         "dragAndDrop": "Glissez et déposez les fichiers ici, ou cliquez pour sélectionner",
         "removeFile": "Supprimer le fichier",
         "uploadDescription": "Vous pouvez télécharger {{isMultiple ? 'plusieurs' : count}} fichiers (jusqu'à {{maxSize}} chacun)",
-        "duplicateFile": "Le nom du fichier existe déjà dans le cache du serveur"
-      }
+        "duplicateFile": "Le nom du fichier existe déjà dans le cache du serveur",
+        "duplicateFileOf": "Même contenu que {{path}}",
+        "invalidFileName": "Nom de fichier invalide"
+      },
+      "overwrite": "Remplacer le document existant par la même source de fichier"
     },
     "documentManager": {
       "title": "Gestion des documents",
@@ -134,7 +172,8 @@
         "created": "Créé",
         "updated": "Mis à jour",
         "metadata": "Métadonnées",
-        "select": "Sélectionner"
+        "select": "Sélectionner",
+        "actions": "Actions"
       },
       "status": {
         "all": "Tous",
@@ -177,7 +216,35 @@
       "cancelNotBusy": "Le pipeline n'est pas en cours d'exécution, pas besoin d'annuler",
       "errors": {
         "fetchFailed": "Échec de la récupération de l'état du pipeline\n{{error}}"
-      }
+      },
+      "noActiveJob": "Aucun job actif"
+    },
+    "editDocument": {
+      "tooltip": "Mettre à jour le contenu",
+      "title": "Mettre à jour le document",
+      "description": "Remplacer le contenu indexé pour cette source de fichier",
+      "placeholder": "Coller le nouveau texte complet du document",
+      "deleteCache": "Supprimer le cache LLM de ce document",
+      "saving": "Enregistrement en cours",
+      "success": "Mise à jour du document en file d'attente",
+      "unchanged": "Contenu inchangé",
+      "notFound": "Aucun document trouvé pour cette source de fichier",
+      "failed": "Échec de la mise à jour",
+      "emptyText": "Le texte est obligatoire",
+      "noFileSource": "Ce document n'a pas de source de fichier, il ne peut donc pas être mis à jour",
+      "error": "Échec de la mise à jour : {{error}}"
+    },
+    "insertText": {
+      "tooltip": "Indexer le texte brut",
+      "button": "Ajouter du texte",
+      "title": "Insérer du texte",
+      "description": "Envoyer le texte directement dans la base de connaissances actuelle",
+      "sourcePlaceholder": "Source du fichier (optionnelle, utilisée pour localiser le document ultérieurement)",
+      "textPlaceholder": "Coller le texte à indexer",
+      "submitting": "Envoi en cours",
+      "confirm": "Envoyer",
+      "success": "Texte envoyé pour indexation",
+      "empty": "Le texte est obligatoire"
     }
   },
   "graphPanel": {
@@ -313,7 +380,9 @@
       "success": {
         "entityUpdated": "Nœud mis à jour avec succès",
         "relationUpdated": "Relation mise à jour avec succès",
-        "entityMerged": "Fusion des nœuds réussie"
+        "entityMerged": "Fusion des nœuds réussie",
+        "entityDeleted": "Entité supprimée",
+        "relationDeleted": "Relation supprimée"
       },
       "mergeOptionLabel": "Fusionner automatiquement en cas de nom dupliqué",
       "mergeOptionDescription": "Si activé, renommer vers un nom existant fusionnera automatiquement ce nœud avec celui-ci au lieu d'échouer.",
@@ -346,7 +415,10 @@
           "file_path": "File",
           "keywords": "Keys",
           "weight": "Poids"
-        }
+        },
+        "deleteNode": "Supprimer l'entité",
+        "deleteTitle": "Supprimer l'entité",
+        "deleteDescription": "Supprimer \"{{name}}\" et toutes ses relations du graphe de connaissances"
       },
       "edge": {
         "title": "Relation",
@@ -354,8 +426,12 @@
         "type": "Type",
         "source": "Source",
         "target": "Cible",
-        "properties": "Propriétés"
-      }
+        "properties": "Propriétés",
+        "deleteEdge": "Supprimer la relation",
+        "deleteTitle": "Supprimer la relation",
+        "deleteDescription": "Supprimer la relation entre \"{{source}}\" et \"{{target}}\""
+      },
+      "deleting": "Suppression en cours"
     },
     "search": {
       "placeholder": "Rechercher des nœuds dans la page...",
@@ -371,7 +447,38 @@
       "refreshCurrentLabelTooltip": "Actualiser les données du graphe de la page actuelle",
       "refreshingTooltip": "Actualisation des données en cours..."
     },
-    "emptyGraph": "Vide (Essayez de recharger)"
+    "emptyGraph": "Vide (Essayez de recharger)",
+    "createEntity": {
+      "tooltip": "Créer une entité",
+      "title": "Créer une entité",
+      "description": "Ajouter un nœud au graphe de connaissances de la base actuelle",
+      "namePlaceholder": "Nom de l'entité",
+      "typePlaceholder": "Type d'entité",
+      "descriptionPlaceholder": "Description",
+      "nameRequired": "Le nom de l'entité est obligatoire",
+      "success": "Entité créée"
+    },
+    "createRelation": {
+      "tooltip": "Créer une relation",
+      "title": "Créer une relation",
+      "description": "Les deux entités doivent déjà exister dans le graphe de connaissances",
+      "keywordsPlaceholder": "Mots-clés",
+      "descriptionPlaceholder": "Description",
+      "entitiesRequired": "Les deux entités sont requises",
+      "success": "Relation créée"
+    },
+    "mergeEntities": {
+      "tooltip": "Fusionner les entités",
+      "title": "Fusionner les entités",
+      "description": "Les relations des entités sources sont transférées vers l'entité cible, qui est conservée",
+      "sourcesPlaceholder": "Entités à fusionner, séparées par des virgules",
+      "targetPlaceholder": "Entité cible",
+      "required": "Sélectionnez au moins une entité à fusionner et une entité cible",
+      "targetIsSource": "L'entité cible ne peut pas être elle-même fusionnée",
+      "merging": "Fusion en cours",
+      "confirm": "Fusionner",
+      "success": "{{count}} entités fusionnées"
+    }
   },
   "retrievePanel": {
     "chatMessage": {
@@ -394,7 +501,26 @@
       "placeholder": "Tapez votre requête (Préfixe de requête : /<Query Mode>)",
       "error": "Erreur : Échec de l'obtention de la réponse",
       "queryModeError": "Seuls les modes de requête suivants sont pris en charge : {{modes}}",
-      "queryModePrefixInvalid": "Préfixe de mode de requête invalide. Utilisez : /<mode> [espace] votre requête"
+      "queryModePrefixInvalid": "Préfixe de mode de requête invalide. Utilisez : /<mode> [espace] votre requête",
+      "queryTooShort": "La requête est trop courte",
+      "fetchData": "Données de récupération",
+      "dataHint": "Lance la récupération à blanc sur le contenu du champ de requête : aperçu des entités, relations et blocs trouvés, sans générer de réponse par le modèle.",
+      "highLevelKeywords": "HL",
+      "lowLevelKeywords": "LL",
+      "progressStages": {
+        "keyword_extraction": "Extraction des mots-clés",
+        "vector_search": "Recherche dans le graphe et les vecteurs",
+        "merge_chunks": "Fusion des blocs",
+        "context_built": "Construction du contexte",
+        "rerank": "Réclassement",
+        "retrieval_done": "Récupération terminée"
+      },
+      "dataCounts": {
+        "entities": "Entités",
+        "relationships": "Relations",
+        "chunks": "Blocs",
+        "references": "Références"
+      }
     },
     "querySettings": {
       "parametersTitle": "Paramètres",
@@ -441,7 +567,48 @@
       "userPromptTooltip": "Fournir des exigences de réponse supplémentaires au LLM (sans rapport avec le contenu de la requête, uniquement pour le traitement de sortie).",
       "userPromptPlaceholder": "Entrez une invite personnalisée (facultatif)",
       "enableRerank": "Activer le Reclassement",
-      "enableRerankTooltip": "Active le reclassement pour les fragments de texte récupérés. Si True mais qu'aucun modèle de reclassement n'est configuré, un avertissement sera émis. True par défaut."
+      "enableRerankTooltip": "Active le reclassement pour les fragments de texte récupérés. Si True mais qu'aucun modèle de reclassement n'est configuré, un avertissement sera émis. True par défaut.",
+      "includeReferences": "Inclure les références",
+      "includeReferencesTooltip": "Retourner la liste des références avec la réponse pour pouvoir résoudre les citations",
+      "includeChunkContent": "Inclure le texte des blocs",
+      "includeChunkContentTooltip": "Joindre les textes des blocs récupérés à chaque référence",
+      "kbNoneExternalOnly": "Aucun (seulement externe)",
+      "externalKbs": "Bases de connaissances externes",
+      "externalKbAdd": "Ajouter une base de connaissances externe",
+      "externalKbEmpty": "Interrogez des services de récupération ou RAG tiers en plus des bases internes",
+      "externalKbOnly": "Ignorer les bases de connaissances internes",
+      "externalKbRetrieval": "Récupération",
+      "externalKbRag": "Service RAG",
+      "externalKbUrl": "URL de l'API",
+      "externalKbApiKey": "Clé API (optionnelle)",
+      "llmOverride": "Remplacement LLM par requête",
+      "llmOverrideReset": "Revenir au LLM par défaut du serveur",
+      "llmOverrideEmpty": "Utilise le LLM configuré sur le serveur. La liaison, le modèle et l'hôte doivent tous être définis.",
+      "llmBinding": "Liaison",
+      "llmModel": "Modèle",
+      "llmHost": "URL de base de l'API",
+      "llmApiKey": "Clé API",
+      "llmHeaders": "En-têtes supplémentaires, un « Nom : valeur » par ligne",
+      "externalKbNone": "Aucun",
+      "externalKbsTooltip": "Services tiers enregistrés interrogés avec les bases de connaissances internes. Gérez-les dans l'onglet Bases de connaissances externes.",
+      "externalKbsEmpty": "Aucune base de connaissances externe enregistrée pour l'instant.",
+      "externalKbsReset": "Effacer les sources externes",
+      "modelProfile": "Modèle",
+      "modelProfileTooltip": "Exécuter cette requête avec un modèle enregistré. La clé API reste sur le serveur.",
+      "modelProfileReset": "Utiliser le modèle par défaut du serveur",
+      "serverDefaultModel": "Par défaut du serveur",
+      "kbSelection": "Sélection des bases de connaissances",
+      "kbSelectionTooltip": "Sélectionnez une ou plusieurs bases de connaissances pour cette requête.",
+      "kbSelectionReset": "Réinitialiser à la base de connaissances actuelle",
+      "maxEntityTokensPlaceholder": "Saisir le nombre maximal de jetons d'entité",
+      "maxRelationTokensPlaceholder": "Saisir le nombre maximal de jetons de relation",
+      "maxTotalTokensPlaceholder": "Saisir le nombre maximal de jetons total",
+      "groupScope": "Portée de la récupération",
+      "groupModel": "Modèle",
+      "groupParams": "Paramètres de récupération",
+      "groupOutput": "Sortie",
+      "streamOn": "streaming",
+      "streamOff": "Bloquant"
     }
   },
   "apiSite": {
@@ -461,5 +628,85 @@
     "prevPage": "Page précédente",
     "nextPage": "Page suivante",
     "lastPage": "Dernière page"
+  },
+  "modelManager": {
+    "title": "Gestion des modèles",
+    "description": "Les points de terminaison sont stockés sur le serveur ; les clés API ne sont jamais envoyées au navigateur.",
+    "create": "Ajouter un modèle",
+    "createTitle": "Ajouter un profil de modèle",
+    "editTitle": "Modifier le profil de modèle",
+    "formDescription": "Les profils d'embedding nécessitent également la dimension vectorielle renvoyée par leur service.",
+    "empty": "Aucun profil de modèle pour l'instant.",
+    "test": "Tester la connexion",
+    "enabled": "Activé",
+    "noKey": "Aucune",
+    "fieldsRequired": "Le nom, le modèle et l'hôte sont obligatoires",
+    "deleted": "Profil de modèle supprimé",
+    "deleteTitle": "Supprimer le profil de modèle",
+    "deleteDescription": "Supprimer \"{{name}}\" ? Les requêtes qui le sélectionnent cesseront de fonctionner.",
+    "namePlaceholder": "Nom affiché",
+    "modelPlaceholder": "Nom du modèle",
+    "hostPlaceholder": "URL de base, ex: http://hôte:11434",
+    "keyPlaceholder": "Clé API (optionnelle)",
+    "keyKeepPlaceholder": "Clé API — laissez vide pour conserver la actuelle",
+    "dimPlaceholder": "Dimension d'embedding",
+    "columns": {
+      "name": "Nom",
+      "kind": "Type",
+      "binding": "Liaison",
+      "model": "Modèle",
+      "host": "Hôte",
+      "apiKey": "Clé",
+      "actions": "Actions"
+    }
+  },
+  "externalKBManager": {
+    "title": "Bases de connaissances externes",
+    "description": "Les services enregistrés peuvent être sélectionnés par requête en plus des bases de connaissances internes.",
+    "create": "Ajouter une base de connaissances externe",
+    "createTitle": "Ajouter une base de connaissances externe",
+    "editTitle": "Modifier la base de connaissances externe",
+    "formDescription": "retrieval renvoie des fragments de texte pour le LLM local ; rag renvoie une réponse complète.",
+    "empty": "Aucune base de connaissances externe enregistrée.",
+    "test": "Tester la connexion",
+    "enabled": "Activé",
+    "noKey": "aucune",
+    "fieldsRequired": "Le nom et l'URL sont obligatoires",
+    "deleted": "Base de connaissances externe supprimée",
+    "deleteTitle": "Supprimer la base de connaissances externe",
+    "deleteDescription": "Supprimer \"{{name}}\" du système ?",
+    "namePlaceholder": "Nom affiché",
+    "urlPlaceholder": "https://service.example.com/api",
+    "keyPlaceholder": "Clé API (optionnelle)",
+    "keyKeepPlaceholder": "Clé API — laissez vide pour conserver la actuelle",
+    "columns": {
+      "name": "Nom",
+      "type": "Type",
+      "url": "URL",
+      "topK": "Top K",
+      "apiKey": "Clé",
+      "actions": "Actions"
+    }
+  },
+  "kbManager": {
+    "title": "Bases de connaissances",
+    "description": "Chaque base conserve son propre graphe, ses vecteurs et ses documents.",
+    "create": "Nouvelle base de connaissances",
+    "createDescription": "L'identifiant est utilisé comme espace de stockage, veillez à ce qu'il soit compatible avec les systèmes de fichiers.",
+    "empty": "Aucune base de connaissances trouvée.",
+    "default": "par défaut",
+    "inUse": "utilisée",
+    "switched": "Actuelle",
+    "switch": "Utiliser",
+    "delete": "Supprimer la base de connaissances",
+    "deleteHasDocuments": "Cette base contient encore {{count}} document(s).",
+    "duplicateId": "Cette base de connaissances existe déjà",
+    "columns": {
+      "name": "Nom",
+      "documents": "Documents",
+      "status": "Statut",
+      "actions": "Actions",
+      "entities": "Entités"
+    }
   }
 }

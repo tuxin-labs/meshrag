@@ -6,6 +6,12 @@
     "dark": "داكن",
     "system": "النظام"
   },
+  "nav": {
+    "workspace": "مساحة العمل",
+    "configuration": "الإعدادات",
+    "expand": "توسيع التنقل",
+    "collapse": "طي التنقل"
+  },
   "header": {
     "documents": "المستندات",
     "knowledgeGraph": "شبكة المعرفة",
@@ -17,7 +23,26 @@
     "themeToggle": {
       "switchToLight": "التحويل إلى السمة الفاتحة",
       "switchToDark": "التحويل إلى السمة الداكنة"
-    }
+    },
+    "kbDelete": "حذف قاعدة المعرفة الحالية",
+    "kbDeleteDefaultDisabled": "لا يمكن حذف قاعدة المعرفة الافتراضية",
+    "kbDeleteTitle": "حذف قاعدة المعرفة",
+    "kbDeleteDescription": "حذف \"{{kbId}}\" وإسقاط جميع مخازنها. لا يمكن التراجع عن هذا الإجراء.",
+    "kbDeletePlaceholder": "اكتب \"yes\" للتأكيد",
+    "kbDeleteSuccess": "تم حذف قاعدة المعرفة",
+    "kbDeletePartial": "تم حذف قاعدة المعرفة، لكن فشلت بعض المخازن: {{storages}}",
+    "kbDeleting": "يتم الحذف",
+    "models": "النماذج",
+    "externalKbs": "قواعد المعرفة الخارجية",
+    "kbSelect": "اختر قاعدة المعرفة",
+    "kbCreate": "إنشاء قاعدة معرفة",
+    "kbCreateTitle": "إنشاء قاعدة معرفة",
+    "kbCreateDescription": "أنشئ قاعدة معرفة منعزلة جديدة وانتقل إليها.",
+    "kbCreatePlaceholder": "أدخل معرف قاعدة المعرفة",
+    "kbCreateRequired": "معرف قاعدة المعرفة مطلوب",
+    "kbCreateSuccess": "تم إنشاء قاعدة المعرفة",
+    "knowledgeBases": "قواعد المعرفة",
+    "kbStatsHint": "{{documents}} وثائق · {{entities}} كيانات"
   },
   "login": {
     "description": "الرجاء إدخال حسابك وكلمة المرور لتسجيل الدخول إلى النظام",
@@ -37,7 +62,13 @@
     "cancel": "إلغاء",
     "save": "حفظ",
     "saving": "جارٍ الحفظ...",
-    "saveFailed": "فشل الحفظ"
+    "saveFailed": "فشل الحفظ",
+    "delete": "حذف",
+    "refresh": "تحديث",
+    "edit": "تعديل",
+    "saveSuccess": "تم الحفظ",
+    "create": "إنشاء",
+    "initializing": "يتم التهيئة..."
   },
   "documentPanel": {
     "clearDocuments": {
@@ -76,7 +107,11 @@
       "failed": "فشل حذف المستندات:\n{{message}}",
       "error": "فشل حذف المستندات:\n{{error}}",
       "busy": "خط المعالجة مشغول، يرجى المحاولة مرة أخرى لاحقًا",
-      "notAllowed": "لا توجد صلاحية لتنفيذ هذه العملية"
+      "notAllowed": "لا توجد صلاحية لتنفيذ هذه العملية",
+      "queued": "خط الأنشطة مشغول؛ تم وضع حذف {{count}} وثيقة في الانتظار",
+      "partialNotFound": "بدأ الحذف، لكن لم يتم العثور على هذه الوثائق: {{ids}}",
+      "notFound": "هذه الوثائق لم تعد موجودة: {{ids}}",
+      "deleting": "يتم الحذف"
     },
     "selectDocuments": {
       "selectCurrentPage": "تحديد الصفحة الحالية ({{count}})",
@@ -110,8 +145,11 @@
         "dragAndDrop": "اسحب وأفلت الملفات هنا، أو انقر للاختيار",
         "removeFile": "إزالة الملف",
         "uploadDescription": "يمكنك رفع {{isMultiple ? 'عدة' : count}} ملفات (حتى {{maxSize}} لكل منها)",
-        "duplicateFile": "اسم الملف موجود بالفعل في ذاكرة التخزين المؤقت للخادم"
-      }
+        "duplicateFile": "اسم الملف موجود بالفعل في ذاكرة التخزين المؤقت للخادم",
+        "duplicateFileOf": "نفس المحتوى مثل {{path}}",
+        "invalidFileName": "اسم الملف غير صالح"
+      },
+      "overwrite": "استبدل الوثيقة الموجودة بنفس مصدر الملف"
     },
     "documentManager": {
       "title": "إدارة المستندات",
@@ -134,7 +172,8 @@
         "created": "تم الإنشاء",
         "updated": "تم التحديث",
         "metadata": "البيانات الوصفية",
-        "select": "اختيار"
+        "select": "اختيار",
+        "actions": "الإجراءات"
       },
       "status": {
         "all": "الكل",
@@ -177,7 +216,35 @@
       "cancelNotBusy": "خط الأنابيب غير قيد التشغيل، لا حاجة للإلغاء",
       "errors": {
         "fetchFailed": "فشل في جلب حالة خط الأنابيب\n{{error}}"
-      }
+      },
+      "noActiveJob": "لا توجد مهمة نشطة"
+    },
+    "editDocument": {
+      "tooltip": "تحديث المحتوى",
+      "title": "تحديث الوثيقة",
+      "description": "استبدال المحتوى المفهرس لمصدر الملف هذا",
+      "placeholder": "لصق النص الكامل الجديد للمستند",
+      "deleteCache": "حذف ذاكرة التخزين المؤقت للـ LLM لهذا المستند",
+      "saving": "جاري الحفظ",
+      "success": "تم وضع تحديث المستند في الطابور",
+      "unchanged": "المحتوى غير متغير",
+      "notFound": "لا يوجد مستند لهذا المصدر الملف",
+      "failed": "فشل التحديث",
+      "emptyText": "النص مطلوب",
+      "noFileSource": "هذا المستند ليس له مصدر ملف، لذلك لا يمكن تحديثه",
+      "error": "فشل التحديث: {{error}}"
+    },
+    "insertText": {
+      "tooltip": "مفهرسة النص العادي",
+      "button": "إضافة نص",
+      "title": "إدراج نص",
+      "description": "إرسال النص مباشرة إلى قاعدة المعرفة الحالية",
+      "sourcePlaceholder": "مصدر الملف (اختياري، يُستخدم لتحديد موقع المستند لاحقاً)",
+      "textPlaceholder": "لصق النص المراد مفهرسته",
+      "submitting": "جاري الإرسال",
+      "confirm": "إرسال",
+      "success": "تم إرسال النص للمفهرسة",
+      "empty": "النص مطلوب"
     }
   },
   "graphPanel": {
@@ -313,7 +380,9 @@
       "success": {
         "entityUpdated": "تم تحديث العقدة بنجاح",
         "relationUpdated": "تم تحديث العلاقة بنجاح",
-        "entityMerged": "تم دمج العقد بنجاح"
+        "entityMerged": "تم دمج العقد بنجاح",
+        "entityDeleted": "تم حذف الكيان",
+        "relationDeleted": "تم حذف العلاقة"
       },
       "mergeOptionLabel": "دمج تلقائي عند العثور على اسم مكرر",
       "mergeOptionDescription": "عند التفعيل، سيتم دمج هذه العقدة تلقائيًا في العقدة الموجودة بدلاً من ظهور خطأ عند إعادة التسمية بنفس الاسم.",
@@ -346,7 +415,10 @@
           "file_path": "File",
           "keywords": "Keyword",
           "weight": "الوزن"
-        }
+        },
+        "deleteNode": "حذف الكيان",
+        "deleteTitle": "حذف الكيان",
+        "deleteDescription": "إزالة \"{{name}}\" وجميع علاقاتها من الرسم البياني المعرفي"
       },
       "edge": {
         "title": "علاقة",
@@ -354,8 +426,12 @@
         "type": "النوع",
         "source": "المصدر",
         "target": "الهدف",
-        "properties": "الخصائص"
-      }
+        "properties": "الخصائص",
+        "deleteEdge": "حذف العلاقة",
+        "deleteTitle": "حذف العلاقة",
+        "deleteDescription": "إزالة العلاقة بين \"{{source}}\" و \"{{target}}\""
+      },
+      "deleting": "جاري الحذف"
     },
     "search": {
       "placeholder": "ابحث في العقد في الصفحة...",
@@ -371,7 +447,38 @@
       "refreshCurrentLabelTooltip": "تحديث بيانات الرسم البياني للصفحة الحالية",
       "refreshingTooltip": "جارٍ تحديث البيانات..."
     },
-    "emptyGraph": "فارغ (حاول إعادة التحميل)"
+    "emptyGraph": "فارغ (حاول إعادة التحميل)",
+    "createEntity": {
+      "tooltip": "إنشاء كيان",
+      "title": "إنشاء كيان",
+      "description": "إضافة عقدة إلى الرسم البياني المعرفي لقاعدة المعرفة الحالية",
+      "namePlaceholder": "اسم الكيان",
+      "typePlaceholder": "نوع الكيان",
+      "descriptionPlaceholder": "الوصف",
+      "nameRequired": "اسم الكيان مطلوب",
+      "success": "تم إنشاء الكيان"
+    },
+    "createRelation": {
+      "tooltip": "إنشاء علاقة",
+      "title": "إنشاء علاقة",
+      "description": "يجب أن يكون كلا الكيانين موجودين بالفعل في الرسم البياني المعرفي",
+      "keywordsPlaceholder": "الكلمات المفتاحية",
+      "descriptionPlaceholder": "الوصف",
+      "entitiesRequired": "كلا الكيانين مطلوبان",
+      "success": "تم إنشاء العلاقة"
+    },
+    "mergeEntities": {
+      "tooltip": "دمج الكيانات",
+      "title": "دمج الكيانات",
+      "description": "تنتقل علاقات الكيانات المصدر إلى الكيان الهدف الذي يتم الاحتفاظ به",
+      "sourcesPlaceholder": "الكيانات المراد دمجها، مفصولة بفواصل",
+      "targetPlaceholder": "الكيان الهدف",
+      "required": "اختر كيانًا واحدًا على الأقل لدمجه وكيانًا هدفًا",
+      "targetIsSource": "لا يمكن دمج الكيان الهدف أيضًا",
+      "merging": "جاري الدمج",
+      "confirm": "دمج",
+      "success": "تم دمج {{count}} كيانات"
+    }
   },
   "retrievePanel": {
     "chatMessage": {
@@ -394,7 +501,26 @@
       "placeholder": "اكتب استفسارك (بادئة وضع الاستعلام: /<Query Mode>)",
       "error": "خطأ: فشل الحصول على الرد",
       "queryModeError": "يُسمح فقط بأنماط الاستعلام التالية: {{modes}}",
-      "queryModePrefixInvalid": "بادئة وضع الاستعلام غير صالحة. استخدم: /<الوضع> [مسافة] استفسارك"
+      "queryModePrefixInvalid": "بادئة وضع الاستعلام غير صالحة. استخدم: /<الوضع> [مسافة] استفسارك",
+      "queryTooShort": "الاستعلام قصير جدًا",
+      "fetchData": "بيانات الاسترجاع",
+      "dataHint": "تشغيل تجريبي للاسترجاع بمحتوى مربع الإدخال: معاينة الكيانات والعلاقات والأجزاء المطابقة دون توليد إجابة من النموذج.",
+      "highLevelKeywords": "HL",
+      "lowLevelKeywords": "LL",
+      "progressStages": {
+        "keyword_extraction": "استخراج الكلمات المفتاحية",
+        "vector_search": "البحث في الرسم البياني والمتجهات",
+        "merge_chunks": "دمج الأجزاء",
+        "context_built": "بناء السياق",
+        "rerank": "إعادة الترتيب",
+        "retrieval_done": "اكتمل الاسترجاع"
+      },
+      "dataCounts": {
+        "entities": "الكيانات",
+        "relationships": "العلاقات",
+        "chunks": "الأجزاء",
+        "references": "المراجع"
+      }
     },
     "querySettings": {
       "parametersTitle": "المعلمات",
@@ -441,7 +567,48 @@
       "userPromptTooltip": "تقديم متطلبات استجابة إضافية إلى نموذج اللغة الكبير (غير متعلقة بمحتوى الاستعلام، فقط لمعالجة المخرجات).",
       "userPromptPlaceholder": "أدخل مطالبة مخصصة (اختياري)",
       "enableRerank": "تمكين إعادة الترتيب",
-      "enableRerankTooltip": "تمكين إعادة ترتيب أجزاء النص المسترجعة. إذا كان True ولكن لم يتم تكوين نموذج إعادة الترتيب، فسيتم إصدار تحذير. افتراضي True."
+      "enableRerankTooltip": "تمكين إعادة ترتيب أجزاء النص المسترجعة. إذا كان True ولكن لم يتم تكوين نموذج إعادة الترتيب، فسيتم إصدار تحذير. افتراضي True.",
+      "includeReferences": "تضمين المراجع",
+      "includeReferencesTooltip": "إرجاع قائمة المراجع مع الإجابة حتى يمكن حل الاستشهادات",
+      "includeChunkContent": "تضمين نص الجزء",
+      "includeChunkContentTooltip": "إرفاق نصوص الأجزاء المسترجعة بكل مرجع",
+      "kbNoneExternalOnly": "لا شيء (الخارجي فقط)",
+      "externalKbs": "قواعد المعرفة الخارجية",
+      "externalKbAdd": "إضافة قاعدة معرفة خارجية",
+      "externalKbEmpty": "استرجاع من خدمات الطرف الثالث أو خدمات RAG جنبًا إلى جنب مع القواعد الداخلية",
+      "externalKbOnly": "تخطي قواعد المعرفة الداخلية",
+      "externalKbRetrieval": "الاسترجاع",
+      "externalKbRag": "خدمة RAG",
+      "externalKbUrl": "رابط API",
+      "externalKbApiKey": "مفتاح API (اختياري)",
+      "llmOverride": "تجاوز LLM لكل استعلام",
+      "llmOverrideReset": "العودة إلى LLM الافتراضي للخادم",
+      "llmOverrideEmpty": "يستخدم LLM المُكوّن من الخادم. يجب ضبط الربط والنموذج والمضيف جميعًا.",
+      "llmBinding": "الربط",
+      "llmModel": "النموذج",
+      "llmHost": "رابط قاعدة API",
+      "llmApiKey": "مفتاح API",
+      "llmHeaders": "رؤوس إضافية، كل سطر \"اسم: قيمة\"",
+      "externalKbNone": "لا شيء",
+      "externalKbsTooltip": "الخدمات الخارجية المسجلة التي يتم استعلامها مع قواعد المعرفة الداخلية. إدارتها في علامة التبويب قواعد المعرفة الخارجية.",
+      "externalKbsEmpty": "لا توجد قواعد معرفة خارجية مسجلة بعد.",
+      "externalKbsReset": "مسح المصادر الخارجية",
+      "modelProfile": "النموذج",
+      "modelProfileTooltip": "تشغيل هذا الاستعلام بنموذج مسجل. يبقى مفتاح API على الخادم.",
+      "modelProfileReset": "استخدام النموذج الافتراضي للخادم",
+      "serverDefaultModel": "افتراضي الخادم",
+      "kbSelection": "اختيار قاعدة المعرفة",
+      "kbSelectionTooltip": "اختر قاعدة معرفة واحدة أو أكثر لهذا الاستعلام.",
+      "kbSelectionReset": "إعادة تعيين إلى قاعدة المعرفة الحالية",
+      "maxEntityTokensPlaceholder": "أدخل الحد الأقصى لرموز الكيانات",
+      "maxRelationTokensPlaceholder": "أدخل الحد الأقصى لرموز العلاقات",
+      "maxTotalTokensPlaceholder": "أدخل الحد الأقصى لرموز الكلية",
+      "groupScope": "نطاق الاسترجاع",
+      "groupModel": "النموذج",
+      "groupParams": "معلمات الاسترجاع",
+      "groupOutput": "الإخراج",
+      "streamOn": "التدفق",
+      "streamOff": "غير متدفق"
     }
   },
   "apiSite": {
@@ -461,5 +628,85 @@
     "prevPage": "الصفحة السابقة",
     "nextPage": "الصفحة التالية",
     "lastPage": "الصفحة الأخيرة"
+  },
+  "modelManager": {
+    "title": "إدارة النماذج",
+    "description": "نقاط النهاية مخزنة على الخادم؛ لا يتم إرسال مفاتيح API أبدًا إلى المتصفح.",
+    "create": "إضافة نموذج",
+    "createTitle": "إضافة ملف تعريف النموذج",
+    "editTitle": "تحرير ملف تعريف النموذج",
+    "formDescription": "ملفات تعريف التضمين تحتاج أيضًا إلى البعد المتجه الذي تعيده خدمتها.",
+    "empty": "لا توجد ملفات تعريف نماذج بعد.",
+    "test": "اختبار الاتصال",
+    "enabled": "ممكّن",
+    "noKey": "لا شيء",
+    "fieldsRequired": "الاسم والنموذج والمضيف مطلوبون",
+    "deleted": "تم حذف ملف النموذج",
+    "deleteTitle": "حذف ملف النموذج",
+    "deleteDescription": "هل تريد حذف \"{{name}}\"؟ الاستعلامات التي تختاره سوف تتوقف عن العمل.",
+    "namePlaceholder": "اسم العرض",
+    "modelPlaceholder": "اسم النموذج",
+    "hostPlaceholder": "الرابط الأساسي، مثلاً http://host:11434",
+    "keyPlaceholder": "مفتاح API (اختياري)",
+    "keyKeepPlaceholder": "مفتاح API — اتركه فارغاً للحفاظ على الحالي",
+    "dimPlaceholder": "أبعاد التضمين",
+    "columns": {
+      "name": "الاسم",
+      "kind": "النوع",
+      "binding": "الربط",
+      "model": "النموذج",
+      "host": "المضيف",
+      "apiKey": "المفتاح",
+      "actions": "الإجراءات"
+    }
+  },
+  "externalKBManager": {
+    "title": "قواعد المعرفة الخارجية",
+    "description": "يمكن اختيار الخدمات المسجلة لكل استعلام مع قواعد المعرفة الداخلية.",
+    "create": "إضافة قاعدة معرفة خارجية",
+    "createTitle": "إضافة قاعدة معرفة خارجية",
+    "editTitle": "تعديل قاعدة المعرفة الخارجية",
+    "formDescription": "الاسترجاع يعيد أجزاء نصية للنمذج اللغوي المحلي؛ RAG يعيد إجابة مكتملة.",
+    "empty": "لا توجد قواعد معرفة خارجية مسجلة.",
+    "test": "اختبار الاتصال",
+    "enabled": "ممكّن",
+    "noKey": "لا يوجد",
+    "fieldsRequired": "الاسم والرابط مطلوبان",
+    "deleted": "تم حذف قاعدة المعرفة الخارجية",
+    "deleteTitle": "حذف قاعدة المعرفة الخارجية",
+    "deleteDescription": "هل تريد حذف \"{{name}}\" من النظام؟",
+    "namePlaceholder": "اسم العرض",
+    "urlPlaceholder": "https://service.example.com/api",
+    "keyPlaceholder": "مفتاح API (اختياري)",
+    "keyKeepPlaceholder": "مفتاح API — اتركه فارغاً للحفاظ على الحالي",
+    "columns": {
+      "name": "الاسم",
+      "type": "النوع",
+      "url": "الرابط",
+      "topK": "Top K",
+      "apiKey": "المفتاح",
+      "actions": "الأفعال"
+    }
+  },
+  "kbManager": {
+    "title": "قواعد المعرفة",
+    "description": "كل قاعدة تحتفظ برسمها البياني، متجهاتها ومستنداتها الخاصة",
+    "create": "قاعدة معرفة جديدة",
+    "createDescription": "المعرف يُستخدم كمساحة عمل للتخزين، لذا احرص على أن يكون آمنًا لنظام الملفات",
+    "empty": "لم يتم العثور على قواعد معرفة",
+    "default": "افتراضي",
+    "inUse": "قيد الاستخدام",
+    "switched": "الحالية",
+    "switch": "استخدم",
+    "delete": "حذف قاعدة معرفة",
+    "deleteHasDocuments": "هذه القاعدة لا تزال تحتوي على {{count}} مستند(ات)",
+    "duplicateId": "هذه القاعدة المعرفة موجودة بالفعل",
+    "columns": {
+      "name": "الاسم",
+      "documents": "المستندات",
+      "status": "الحالة",
+      "actions": "الأفعال",
+      "entities": "الكيانات"
+    }
   }
 }

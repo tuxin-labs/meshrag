@@ -6,6 +6,12 @@
     "dark": "Dunkel",
     "system": "System"
   },
+  "nav": {
+    "workspace": "Arbeitsbereich",
+    "configuration": "Konfiguration",
+    "expand": "Navigation erweitern",
+    "collapse": "Navigation einklappen"
+  },
   "header": {
     "documents": "Dokumente",
     "knowledgeGraph": "Wissensgraph",
@@ -17,7 +23,26 @@
     "themeToggle": {
       "switchToLight": "Zu hellem Design wechseln",
       "switchToDark": "Zu dunklem Design wechseln"
-    }
+    },
+    "kbDelete": "Aktuelle Wissensdatenbank löschen",
+    "kbDeleteDefaultDisabled": "Die Standard-Wissensdatenbank kann nicht gelöscht werden",
+    "kbDeleteTitle": "Wissensdatenbank löschen",
+    "kbDeleteDescription": "{{kbId}} löschen und alle seine Speicher verwerfen. Dies kann nicht rückgängig gemacht werden.",
+    "kbDeletePlaceholder": "Geben Sie \"yes\" zur Bestätigung ein",
+    "kbDeleteSuccess": "Wissensdatenbank gelöscht",
+    "kbDeletePartial": "Wissensdatenbank gelöscht, aber einige Speicher sind fehlgeschlagen: {{storages}}",
+    "kbDeleting": "Wird gelöscht",
+    "models": "Modelle",
+    "externalKbs": "Externe Wissensdatenbanken",
+    "kbSelect": "Wissensdatenbank auswählen",
+    "kbCreate": "Wissensdatenbank erstellen",
+    "kbCreateTitle": "Wissensdatenbank erstellen",
+    "kbCreateDescription": "Neue isolierte Wissensdatenbank erstellen und zu ihr wechseln.",
+    "kbCreatePlaceholder": "Wissensdatenbank-ID eingeben",
+    "kbCreateRequired": "Wissensdatenbank-ID ist erforderlich",
+    "kbCreateSuccess": "Wissensdatenbank erstellt",
+    "knowledgeBases": "Wissensdatenbanken",
+    "kbStatsHint": "{{documents}} Dokumente · {{entities}} Entitäten"
   },
   "login": {
     "description": "Bitte geben Sie Ihr Konto und Passwort ein, um sich im System anzumelden",
@@ -37,7 +62,13 @@
     "cancel": "Abbrechen",
     "save": "Speichern",
     "saving": "Speichern...",
-    "saveFailed": "Speichern fehlgeschlagen"
+    "saveFailed": "Speichern fehlgeschlagen",
+    "delete": "Löschen",
+    "refresh": "Aktualisieren",
+    "edit": "Bearbeiten",
+    "saveSuccess": "Gespeichert",
+    "create": "Erstellen",
+    "initializing": "Wird initialisiert..."
   },
   "documentPanel": {
     "clearDocuments": {
@@ -76,7 +107,11 @@
       "failed": "Dokumente löschen fehlgeschlagen:\n{{message}}",
       "error": "Dokumente löschen fehlgeschlagen:\n{{error}}",
       "busy": "Pipeline ist beschäftigt, bitte versuchen Sie es später erneut",
-      "notAllowed": "Keine Berechtigung, diese Operation auszuführen"
+      "notAllowed": "Keine Berechtigung, diese Operation auszuführen",
+      "queued": "Pipeline ist ausgelastet; Löschung von {{count}} Dokument(en) in der Warteschlange",
+      "partialNotFound": "Löschung gestartet, aber diese Dokumente wurden nicht gefunden: {{ids}}",
+      "notFound": "Diese Dokumente existieren nicht mehr: {{ids}}",
+      "deleting": "Wird gelöscht"
     },
     "selectDocuments": {
       "selectCurrentPage": "Aktuelle Seite auswählen ({{count}})",
@@ -110,8 +145,11 @@
         "dragAndDrop": "Dateien hierher ziehen oder klicken, um Dateien auszuwählen",
         "removeFile": "Datei entfernen",
         "uploadDescription": "Sie können {{isMultiple ? 'mehrere' : count}} Dateien hochladen (bis zu {{maxSize}} pro Datei)",
-        "duplicateFile": "Dateiname existiert bereits im Server-Cache"
-      }
+        "duplicateFile": "Dateiname existiert bereits im Server-Cache",
+        "duplicateFileOf": "Gleicher Inhalt wie {{path}}",
+        "invalidFileName": "Ungültiger Dateiname"
+      },
+      "overwrite": "Vorhandenes Dokument mit gleicher Dateiquelle ersetzen"
     },
     "documentManager": {
       "title": "Dokumentenverwaltung",
@@ -134,7 +172,8 @@
         "created": "Erstellt",
         "updated": "Aktualisiert",
         "metadata": "Metadaten",
-        "select": "Auswählen"
+        "select": "Auswählen",
+        "actions": "Aktionen"
       },
       "status": {
         "all": "Alle",
@@ -177,7 +216,35 @@
       "cancelNotBusy": "Pipeline läuft nicht, keine Stornierung erforderlich",
       "errors": {
         "fetchFailed": "Pipeline-Status konnte nicht abgerufen werden\n{{error}}"
-      }
+      },
+      "noActiveJob": "Kein aktiver Job"
+    },
+    "editDocument": {
+      "tooltip": "Inhalt aktualisieren",
+      "title": "Dokument aktualisieren",
+      "description": "Indizierten Inhalt für diese Dateiquelle ersetzen",
+      "placeholder": "Neuen vollständigen Text des Dokuments einfügen",
+      "deleteCache": "LLM-Cache dieses Dokuments löschen",
+      "saving": "Wird gespeichert",
+      "success": "Dokumentenaktualisierung in die Warteschlange gestellt",
+      "unchanged": "Inhalt unverändert",
+      "notFound": "Kein Dokument für diese Dateiquelle gefunden",
+      "failed": "Aktualisierung fehlgeschlagen",
+      "emptyText": "Text ist erforderlich",
+      "noFileSource": "Dieses Dokument hat keine Dateiquelle, daher kann es nicht aktualisiert werden",
+      "error": "Aktualisierung fehlgeschlagen: {{error}}"
+    },
+    "insertText": {
+      "tooltip": "Klartext indizieren",
+      "button": "Text hinzufügen",
+      "title": "Text einfügen",
+      "description": "Text direkt in die aktuelle Wissensdatenbank übermitteln",
+      "sourcePlaceholder": "Dateiquelle (optional, zur späteren Lokalisierung des Dokuments)",
+      "textPlaceholder": "Zu indizierenden Text einfügen",
+      "submitting": "Wird übermittelt",
+      "confirm": "Übermitteln",
+      "success": "Text zur Indizierung übermittelt",
+      "empty": "Text ist erforderlich"
     }
   },
   "graphPanel": {
@@ -313,7 +380,9 @@
       "success": {
         "entityUpdated": "Knoten erfolgreich aktualisiert",
         "relationUpdated": "Beziehung erfolgreich aktualisiert",
-        "entityMerged": "Knoten erfolgreich zusammengeführt"
+        "entityMerged": "Knoten erfolgreich zusammengeführt",
+        "entityDeleted": "Entität gelöscht",
+        "relationDeleted": "Beziehung gelöscht"
       },
       "mergeOptionLabel": "Automatisch zusammenführen, wenn ein doppelter Name gefunden wird",
       "mergeOptionDescription": "Wenn aktiviert, wird beim Umbenennen in einen bestehenden Namen dieser Knoten in den bestehenden zusammengeführt, anstatt zu scheitern.",
@@ -346,7 +415,10 @@
           "file_path": "Datei",
           "keywords": "Schlüssel",
           "weight": "Gewicht"
-        }
+        },
+        "deleteNode": "Entität löschen",
+        "deleteTitle": "Entität löschen",
+        "deleteDescription": "{{name}} und alle seine Beziehungen aus dem Wissensgraphen entfernen"
       },
       "edge": {
         "title": "Beziehung",
@@ -354,8 +426,12 @@
         "type": "Typ",
         "source": "Quelle",
         "target": "Ziel",
-        "properties": "Eigenschaften"
-      }
+        "properties": "Eigenschaften",
+        "deleteEdge": "Beziehung löschen",
+        "deleteTitle": "Beziehung löschen",
+        "deleteDescription": "Die Beziehung zwischen \"{{source}}\" und \"{{target}}\" entfernen"
+      },
+      "deleting": "Wird gelöscht"
     },
     "search": {
       "placeholder": "Knoten auf der Seite suchen...",
@@ -371,7 +447,38 @@
       "refreshCurrentLabelTooltip": "Graphdaten der aktuellen Seite aktualisieren",
       "refreshingTooltip": "Daten werden aktualisiert..."
     },
-    "emptyGraph": "Leer (Bitte erneut laden)"
+    "emptyGraph": "Leer (Bitte erneut laden)",
+    "createEntity": {
+      "tooltip": "Entität erstellen",
+      "title": "Entität erstellen",
+      "description": "Einen Knoten zum Wissensgraphen der aktuellen Wissensdatenbank hinzufügen",
+      "namePlaceholder": "Entitätsname",
+      "typePlaceholder": "Entitätstyp",
+      "descriptionPlaceholder": "Beschreibung",
+      "nameRequired": "Entitätsname ist erforderlich",
+      "success": "Entität erstellt"
+    },
+    "createRelation": {
+      "tooltip": "Beziehung erstellen",
+      "title": "Beziehung erstellen",
+      "description": "Beide Entitäten müssen bereits im Wissensgraphen vorhanden sein",
+      "keywordsPlaceholder": "Schlüsselwörter",
+      "descriptionPlaceholder": "Beschreibung",
+      "entitiesRequired": "Beide Entitäten sind erforderlich",
+      "success": "Beziehung erstellt"
+    },
+    "mergeEntities": {
+      "tooltip": "Entitäten zusammenführen",
+      "title": "Entitäten zusammenführen",
+      "description": "Beziehungen der Quellentitäten werden in die beizubehaltende Zielentität überführt",
+      "sourcesPlaceholder": "Zu zusammenführende Entitäten, getrennt durch Kommas",
+      "targetPlaceholder": "Zielentität",
+      "required": "Wählen Sie mindestens eine zu zusammenführende Entität und eine Zielentität aus",
+      "targetIsSource": "Die Zielentität kann nicht ebenfalls zusammengeführt werden",
+      "merging": "Zusammenführen",
+      "confirm": "Zusammenführen",
+      "success": "{{count}} Entitäten zusammengeführt"
+    }
   },
   "retrievePanel": {
     "chatMessage": {
@@ -394,7 +501,26 @@
       "placeholder": "Geben Sie Ihre Abfrage ein (Präfix unterstützt: /<Abfragemodus>)",
       "error": "Fehler: Antwort konnte nicht abgerufen werden",
       "queryModeError": "Nur die folgenden Abfragemodi werden unterstützt: {{modes}}",
-      "queryModePrefixInvalid": "Ungültiges Abfragemodus-Präfix. Verwenden Sie: /<mode> [Leerzeichen] Ihre Abfrage"
+      "queryModePrefixInvalid": "Ungültiges Abfragemodus-Präfix. Verwenden Sie: /<mode> [Leerzeichen] Ihre Abfrage",
+      "queryTooShort": "Abfrage ist zu kurz",
+      "fetchData": "Abrufdaten",
+      "dataHint": "Testlauf des Abrufs mit dem Inhalt des Abfragefelds: zeigt getroffene Entitäten, Beziehungen und Chunks, ohne eine Antwort des Modells zu erzeugen.",
+      "highLevelKeywords": "HL",
+      "lowLevelKeywords": "LL",
+      "progressStages": {
+        "keyword_extraction": "Schlüsselwörter extrahieren",
+        "vector_search": "Graph und Vektoren durchsuchen",
+        "merge_chunks": "Chunks zusammenführen",
+        "context_built": "Kontext aufbauen",
+        "rerank": "Reranking",
+        "retrieval_done": "Abruf abgeschlossen"
+      },
+      "dataCounts": {
+        "entities": "Entitäten",
+        "relationships": "Beziehungen",
+        "chunks": "Chunks",
+        "references": "Referenzen"
+      }
     },
     "querySettings": {
       "parametersTitle": "Parameter",
@@ -441,7 +567,48 @@
       "userPromptTooltip": "Geben Sie zusätzliche Antwortanforderungen an das LLM an (unabhängig vom Abfrageinhalt, nur für die Ausgabeverarbeitung).",
       "userPromptPlaceholder": "Benutzerdefinierten Prompt eingeben (optional)",
       "enableRerank": "Rerank aktivieren",
-      "enableRerankTooltip": "Reranking für abgerufene Text-Chunks aktivieren. Wenn True, aber kein Rerank-Modell konfiguriert ist, wird eine Warnung ausgegeben. Standard ist True."
+      "enableRerankTooltip": "Reranking für abgerufene Text-Chunks aktivieren. Wenn True, aber kein Rerank-Modell konfiguriert ist, wird eine Warnung ausgegeben. Standard ist True.",
+      "includeReferences": "Referenzen einschließen",
+      "includeReferencesTooltip": "Geben Sie die Referenzliste zusammen mit der Antwort zurück, damit Zitate aufgelöst werden können",
+      "includeChunkContent": "Chunk-Text einschließen",
+      "includeChunkContentTooltip": "Fügen Sie die abgerufenen Chunk-Texte zu jeder Referenz hinzu",
+      "kbNoneExternalOnly": "Keine (nur extern)",
+      "externalKbs": "Externe Wissensdatenbanken",
+      "externalKbAdd": "Externe Wissensdatenbank hinzufügen",
+      "externalKbEmpty": "Fragen Sie neben den internen Basen auch Drittanbieter-Abruf- oder RAG-Dienste ab",
+      "externalKbOnly": "Interne Wissensdatenbanken überspringen",
+      "externalKbRetrieval": "Abruf",
+      "externalKbRag": "RAG-Dienst",
+      "externalKbUrl": "API-URL",
+      "externalKbApiKey": "API-Schlüssel (optional)",
+      "llmOverride": "Pro-Abfrage-LLM-Überschreibung",
+      "llmOverrideReset": "Zurück zum Standard-LLM des Servers",
+      "llmOverrideEmpty": "Verwendet den serverseitig konfigurierten LLM. Bindung, Modell und Host müssen alle gesetzt sein.",
+      "llmBinding": "Bindung",
+      "llmModel": "Modell",
+      "llmHost": "API-Basis-URL",
+      "llmApiKey": "API-Schlüssel",
+      "llmHeaders": "Zusätzliche Header, je eine \"Name: Wert\"-Zeile",
+      "externalKbNone": "Keine",
+      "externalKbsTooltip": "Registrierte Drittanbieter-Dienste, die zusammen mit internen Wissensdatenbanken abgefragt werden. Verwalten Sie sie im Tab \"Externe Wissensdatenbanken\".",
+      "externalKbsEmpty": "Noch keine externen Wissensdatenbanken registriert.",
+      "externalKbsReset": "Externe Quellen löschen",
+      "modelProfile": "Modell",
+      "modelProfileTooltip": "Führen Sie diese Abfrage mit einem registrierten Modell aus. Der API-Schlüssel verbleibt auf dem Server.",
+      "modelProfileReset": "Standardmodell des Servers verwenden",
+      "serverDefaultModel": "Server-Standard",
+      "kbSelection": "KB-Auswahl",
+      "kbSelectionTooltip": "Wählen Sie eine oder mehrere Wissensdatenbanken für diese Abfrage aus.",
+      "kbSelectionReset": "Zurück zur aktuellen Wissensdatenbank",
+      "maxEntityTokensPlaceholder": "Maximale Entitäts-Tokens eingeben",
+      "maxRelationTokensPlaceholder": "Maximale Relations-Tokens eingeben",
+      "maxTotalTokensPlaceholder": "Maximale Gesamt-Tokens eingeben",
+      "groupScope": "Abrufbereich",
+      "groupModel": "Modell",
+      "groupParams": "Abrufparameter",
+      "groupOutput": "Ausgabe",
+      "streamOn": "Streaming",
+      "streamOff": "Blockierend"
     }
   },
   "apiSite": {
@@ -461,5 +628,85 @@
     "prevPage": "Vorherige Seite",
     "nextPage": "Nächste Seite",
     "lastPage": "Letzte Seite"
+  },
+  "modelManager": {
+    "title": "Modellverwaltung",
+    "description": "Endpunkte werden auf dem Server gespeichert; API-Schlüssel werden niemals an den Browser gesendet.",
+    "create": "Modell hinzufügen",
+    "createTitle": "Modellprofil hinzufügen",
+    "editTitle": "Modellprofil bearbeiten",
+    "formDescription": "Embedding-Profile benötigen zudem die Vektordimension, die ihr Dienst zurückgibt.",
+    "empty": "Noch keine Modellprofile vorhanden.",
+    "test": "Verbindung testen",
+    "enabled": "Aktiviert",
+    "noKey": "Keiner",
+    "fieldsRequired": "Name, Modell und Host sind erforderlich",
+    "deleted": "Modellprofil gelöscht",
+    "deleteTitle": "Modellprofil löschen",
+    "deleteDescription": "„{{name}}“ löschen? Abfragen, die es auswählen, funktionieren danach nicht mehr.",
+    "namePlaceholder": "Anzeigename",
+    "modelPlaceholder": "Modellname",
+    "hostPlaceholder": "Basis-URL, z. B. http://host:11434",
+    "keyPlaceholder": "API-Schlüssel (optional)",
+    "keyKeepPlaceholder": "API-Schlüssel – leer lassen, um den aktuellen zu behalten",
+    "dimPlaceholder": "Embedding-Dimension",
+    "columns": {
+      "name": "Name",
+      "kind": "Typ",
+      "binding": "Bindung",
+      "model": "Modell",
+      "host": "Host",
+      "apiKey": "Schlüssel",
+      "actions": "Aktionen"
+    }
+  },
+  "externalKBManager": {
+    "title": "Externe Wissensdatenbanken",
+    "description": "Registrierte Dienste können pro Abfrage neben internen Wissensdatenbanken ausgewählt werden.",
+    "create": "Externe KB hinzufügen",
+    "createTitle": "Externe Wissensdatenbank hinzufügen",
+    "editTitle": "Externe Wissensdatenbank bearbeiten",
+    "formDescription": "Retrieval gibt Textabschnitte für das lokale LLM zurück; RAG gibt eine fertige Antwort zurück.",
+    "empty": "Keine externen Wissensdatenbanken registriert.",
+    "test": "Verbindung testen",
+    "enabled": "Aktiviert",
+    "noKey": "Keiner",
+    "fieldsRequired": "Name und URL sind erforderlich",
+    "deleted": "Externe Wissensdatenbank gelöscht",
+    "deleteTitle": "Externe Wissensdatenbank löschen",
+    "deleteDescription": "„{{name}}“ aus dem System löschen?",
+    "namePlaceholder": "Anzeigename",
+    "urlPlaceholder": "https://service.example.com/api",
+    "keyPlaceholder": "API-Schlüssel (optional)",
+    "keyKeepPlaceholder": "API-Schlüssel – leer lassen, um den aktuellen zu behalten",
+    "columns": {
+      "name": "Name",
+      "type": "Typ",
+      "url": "URL",
+      "topK": "Top K",
+      "apiKey": "Schlüssel",
+      "actions": "Aktionen"
+    }
+  },
+  "kbManager": {
+    "title": "Wissensdatenbanken",
+    "description": "Jede Datenbank verwaltet ihren eigenen Graphen, Vektoren und Dokumente.",
+    "create": "Neue Wissensdatenbank",
+    "createDescription": "Der Bezeichner wird als Speicherbereich verwendet, daher sollte er dateisystemkompatibel sein.",
+    "empty": "Keine Wissensdatenbanken gefunden.",
+    "default": "Standard",
+    "inUse": "In Verwendung",
+    "switched": "Aktuell",
+    "switch": "Verwenden",
+    "delete": "Wissensdatenbank löschen",
+    "deleteHasDocuments": "Diese Datenbank enthält noch {{count}} Dokument(e).",
+    "duplicateId": "Diese Wissensdatenbank existiert bereits",
+    "columns": {
+      "name": "Name",
+      "documents": "Dokumente",
+      "status": "Status",
+      "actions": "Aktionen",
+      "entities": "Entitäten"
+    }
   }
 }

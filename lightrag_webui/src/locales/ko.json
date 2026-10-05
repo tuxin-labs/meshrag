@@ -6,6 +6,12 @@
     "dark": "다크",
     "system": "시스템"
   },
+  "nav": {
+    "workspace": "작업 공간",
+    "configuration": "설정",
+    "expand": "네비게이션 확장",
+    "collapse": "네비게이션 축소"
+  },
   "header": {
     "documents": "문서",
     "knowledgeGraph": "지식 그래프",
@@ -17,7 +23,26 @@
     "themeToggle": {
       "switchToLight": "라이트 테마로 전환",
       "switchToDark": "다크 테마로 전환"
-    }
+    },
+    "kbDelete": "현재 지식베이스 삭제",
+    "kbDeleteDefaultDisabled": "기본 지식베이스는 삭제할 수 없습니다",
+    "kbDeleteTitle": "지식베이스 삭제",
+    "kbDeleteDescription": "{{kbId}}를 삭제하고 모든 스토리지를 제거합니다. 이 작업은 취소할 수 없습니다.",
+    "kbDeletePlaceholder": "확인하려면 \"yes\"를 입력하세요",
+    "kbDeleteSuccess": "지식베이스가 삭제되었습니다",
+    "kbDeletePartial": "지식베이스가 삭제되었으나 일부 스토리지가 실패했습니다: {{storages}}",
+    "kbDeleting": "삭제 중",
+    "models": "모델",
+    "externalKbs": "외부 지식베이스",
+    "kbSelect": "지식베이스 선택",
+    "kbCreate": "지식베이스 생성",
+    "kbCreateTitle": "지식베이스 생성",
+    "kbCreateDescription": "새로운 독립 지식베이스를 생성하고 해당 베이스로 전환합니다.",
+    "kbCreatePlaceholder": "지식베이스 ID를 입력하세요",
+    "kbCreateRequired": "지식베이스 ID는 필수입니다",
+    "kbCreateSuccess": "지식베이스가 생성되었습니다",
+    "knowledgeBases": "지식베이스",
+    "kbStatsHint": "문서 {{documents}}개 · 엔티티 {{entities}}개"
   },
   "login": {
     "description": "시스템에 로그인하려면 계정과 비밀번호를 입력하세요",
@@ -37,7 +62,13 @@
     "cancel": "취소",
     "save": "저장",
     "saving": "저장 중...",
-    "saveFailed": "저장 실패"
+    "saveFailed": "저장 실패",
+    "delete": "삭제",
+    "refresh": "새로고침",
+    "edit": "편집",
+    "saveSuccess": "저장되었습니다",
+    "create": "생성",
+    "initializing": "초기화 중..."
   },
   "documentPanel": {
     "clearDocuments": {
@@ -76,7 +107,11 @@
       "failed": "문서 삭제 실패:\n{{message}}",
       "error": "문서 삭제 실패:\n{{error}}",
       "busy": "파이프라인이 현재 작업 중입니다. 잠시 후 다시 시도해 주세요.",
-      "notAllowed": "이 작업을 수행할 권한이 없습니다"
+      "notAllowed": "이 작업을 수행할 권한이 없습니다",
+      "queued": "파이프라인이 바쁩니다; {{count}}개 문서 삭제가 대기열에 추가되었습니다",
+      "partialNotFound": "삭제가 시작되었으나 다음 문서를 찾을 수 없습니다: {{ids}}",
+      "notFound": "다음 문서는 더 이상 존재하지 않습니다: {{ids}}",
+      "deleting": "삭제 중"
     },
     "selectDocuments": {
       "selectCurrentPage": "현재 페이지 선택 ({{count}})",
@@ -110,8 +145,11 @@
         "dragAndDrop": "여기에 파일을 드래그 앤 드롭하거나 클릭하여 선택하세요",
         "removeFile": "파일 제거",
         "uploadDescription": "{{isMultiple ? '여러' : count}}개의 파일을 업로드할 수 있습니다 (각 최대 {{maxSize}})",
-        "duplicateFile": "파일 이름이 서버 캐시에 이미 존재합니다"
-      }
+        "duplicateFile": "파일 이름이 서버 캐시에 이미 존재합니다",
+        "duplicateFileOf": "{{path}}와 동일한 내용입니다",
+        "invalidFileName": "잘못된 파일 이름입니다"
+      },
+      "overwrite": "동일한 파일 소스의 기존 문서를 교체합니다"
     },
     "documentManager": {
       "title": "문서 관리",
@@ -134,7 +172,8 @@
         "created": "생성일",
         "updated": "수정일",
         "metadata": "메타데이터",
-        "select": "선택"
+        "select": "선택",
+        "actions": "작업"
       },
       "status": {
         "all": "전체",
@@ -177,7 +216,35 @@
       "cancelNotBusy": "파이프라인이 작업 중이 아니므로 취소할 필요가 없습니다",
       "errors": {
         "fetchFailed": "파이프라인 상태 가져오기 실패\n{{error}}"
-      }
+      },
+      "noActiveJob": "활성 작업이 없습니다"
+    },
+    "editDocument": {
+      "tooltip": "내용 업데이트",
+      "title": "문서 업데이트",
+      "description": "이 파일 소스에 대해 인덱싱된 내용을 교체합니다",
+      "placeholder": "문서의 새로운 전체 텍스트를 붙여넣으세요",
+      "deleteCache": "이 문서의 LLM 캐시를 삭제합니다",
+      "saving": "저장 중",
+      "success": "문서 업데이트가 대기열에 추가되었습니다",
+      "unchanged": "내용이 변경되지 않았습니다",
+      "notFound": "이 파일 소스에 대한 문서를 찾을 수 없습니다",
+      "failed": "업데이트 실패",
+      "emptyText": "텍스트가 필요합니다",
+      "noFileSource": "이 문서에는 파일 소스가 없어 업데이트할 수 없습니다",
+      "error": "업데이트 실패: {{error}}"
+    },
+    "insertText": {
+      "tooltip": "일반 텍스트 인덱싱",
+      "button": "텍스트 추가",
+      "title": "텍스트 삽입",
+      "description": "현재 지식 베이스에 직접 텍스트를 제출합니다",
+      "sourcePlaceholder": "파일 소스 (선택 사항, 나중에 문서를 찾는 데 사용됨)",
+      "textPlaceholder": "인덱싱할 텍스트를 붙여넣으세요",
+      "submitting": "제출 중",
+      "confirm": "제출",
+      "success": "텍스트가 인덱싱을 위해 제출되었습니다",
+      "empty": "텍스트가 필요합니다"
     }
   },
   "graphPanel": {
@@ -313,7 +380,9 @@
       "success": {
         "entityUpdated": "노드가 성공적으로 업데이트되었습니다",
         "relationUpdated": "관계가 성공적으로 업데이트되었습니다",
-        "entityMerged": "노드가 성공적으로 병합되었습니다"
+        "entityMerged": "노드가 성공적으로 병합되었습니다",
+        "entityDeleted": "엔티티가 삭제되었습니다",
+        "relationDeleted": "관계가 삭제되었습니다"
       },
       "mergeOptionLabel": "중복 이름 발견 시 자동으로 병합",
       "mergeOptionDescription": "이 옵션을 활성화하면 기존 이름으로 변경 시 실패하는 대신 해당 노드로 병합됩니다.",
@@ -346,7 +415,10 @@
           "file_path": "파일",
           "keywords": "키워드",
           "weight": "가중치"
-        }
+        },
+        "deleteNode": "엔티티 삭제",
+        "deleteTitle": "엔티티 삭제",
+        "deleteDescription": "지식 그래프에서 \"{{name}}\"과 모든 관계를 제거합니다"
       },
       "edge": {
         "title": "관계",
@@ -354,8 +426,12 @@
         "type": "유형",
         "source": "소스",
         "target": "대상",
-        "properties": "속성"
-      }
+        "properties": "속성",
+        "deleteEdge": "관계 삭제",
+        "deleteTitle": "관계 삭제",
+        "deleteDescription": "\"{{source}}\"와 \"{{target}}\" 사이의 관계를 제거합니다"
+      },
+      "deleting": "삭제 중"
     },
     "search": {
       "placeholder": "페이지 내 노드 검색...",
@@ -371,7 +447,38 @@
       "refreshCurrentLabelTooltip": "현재 페이지 그래프 데이터 새로고침",
       "refreshingTooltip": "데이터 새로고침 중..."
     },
-    "emptyGraph": "데이터 없음(새로고침을 시도해보세요)"
+    "emptyGraph": "데이터 없음(새로고침을 시도해보세요)",
+    "createEntity": {
+      "tooltip": "엔티티 생성",
+      "title": "엔티티 생성",
+      "description": "현재 지식 베이스의 지식 그래프에 노드를 추가합니다",
+      "namePlaceholder": "엔티티 이름",
+      "typePlaceholder": "엔티티 유형",
+      "descriptionPlaceholder": "설명",
+      "nameRequired": "엔티티 이름이 필요합니다",
+      "success": "엔티티가 생성되었습니다"
+    },
+    "createRelation": {
+      "tooltip": "관계 생성",
+      "title": "관계 생성",
+      "description": "지식 그래프에 이미 존재하는 두 엔티티여야 합니다",
+      "keywordsPlaceholder": "키워드",
+      "descriptionPlaceholder": "설명",
+      "entitiesRequired": "두 엔티티 모두 필요합니다",
+      "success": "관계가 생성되었습니다"
+    },
+    "mergeEntities": {
+      "tooltip": "엔티티 병합",
+      "title": "엔티티 병합",
+      "description": "소스 엔티티의 관계는 유지되는 타겟 엔티티로 이동합니다",
+      "sourcesPlaceholder": "병합할 엔티티, 쉼표로 구분",
+      "targetPlaceholder": "타겟 엔티티",
+      "required": "병합할 엔티티 최소 1개와 타겟 엔티티를 선택해주세요",
+      "targetIsSource": "타겟 엔티티는 병합 대상이 될 수 없습니다",
+      "merging": "병합 중",
+      "confirm": "병합",
+      "success": "{{count}}개 엔티티가 병합되었습니다"
+    }
   },
   "retrievePanel": {
     "chatMessage": {
@@ -394,7 +501,26 @@
       "placeholder": "질문을 입력하세요 (접두사 지원: /<쿼리 모드>)",
       "error": "오류: 응답을 가져오지 못했습니다",
       "queryModeError": "다음 쿼리 모드만 지원합니다: {{modes}}",
-      "queryModePrefixInvalid": "잘못된 쿼리 모드 접두사입니다. 사용법: /<모드> [공백] 질문"
+      "queryModePrefixInvalid": "잘못된 쿼리 모드 접두사입니다. 사용법: /<모드> [공백] 질문",
+      "queryTooShort": "쿼리가 너무 짧습니다",
+      "fetchData": "검색 데이터",
+      "dataHint": "위 입력창의 내용으로 검색만 실행합니다. 매칭된 엔티티, 관계, 청크를 미리 보며, LLM 답변은 생성하지 않습니다.",
+      "highLevelKeywords": "HL",
+      "lowLevelKeywords": "LL",
+      "progressStages": {
+        "keyword_extraction": "키워드 추출 중",
+        "vector_search": "그래프 및 벡터 검색 중",
+        "merge_chunks": "청크 병합 중",
+        "context_built": "컨텍스트 구축 중",
+        "rerank": "재순위 정렬 중",
+        "retrieval_done": "검색 완료"
+      },
+      "dataCounts": {
+        "entities": "엔티티",
+        "relationships": "관계",
+        "chunks": "청크",
+        "references": "참고문헌"
+      }
     },
     "querySettings": {
       "parametersTitle": "매개변수",
@@ -441,7 +567,48 @@
       "userPromptTooltip": "LLM에 추가 응답 요구 사항을 제공합니다 (쿼리 내용과 무관, 출력 처리에만 사용).",
       "userPromptPlaceholder": "사용자 지정 프롬프트 입력 (선택 사항)",
       "enableRerank": "Rerank 활성화",
-      "enableRerankTooltip": "검색된 텍스트 청크에 대해 Rerank를 활성화합니다. True이지만 Rerank 모델이 구성되지 않은 경우 경고가 발생합니다. 기본값은 True입니다."
+      "enableRerankTooltip": "검색된 텍스트 청크에 대해 Rerank를 활성화합니다. True이지만 Rerank 모델이 구성되지 않은 경우 경고가 발생합니다. 기본값은 True입니다.",
+      "includeReferences": "참고문헌 포함",
+      "includeReferencesTooltip": "답변과 함께 참고문헌 목록을 반환하여 인용을 확인할 수 있게 합니다",
+      "includeChunkContent": "청크 텍스트 포함",
+      "includeChunkContentTooltip": "각 참고문헌에 검색된 청크 텍스트를 첨부합니다",
+      "kbNoneExternalOnly": "없음 (외부만)",
+      "externalKbs": "외부 지식 베이스",
+      "externalKbAdd": "외부 지식 베이스 추가",
+      "externalKbEmpty": "내부 베이스와 함께 제3자 검색 또는 RAG 서비스를 쿼리합니다",
+      "externalKbOnly": "내부 지식 베이스 건너뛰기",
+      "externalKbRetrieval": "검색",
+      "externalKbRag": "RAG 서비스",
+      "externalKbUrl": "API 주소",
+      "externalKbApiKey": "API 키 (선택 사항)",
+      "llmOverride": "쿼리별 LLM 재정의",
+      "llmOverrideReset": "서버 기본 LLM으로 돌아가기",
+      "llmOverrideEmpty": "서버 설정된 LLM을 사용합니다. 바인딩, 모델, 호스트가 모두 설정되어야 합니다.",
+      "llmBinding": "바인딩",
+      "llmModel": "모델",
+      "llmHost": "API 기본 URL",
+      "llmApiKey": "API 키",
+      "llmHeaders": "추가 헤더, 한 줄에 \"이름: 값\" 형식으로",
+      "externalKbNone": "없음",
+      "externalKbsTooltip": "내부 지식 베이스와 함께 조회되는 등록된 타사 서비스입니다. 외부 KBs 탭에서 관리하세요.",
+      "externalKbsEmpty": "아직 등록된 외부 지식 베이스가 없습니다.",
+      "externalKbsReset": "외부 소스 초기화",
+      "modelProfile": "모델",
+      "modelProfileTooltip": "등록된 모델로 이 쿼리를 실행합니다. API 키는 서버에 유지됩니다.",
+      "modelProfileReset": "서버 기본 모델 사용",
+      "serverDefaultModel": "서버 기본",
+      "kbSelection": "지식 베이스 선택",
+      "kbSelectionTooltip": "이 쿼리에 사용할 하나 이상의 지식 베이스를 선택하세요.",
+      "kbSelectionReset": "현재 KB로 재설정",
+      "maxEntityTokensPlaceholder": "최대 엔티티 토큰을 입력하세요",
+      "maxRelationTokensPlaceholder": "최대 관계 토큰을 입력하세요",
+      "maxTotalTokensPlaceholder": "최대 총 토큰을 입력하세요",
+      "groupScope": "조회 범위",
+      "groupModel": "모델",
+      "groupParams": "조회 매개변수",
+      "groupOutput": "출력",
+      "streamOn": "스트리밍",
+      "streamOff": "차단식"
     }
   },
   "apiSite": {
@@ -461,5 +628,85 @@
     "prevPage": "이전 페이지",
     "nextPage": "다음 페이지",
     "lastPage": "마지막 페이지"
+  },
+  "modelManager": {
+    "title": "모델 관리",
+    "description": "엔드포인트는 서버에 저장되며, API 키는 브라우저로 절대 전송되지 않습니다.",
+    "create": "모델 추가",
+    "createTitle": "모델 프로필 추가",
+    "editTitle": "모델 프로필 편집",
+    "formDescription": "임베딩 프로필은 서비스가 반환하는 벡터 차원도 필요합니다.",
+    "empty": "아직 모델 프로필이 없습니다.",
+    "test": "연결 테스트",
+    "enabled": "활성화됨",
+    "noKey": "없음",
+    "fieldsRequired": "이름, 모델, 호스트는 필수입니다",
+    "deleted": "모델 프로필이 삭제되었습니다",
+    "deleteTitle": "모델 프로필 삭제",
+    "deleteDescription": "{{name}}을 삭제하시겠습니까? 이를 선택하는 쿼리는 더 이상 작동하지 않습니다",
+    "namePlaceholder": "표시 이름",
+    "modelPlaceholder": "모델 이름",
+    "hostPlaceholder": "기본 URL, 예: http://host:11434",
+    "keyPlaceholder": "API 키 (선택 사항)",
+    "keyKeepPlaceholder": "API 키 — 현재 값을 유지하려면 비워두세요",
+    "dimPlaceholder": "임베딩 차원",
+    "columns": {
+      "name": "이름",
+      "kind": "종류",
+      "binding": "바인딩",
+      "model": "모델",
+      "host": "호스트",
+      "apiKey": "키",
+      "actions": "작업"
+    }
+  },
+  "externalKBManager": {
+    "title": "외부 지식 베이스",
+    "description": "등록된 서비스는 내부 지식 베이스와 함께 쿼리별로 선택할 수 있습니다",
+    "create": "외부 KB 추가",
+    "createTitle": "외부 지식 베이스 추가",
+    "editTitle": "외부 지식 베이스 편집",
+    "formDescription": "retrieval은 로컬 LLM에 대한 텍스트 청크를 반환하고, rag는 완성된 답변을 반환합니다",
+    "empty": "등록된 외부 지식 베이스가 없습니다",
+    "test": "연결 테스트",
+    "enabled": "활성화됨",
+    "noKey": "없음",
+    "fieldsRequired": "이름과 URL은 필수입니다",
+    "deleted": "외부 지식 베이스가 삭제되었습니다",
+    "deleteTitle": "외부 지식 베이스 삭제",
+    "deleteDescription": "시스템에서 {{name}}을 삭제하시겠습니까",
+    "namePlaceholder": "표시 이름",
+    "urlPlaceholder": "https://service.example.com/api",
+    "keyPlaceholder": "API 키 (선택 사항)",
+    "keyKeepPlaceholder": "API 키 — 현재 값을 유지하려면 비워두세요",
+    "columns": {
+      "name": "이름",
+      "type": "유형",
+      "url": "URL",
+      "topK": "Top K",
+      "apiKey": "키",
+      "actions": "작업"
+    }
+  },
+  "kbManager": {
+    "title": "지식 베이스",
+    "description": "각 베이스는 자체 그래프, 벡터, 문서를 보관합니다.",
+    "create": "새 지식 베이스",
+    "createDescription": "식별자는 저장 작업 공간으로 사용되므로, 파일 시스템에 안전하게 유지해 주세요.",
+    "empty": "지식 베이스를 찾을 수 없습니다.",
+    "default": "기본",
+    "inUse": "사용 중",
+    "switched": "현재",
+    "switch": "사용",
+    "delete": "지식 베이스 삭제",
+    "deleteHasDocuments": "이 베이스에는 아직 {{count}}개의 문서가 있습니다.",
+    "duplicateId": "해당 지식 베이스가 이미 존재합니다.",
+    "columns": {
+      "name": "이름",
+      "documents": "문서",
+      "status": "상태",
+      "actions": "작업",
+      "entities": "엔티티"
+    }
   }
 }

@@ -6,6 +6,12 @@
     "dark": "Tối",
     "system": "Hệ thống"
   },
+  "nav": {
+    "workspace": "Không gian làm việc",
+    "configuration": "Cấu hình",
+    "expand": "Mở rộng điều hướng",
+    "collapse": "Thu gọn điều hướng"
+  },
   "header": {
     "documents": "Tài liệu",
     "knowledgeGraph": "Đồ thị tri thức",
@@ -17,7 +23,26 @@
     "themeToggle": {
       "switchToLight": "Chuyển sang giao diện sáng",
       "switchToDark": "Chuyển sang giao diện tối"
-    }
+    },
+    "kbDelete": "Xóa cơ sở kiến thức hiện tại",
+    "kbDeleteDefaultDisabled": "Không thể xóa cơ sở kiến thức mặc định",
+    "kbDeleteTitle": "Xóa cơ sở kiến thức",
+    "kbDeleteDescription": "Xóa \"{{kbId}}\" và hủy tất cả kho lưu trữ của nó. Hành động này không thể hoàn tác.",
+    "kbDeletePlaceholder": "Nhập \"yes\" để xác nhận",
+    "kbDeleteSuccess": "Đã xóa cơ sở kiến thức",
+    "kbDeletePartial": "Đã xóa cơ sở kiến thức, nhưng một số kho lưu trữ thất bại: {{storages}}",
+    "kbDeleting": "Đang xóa",
+    "models": "Mô hình",
+    "externalKbs": "Cơ sở kiến thức bên ngoài",
+    "kbSelect": "Chọn cơ sở kiến thức",
+    "kbCreate": "Tạo cơ sở kiến thức",
+    "kbCreateTitle": "Tạo cơ sở kiến thức",
+    "kbCreateDescription": "Tạo một cơ sở kiến thức mới, độc lập và chuyển sang nó.",
+    "kbCreatePlaceholder": "Nhập ID cơ sở kiến thức",
+    "kbCreateRequired": "Yêu cầu ID cơ sở kiến thức",
+    "kbCreateSuccess": "Đã tạo cơ sở kiến thức",
+    "knowledgeBases": "Cơ sở kiến thức",
+    "kbStatsHint": "{{documents}} tài liệu · {{entities}} thực thể"
   },
   "login": {
     "description": "Vui lòng nhập tài khoản và mật khẩu để đăng nhập vào hệ thống",
@@ -37,7 +62,13 @@
     "cancel": "Hủy",
     "save": "Lưu",
     "saving": "Đang lưu...",
-    "saveFailed": "Lưu thất bại"
+    "saveFailed": "Lưu thất bại",
+    "delete": "Xóa",
+    "refresh": "Làm mới",
+    "edit": "Chỉnh sửa",
+    "saveSuccess": "Đã lưu",
+    "create": "Tạo",
+    "initializing": "Đang khởi tạo..."
   },
   "documentPanel": {
     "clearDocuments": {
@@ -76,7 +107,11 @@
       "failed": "Xóa Tài Liệu Thất Bại:\n{{message}}",
       "error": "Xóa Tài Liệu Thất Bại:\n{{error}}",
       "busy": "Quy trình đang bận, vui lòng thử lại sau",
-      "notAllowed": "Không có quyền thực hiện thao tác này"
+      "notAllowed": "Không có quyền thực hiện thao tác này",
+      "queued": "Pipeline đang bận; việc xóa {{count}} tài liệu đã được xếp hàng",
+      "partialNotFound": "Đã bắt đầu xóa, nhưng không tìm thấy các tài liệu sau: {{ids}}",
+      "notFound": "Các tài liệu này không còn tồn tại: {{ids}}",
+      "deleting": "Đang xóa"
     },
     "selectDocuments": {
       "selectCurrentPage": "Chọn Trang Hiện Tại ({{count}})",
@@ -110,8 +145,11 @@
         "dragAndDrop": "Kéo và thả tệp vào đây, hoặc nhấp để chọn tệp",
         "removeFile": "Xóa tệp",
         "uploadDescription": "Bạn có thể tải lên {{isMultiple ? 'nhiều' : count}} tệp (tối đa {{maxSize}} mỗi tệp)",
-        "duplicateFile": "Tên tệp đã tồn tại trong bộ nhớ cache của máy chủ"
-      }
+        "duplicateFile": "Tên tệp đã tồn tại trong bộ nhớ cache của máy chủ",
+        "duplicateFileOf": "Nội dung giống như {{path}}",
+        "invalidFileName": "Tên tệp không hợp lệ"
+      },
+      "overwrite": "Thay thế tài liệu hiện có bằng tệp cùng nguồn"
     },
     "documentManager": {
       "title": "Quản Lý Tài Liệu",
@@ -134,7 +172,8 @@
         "created": "Ngày Tạo",
         "updated": "Ngày Cập Nhật",
         "metadata": "Siêu Dữ Liệu",
-        "select": "Chọn"
+        "select": "Chọn",
+        "actions": "Thao tác"
       },
       "status": {
         "all": "Tất cả",
@@ -177,7 +216,35 @@
       "cancelNotBusy": "Quy trình không đang chạy, không cần hủy",
       "errors": {
         "fetchFailed": "Lấy trạng thái quy trình thất bại\n{{error}}"
-      }
+      },
+      "noActiveJob": "Không có công việc đang hoạt động"
+    },
+    "editDocument": {
+      "tooltip": "Cập nhật nội dung",
+      "title": "Cập nhật tài liệu",
+      "description": "Thay thế nội dung đã được lập chỉ mục cho nguồn tệp này",
+      "placeholder": "Dán toàn bộ văn bản mới của tài liệu",
+      "deleteCache": "Xóa bộ nhớ đệm LLM của tài liệu này",
+      "saving": "Đang lưu",
+      "success": "Đã xếp hàng cập nhật tài liệu",
+      "unchanged": "Nội dung không thay đổi",
+      "notFound": "Không tìm thấy tài liệu cho nguồn tệp này",
+      "failed": "Cập nhật thất bại",
+      "emptyText": "Cần có văn bản",
+      "noFileSource": "Tài liệu này không có nguồn tệp, nên không thể cập nhật",
+      "error": "Cập nhật thất bại: {{error}}"
+    },
+    "insertText": {
+      "tooltip": "Lập chỉ mục văn bản thuần",
+      "button": "Thêm văn bản",
+      "title": "Chèn văn bản",
+      "description": "Gửi văn bản trực tiếp vào cơ sở tri thức hiện tại",
+      "sourcePlaceholder": "Nguồn tệp (tùy chọn, dùng để tìm tài liệu sau này)",
+      "textPlaceholder": "Dán văn bản cần lập chỉ mục",
+      "submitting": "Đang gửi",
+      "confirm": "Gửi",
+      "success": "Đã gửi văn bản để lập chỉ mục",
+      "empty": "Cần có văn bản"
     }
   },
   "graphPanel": {
@@ -313,7 +380,9 @@
       "success": {
         "entityUpdated": "Nút đã được cập nhật thành công",
         "relationUpdated": "Quan hệ đã được cập nhật thành công",
-        "entityMerged": "Các nút đã được hợp nhất thành công"
+        "entityMerged": "Các nút đã được hợp nhất thành công",
+        "entityDeleted": "Đã xóa thực thể",
+        "relationDeleted": "Đã xóa quan hệ"
       },
       "mergeOptionLabel": "Tự động hợp nhất khi tìm thấy tên trùng lặp",
       "mergeOptionDescription": "Nếu được bật, đổi tên thành một tên đã tồn tại sẽ hợp nhất nút này vào nút hiện có thay vì thất bại.",
@@ -346,7 +415,10 @@
           "file_path": "Tệp",
           "keywords": "Từ Khóa",
           "weight": "Trọng Số"
-        }
+        },
+        "deleteNode": "Xóa thực thể",
+        "deleteTitle": "Xóa thực thể",
+        "deleteDescription": "Xóa \"{{name}}\" và tất cả các quan hệ của nó khỏi đồ thị tri thức"
       },
       "edge": {
         "title": "Quan Hệ",
@@ -354,8 +426,12 @@
         "type": "Loại",
         "source": "Nguồn",
         "target": "Đích",
-        "properties": "Thuộc Tính"
-      }
+        "properties": "Thuộc Tính",
+        "deleteEdge": "Xóa quan hệ",
+        "deleteTitle": "Xóa quan hệ",
+        "deleteDescription": "Xóa quan hệ giữa \"{{source}}\" và \"{{target}}\""
+      },
+      "deleting": "Đang xóa"
     },
     "search": {
       "placeholder": "Tìm kiếm nút trong trang...",
@@ -371,7 +447,38 @@
       "refreshCurrentLabelTooltip": "Làm mới dữ liệu đồ thị trang hiện tại",
       "refreshingTooltip": "Đang làm mới dữ liệu..."
     },
-    "emptyGraph": "Trống (Thử Tải Lại)"
+    "emptyGraph": "Trống (Thử Tải Lại)",
+    "createEntity": {
+      "tooltip": "Tạo thực thể",
+      "title": "Tạo thực thể",
+      "description": "Thêm một nút vào đồ thị tri thức của cơ sở tri thức hiện tại",
+      "namePlaceholder": "Tên thực thể",
+      "typePlaceholder": "Loại thực thể",
+      "descriptionPlaceholder": "Mô tả",
+      "nameRequired": "Cần có tên thực thể",
+      "success": "Đã tạo thực thể"
+    },
+    "createRelation": {
+      "tooltip": "Tạo quan hệ",
+      "title": "Tạo quan hệ",
+      "description": "Cả hai thực thể phải đã tồn tại trong đồ thị tri thức",
+      "keywordsPlaceholder": "Từ khóa",
+      "descriptionPlaceholder": "Mô tả",
+      "entitiesRequired": "Cả hai thực thể là bắt buộc",
+      "success": "Đã tạo mối quan hệ"
+    },
+    "mergeEntities": {
+      "tooltip": "Gộp thực thể",
+      "title": "Gộp thực thể",
+      "description": "Các mối quan hệ của thực thể nguồn sẽ chuyển sang thực thể đích, thực thể đích sẽ được giữ lại",
+      "sourcesPlaceholder": "Thực thể cần gộp, phân cách bằng dấu phẩy",
+      "targetPlaceholder": "Thực thể đích",
+      "required": "Chọn ít nhất một thực thể để gộp và một thực thể đích",
+      "targetIsSource": "Thực thể đích không thể là một trong những thực thể cần gộp",
+      "merging": "Đang gộp",
+      "confirm": "Gộp",
+      "success": "Đã gộp {{count}} thực thể"
+    }
   },
   "retrievePanel": {
     "chatMessage": {
@@ -394,7 +501,26 @@
       "placeholder": "Nhập truy vấn của bạn (Hỗ trợ tiền tố: /<Chế Độ Truy Vấn>)",
       "error": "Lỗi: Không thể nhận phản hồi",
       "queryModeError": "Chỉ hỗ trợ các chế độ truy vấn sau: {{modes}}",
-      "queryModePrefixInvalid": "Tiền tố chế độ truy vấn không hợp lệ. Dùng: /<mode> [khoảng trắng] truy vấn của bạn"
+      "queryModePrefixInvalid": "Tiền tố chế độ truy vấn không hợp lệ. Dùng: /<mode> [khoảng trắng] truy vấn của bạn",
+      "queryTooShort": "Truy vấn quá ngắn",
+      "fetchData": "Lấy dữ liệu",
+      "dataHint": "Chạy thử truy xuất với nội dung ô truy vấn: xem trước các thực thể, mối quan hệ và đoạn được khớp, không tạo câu trả lời bằng mô hình.",
+      "highLevelKeywords": "HL",
+      "lowLevelKeywords": "LL",
+      "progressStages": {
+        "keyword_extraction": "Đang trích xuất từ khóa",
+        "vector_search": "Đang tìm kiếm trong đồ thị và vector",
+        "merge_chunks": "Đang gộp các đoạn",
+        "context_built": "Đang xây dựng ngữ cảnh",
+        "rerank": "Đang xếp hạng lại",
+        "retrieval_done": "Đã hoàn thành truy xuất"
+      },
+      "dataCounts": {
+        "entities": "Thực thể",
+        "relationships": "Mối quan hệ",
+        "chunks": "Đoạn",
+        "references": "Tham chiếu"
+      }
     },
     "querySettings": {
       "parametersTitle": "Tham Số",
@@ -441,7 +567,48 @@
       "userPromptTooltip": "Cung cấp yêu cầu phản hồi bổ sung cho LLM (không liên quan đến nội dung truy vấn, chỉ để xử lý đầu ra).",
       "userPromptPlaceholder": "Nhập lời nhắc tùy chỉnh (tùy chọn)",
       "enableRerank": "Bật Xếp Hạng Lại",
-      "enableRerankTooltip": "Bật xếp hạng lại cho các đoạn văn bản đã truy xuất. Nếu True nhưng không có mô hình rerank nào được cấu hình, một cảnh báo sẽ được đưa ra. Mặc định là True."
+      "enableRerankTooltip": "Bật xếp hạng lại cho các đoạn văn bản đã truy xuất. Nếu True nhưng không có mô hình rerank nào được cấu hình, một cảnh báo sẽ được đưa ra. Mặc định là True.",
+      "includeReferences": "Bao gồm tham chiếu",
+      "includeReferencesTooltip": "Trả về danh sách tham chiếu cùng câu trả lời để có thể xác định nguồn trích dẫn",
+      "includeChunkContent": "Bao gồm nội dung đoạn",
+      "includeChunkContentTooltip": "Gắn các đoạn văn bản đã truy xuất vào mỗi tham chiếu",
+      "kbNoneExternalOnly": "Không có (chỉ bên ngoài)",
+      "externalKbs": "Cơ sở tri thức bên ngoài",
+      "externalKbAdd": "Thêm cơ sở tri thức bên ngoài",
+      "externalKbEmpty": "Truy vấn các dịch vụ truy xuất hoặc RAG của bên thứ ba cùng với cơ sở nội bộ",
+      "externalKbOnly": "Bỏ qua cơ sở tri thức nội bộ",
+      "externalKbRetrieval": "Truy xuất",
+      "externalKbRag": "Dịch vụ RAG",
+      "externalKbUrl": "URL API",
+      "externalKbApiKey": "Khóa API (tùy chọn)",
+      "llmOverride": "Ghi đè LLM theo truy vấn",
+      "llmOverrideReset": "Quay lại LLM mặc định máy chủ",
+      "llmOverrideEmpty": "Sử dụng LLM được cấu hình bởi máy chủ. Cần thiết lập cả Binding, model và host.",
+      "llmBinding": "Binding",
+      "llmModel": "Mô hình",
+      "llmHost": "URL cơ sở API",
+      "llmApiKey": "Khóa API",
+      "llmHeaders": "Headers bổ sung, mỗi dòng một \"Tên: giá trị\"",
+      "externalKbNone": "Không có",
+      "externalKbsTooltip": "Các dịch vụ bên thứ ba đã đăng ký được truy vấn cùng cơ sở kiến thức nội bộ. Quản lý chúng ở tab Cơ sở kiến thức bên ngoài.",
+      "externalKbsEmpty": "Chưa có cơ sở kiến thức bên ngoài nào được đăng ký.",
+      "externalKbsReset": "Xóa nguồn bên ngoài",
+      "modelProfile": "Mô hình",
+      "modelProfileTooltip": "Chạy truy vấn này với mô hình đã đăng ký. Khóa API được giữ trên máy chủ.",
+      "modelProfileReset": "Sử dụng mô hình mặc định máy chủ",
+      "serverDefaultModel": "Mặc định máy chủ",
+      "kbSelection": "Chọn KB",
+      "kbSelectionTooltip": "Chọn một hoặc nhiều cơ sở kiến thức cho truy vấn này.",
+      "kbSelectionReset": "Đặt lại về KB hiện tại",
+      "maxEntityTokensPlaceholder": "Nhập số token thực thể tối đa",
+      "maxRelationTokensPlaceholder": "Nhập số token quan hệ tối đa",
+      "maxTotalTokensPlaceholder": "Nhập tổng số token tối đa",
+      "groupScope": "Phạm vi truy xuất",
+      "groupModel": "Mô hình",
+      "groupParams": "Tham số truy xuất",
+      "groupOutput": "Đầu ra",
+      "streamOn": "Phát trực tiếp",
+      "streamOff": "Chặn"
     }
   },
   "apiSite": {
@@ -461,5 +628,85 @@
     "prevPage": "Trang Trước",
     "nextPage": "Trang Tiếp",
     "lastPage": "Trang Cuối"
+  },
+  "modelManager": {
+    "title": "Quản lý mô hình",
+    "description": "Các điểm cuối được lưu trên máy chủ; khóa API không bao giờ được gửi đến trình duyệt.",
+    "create": "Thêm mô hình",
+    "createTitle": "Thêm hồ sơ mô hình",
+    "editTitle": "Chỉnh sửa hồ sơ mô hình",
+    "formDescription": "Hồ sơ nhúng cũng cần chiều vectơ mà dịch vụ của chúng trả về.",
+    "empty": "Chưa có hồ sơ mô hình nào.",
+    "test": "Kiểm tra kết nối",
+    "enabled": "Đã bật",
+    "noKey": "Không có",
+    "fieldsRequired": "Tên, model và host là bắt buộc",
+    "deleted": "Hồ sơ model đã bị xóa",
+    "deleteTitle": "Xóa hồ sơ model",
+    "deleteDescription": "Xóa \"{{name}}\"? Các truy vấn chọn nó sẽ ngừng hoạt động.",
+    "namePlaceholder": "Tên hiển thị",
+    "modelPlaceholder": "Tên model",
+    "hostPlaceholder": "URL cơ sở, ví dụ: http://host:11434",
+    "keyPlaceholder": "Khóa API (tùy chọn)",
+    "keyKeepPlaceholder": "Khóa API — để trống để giữ giá trị hiện tại",
+    "dimPlaceholder": "Chiều nhúng",
+    "columns": {
+      "name": "Tên",
+      "kind": "Loại",
+      "binding": "Ràng buộc",
+      "model": "Model",
+      "host": "Host",
+      "apiKey": "Khóa",
+      "actions": "Thao tác"
+    }
+  },
+  "externalKBManager": {
+    "title": "Cơ sở kiến thức bên ngoài",
+    "description": "Các dịch vụ đã đăng ký có thể được chọn cho mỗi truy vấn cùng với cơ sở kiến thức nội bộ.",
+    "create": "Thêm KB bên ngoài",
+    "createTitle": "Thêm Cơ sở kiến thức bên ngoài",
+    "editTitle": "Chỉnh sửa Cơ sở kiến thức bên ngoài",
+    "formDescription": "retrieval trả về các đoạn văn bản cho LLM cục bộ; rag trả về câu trả lời hoàn chỉnh.",
+    "empty": "Chưa có cơ sở kiến thức bên ngoài nào được đăng ký.",
+    "test": "Kiểm tra kết nối",
+    "enabled": "Đã bật",
+    "noKey": "không có",
+    "fieldsRequired": "Tên và URL là bắt buộc",
+    "deleted": "Cơ sở kiến thức bên ngoài đã bị xóa",
+    "deleteTitle": "Xóa cơ sở kiến thức bên ngoài",
+    "deleteDescription": "Xóa \"{{name}}\" khỏi hệ thống?",
+    "namePlaceholder": "Tên hiển thị",
+    "urlPlaceholder": "https://service.example.com/api",
+    "keyPlaceholder": "Khóa API (tùy chọn)",
+    "keyKeepPlaceholder": "Khóa API — để trống để giữ giá trị hiện tại",
+    "columns": {
+      "name": "Tên",
+      "type": "Loại",
+      "url": "URL",
+      "topK": "Top K",
+      "apiKey": "Khóa",
+      "actions": "Hành động"
+    }
+  },
+  "kbManager": {
+    "title": "Cơ sở kiến thức",
+    "description": "Mỗi cơ sở lưu trữ đồ thị, vector và tài liệu riêng.",
+    "create": "Tạo cơ sở kiến thức mới",
+    "createDescription": "Mã định danh được dùng làm không gian làm việc lưu trữ, hãy đảm bảo nó an toàn cho hệ thống tệp.",
+    "empty": "Không tìm thấy cơ sở kiến thức nào.",
+    "default": "mặc định",
+    "inUse": "đang sử dụng",
+    "switched": "Hiện tại",
+    "switch": "Sử dụng",
+    "delete": "Xóa cơ sở kiến thức",
+    "deleteHasDocuments": "Cơ sở này vẫn chứa {{count}} tài liệu.",
+    "duplicateId": "Cơ sở kiến thức này đã tồn tại.",
+    "columns": {
+      "name": "Tên",
+      "documents": "Tài liệu",
+      "status": "Trạng thái",
+      "actions": "Hành động",
+      "entities": "Thực thể"
+    }
   }
 }
