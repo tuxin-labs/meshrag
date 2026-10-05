@@ -31,6 +31,7 @@ def test_app():
     mock_rag.doc_status = mock_doc_status
 
     mock_rag_mgr.get_rag = AsyncMock(return_value=mock_rag)
+    mock_rag_mgr.get_rag_or_none = AsyncMock(return_value=mock_rag)
     mock_rag_mgr.delete_knowledge_base = AsyncMock(
         return_value={"status": "success", "message": "deleted"}
     )

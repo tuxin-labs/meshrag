@@ -147,19 +147,14 @@ class TestQueryRequestValidation:
 def _make_client(mock_mgr):
     """创建独立 FastAPI app，挂载 query routes 并返回 TestClient。
 
-    每次调用都会替换模块级 router，避免多个测试共享同一个 APIRouter
-    导致路由冲突（第一个注册的 handler 始终优先匹配）。
+    create_query_routes 每次调用都返回全新的 APIRouter（不再依赖模块级
+    router 单例），因此这里直接挂载即可，多个 app 之间天然隔离。
     """
-    from unittest.mock import patch
-    from fastapi import FastAPI, APIRouter
-    from lightrag.api.routers import query_routes
+    from fastapi import FastAPI
     from lightrag.api.routers.query_routes import create_query_routes
 
-    # 用全新的 APIRouter 替换模块级 router，确保路由隔离
-    fresh_router = APIRouter(tags=["query"])
-    with patch.object(query_routes, "router", fresh_router):
-        app = FastAPI()
-        app.include_router(create_query_routes(mock_mgr))
+    app = FastAPI()
+    app.include_router(create_query_routes(mock_mgr))
     return TestClient(app)
 
 

@@ -1481,10 +1481,32 @@ class TestMultiKbQueryPaths:
         manager = RAGManager(rag_factory=lambda kb_id: mock_rag_factory())
         mock_query_param.mode = "bypass"
 
+        # 查询前必须先注册 KB（未知 id 不再被惰性创建）
+        await manager.get_rag("kb1")
+
         result = await manager.multi_kb_query("query", ["kb1"], mock_query_param)
 
         assert result["status"] == "success"
         assert result["metadata"]["query_mode"] == "bypass"
+
+    @pytest.mark.asyncio
+    async def test_multi_kb_query_unknown_kb_not_created(self, mock_query_param, mock_rag_factory):
+        """未知 kb_id 应被过滤且绝不惰性创建（防僵尸库复活）。"""
+        from lightrag.api.rag_manager import RAGManager, UnknownKnowledgeBaseError
+
+        manager = RAGManager(rag_factory=lambda kb_id: mock_rag_factory())
+
+        with pytest.raises(UnknownKnowledgeBaseError, match="ghost_kb"):
+            await manager.multi_kb_query("query", ["ghost_kb"], mock_query_param)
+
+        assert "ghost_kb" not in manager.list_knowledge_bases()
+
+        # 混合场景：已知 KB 正常查询，未知 KB 被过滤掉
+        await manager.get_rag("kb1")
+        mock_query_param.mode = "naive"
+        result = await manager.multi_kb_query("query", ["kb1", "ghost_kb"], mock_query_param)
+        assert result["status"] == "success"
+        assert "ghost_kb" not in manager.list_knowledge_bases()
 
     @pytest.mark.asyncio
     async def test_multi_kb_query_single_local_kb(
