@@ -4,6 +4,12 @@
 
 **Multi-Knowledge-Base Graph RAG engine, based on [LightRAG](https://github.com/HKUDS/LightRAG)**
 
+[![PyPI - Version](https://img.shields.io/pypi/v/meshrag)](https://pypi.org/project/meshrag/)
+[![Python](https://img.shields.io/pypi/pyversions/meshrag)](https://pypi.org/project/meshrag/)
+[![CI](https://github.com/tuxin-labs/meshrag/actions/workflows/tests.yml/badge.svg)](https://github.com/tuxin-labs/meshrag/actions/workflows/tests.yml)
+[![Docker Image](https://img.shields.io/badge/docker-ghcr.io/tuxin--labs/meshrag-2496ED?logo=docker)](https://github.com/tuxin-labs/meshrag/pkgs/container/meshrag)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 [中文文档](README-zh.md) · [License](#license) · Python 3.10+
 
 </div>
@@ -159,8 +165,16 @@ meshrag-gunicorn       # multi-worker
 Docker:
 
 ```bash
-docker compose up -d          # uses ghcr.io/tuxin-labs/meshrag
-docker build -t meshrag .     # full image (frontend + backend)
+# Run the prebuilt public image (no local build needed)
+cp env.example .env           # configure LLM / embedding providers first
+docker run -d --name meshrag -p 9621:9621 \
+  -v ./data/rag_storage:/app/data/rag_storage \
+  -v ./data/inputs:/app/data/inputs \
+  -v ./.env:/app/.env \
+  ghcr.io/tuxin-labs/meshrag:latest
+
+docker compose up -d          # same image via Compose
+docker build -t meshrag .     # build the full image yourself (frontend + backend)
 docker build -f Dockerfile.lite .  # lite image (API + offline storage only)
 ```
 

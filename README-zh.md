@@ -6,6 +6,12 @@
 
 Multi-Knowledge-Base Graph RAG engine, based on LightRAG
 
+[![PyPI - Version](https://img.shields.io/pypi/v/meshrag)](https://pypi.org/project/meshrag/)
+[![Python](https://img.shields.io/pypi/pyversions/meshrag)](https://pypi.org/project/meshrag/)
+[![CI](https://github.com/tuxin-labs/meshrag/actions/workflows/tests.yml/badge.svg)](https://github.com/tuxin-labs/meshrag/actions/workflows/tests.yml)
+[![Docker Image](https://img.shields.io/badge/docker-ghcr.io/tuxin--labs/meshrag-2496ED?logo=docker)](https://github.com/tuxin-labs/meshrag/pkgs/container/meshrag)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 [English](README.md) · [许可证](#许可证) · Python 3.10+
 
 </div>
@@ -143,8 +149,16 @@ meshrag-gunicorn       # 多 worker 启动
 Docker：
 
 ```bash
-docker compose up -d               # 使用 ghcr.io/tuxin-labs/meshrag 镜像
-docker build -t meshrag .          # 完整镜像（前端 + 后端）
+# 直接运行官方公开镜像（无需本地构建）
+cp env.example .env                # 先配置大模型 / 向量模型
+docker run -d --name meshrag -p 9621:9621 \
+  -v ./data/rag_storage:/app/data/rag_storage \
+  -v ./data/inputs:/app/data/inputs \
+  -v ./.env:/app/.env \
+  ghcr.io/tuxin-labs/meshrag:latest
+
+docker compose up -d               # 用 Compose 跑同一个官方镜像
+docker build -t meshrag .          # 自行构建完整镜像（前端 + 后端）
 docker build -f Dockerfile.lite .  # 精简镜像（API + 离线存储）
 ```
 
