@@ -33,8 +33,9 @@ import {
 import { errorMessage } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useBackendState } from '@/stores/state'
+import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
 
-import { RefreshCwIcon, ActivityIcon, ArrowUpIcon, ArrowDownIcon, RotateCcwIcon, CheckSquareIcon, XIcon, AlertTriangle, Info, PencilIcon } from 'lucide-react'
+import { RefreshCwIcon, ActivityIcon, ArrowUpIcon, ArrowDownIcon, RotateCcwIcon, CheckSquareIcon, XIcon, AlertTriangle, Info, PencilIcon, UploadIcon, FilePlusIcon } from 'lucide-react'
 import PipelineStatusDialog from '@/components/documents/PipelineStatusDialog'
 
 type StatusFilter = DocStatus | 'all';
@@ -221,9 +222,13 @@ export default function DocumentManager() {
   }, []);
 
   const [showPipelineStatus, setShowPipelineStatus] = useState(false)
+  // Empty-state quick actions open the same ingestion dialogs as the toolbar
+  const [insertDialogOpen, setInsertDialogOpen] = useState(false)
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const { t, i18n } = useTranslation()
   const health = useBackendState.use.health()
   const pipelineBusy = useBackendState.use.pipelineBusy()
+  const { refreshKnowledgeBases } = useKnowledgeBase()
 
   // Legacy state for backward compatibility
   const [docs, setDocs] = useState<DocsStatusesResponse | null>(null)
@@ -745,6 +750,15 @@ export default function DocumentManager() {
 
     } catch (err) {
       if (isMountedRef.current) {
+        const messageText = errorMessage(err)
+        // A 404 means the selected knowledge base no longer exists (deleted in
+        // another tab or via the API). Refresh the registry so the selection
+        // falls back to an existing base instead of polling a dead id forever.
+        if (messageText.includes('404') && messageText.toLowerCase().includes('not found')) {
+          void refreshKnowledgeBases()
+          return
+        }
+
         const errorClassification = classifyError(err);
 
         if (errorClassification.shouldShowToast) {
@@ -1208,8 +1222,16 @@ export default function DocumentManager() {
             ) : !isSelectionMode ? (
               <ClearDocumentsDialog onDocumentsCleared={handleDocumentsCleared} />
             ) : null}
-            <InsertTextDialog onDocumentsInserted={() => handleIntelligentRefresh(undefined, false, 120000)} />
-            <UploadDocumentsDialog onDocumentsUploaded={() => handleIntelligentRefresh(undefined, false, 120000)} />
+            <InsertTextDialog
+              open={insertDialogOpen}
+              onOpenChange={setInsertDialogOpen}
+              onDocumentsInserted={() => handleIntelligentRefresh(undefined, false, 120000)}
+            />
+            <UploadDocumentsDialog
+              open={uploadDialogOpen}
+              onOpenChange={setUploadDialogOpen}
+              onDocumentsUploaded={() => handleIntelligentRefresh(undefined, false, 120000)}
+            />
             <PipelineStatusDialog
               open={showPipelineStatus}
               onOpenChange={setShowPipelineStatus}
@@ -1336,6 +1358,18 @@ export default function DocumentManager() {
                 <EmptyCard
                   title={t('documentPanel.documentManager.emptyTitle')}
                   description={t('documentPanel.documentManager.emptyDescription')}
+                  action={
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" onClick={() => setUploadDialogOpen(true)}>
+                        <UploadIcon className="h-4 w-4" />
+                        {t('documentPanel.uploadDocuments.button')}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setInsertDialogOpen(true)}>
+                        <FilePlusIcon className="h-4 w-4" />
+                        {t('documentPanel.insertText.button')}
+                      </Button>
+                    </div>
+                  }
                 />
               </div>
             )}

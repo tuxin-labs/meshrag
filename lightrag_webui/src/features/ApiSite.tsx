@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useTabVisibility } from '@/contexts/useTabVisibility'
 import { backendBaseUrl } from '@/lib/constants'
 import { useTranslation } from 'react-i18next'
 
 export default function ApiSite() {
   const { t } = useTranslation()
-  const { isTabVisible } = useTabVisibility()
-  const isApiTabVisible = isTabVisible('api')
   const [iframeLoaded, setIframeLoaded] = useState(false)
 
   // Load the iframe once on component mount
@@ -18,7 +15,7 @@ export default function ApiSite() {
 
   // Use CSS to hide content when tab is not visible
   return (
-    <div className={`size-full ${isApiTabVisible ? '' : 'hidden'}`}>
+    <div className="size-full">
       {iframeLoaded ? (
         <iframe
           src={backendBaseUrl + '/docs'}

@@ -343,17 +343,15 @@ const useLightrangeGraph = () => {
       const currentMaxQueryDepth = maxQueryDepth
       const currentMaxNodes = maxNodes
 
+      // An empty label used to dead-end on the "Graph Is Empty" placeholder even after
+      // documents arrived later. Fetching '*' (all labels) instead lets the view recover
+      // on its own; a genuinely empty knowledge base still resolves to the empty state.
+      const effectiveLabel = currentQueryLabel || '*'
+
       // Declare a variable to store data promise
       let dataPromise: Promise<{ rawGraph: RawGraph | null; is_truncated: boolean | undefined } | null>;
 
-      // 1. If query label is not empty, use fetchGraph
-      if (currentQueryLabel) {
-        dataPromise = fetchGraph(currentQueryLabel, currentMaxQueryDepth, currentMaxNodes);
-      } else {
-        // 2. If query label is empty, set data to null
-        console.log('Query label is empty, show empty graph')
-        dataPromise = Promise.resolve({ rawGraph: null, is_truncated: false });
-      }
+      dataPromise = fetchGraph(effectiveLabel, currentMaxQueryDepth, currentMaxNodes);
 
       // 3. Process data
       dataPromise.then((result) => {
@@ -426,8 +424,14 @@ const useLightrangeGraph = () => {
           state.setRawGraph(data);
           state.setGraphIsEmpty(false);
 
+          // The view recovered from an emptied label: keep the selector in sync so it
+          // shows '*' instead of an empty placeholder.
+          if (!currentQueryLabel) {
+            useSettingsStore.getState().setQueryLabel('*')
+          }
+
           // Update last successful query label
-          state.setLastSuccessfulQueryLabel(currentQueryLabel);
+          state.setLastSuccessfulQueryLabel(effectiveLabel);
 
           // Reset camera view
           state.setMoveToSelectedNode(true);

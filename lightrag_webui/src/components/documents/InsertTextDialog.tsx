@@ -20,12 +20,22 @@ import { errorMessage } from '@/lib/utils'
 
 interface InsertTextDialogProps {
   onDocumentsInserted?: () => Promise<void> | void
+  /** Semi-controlled open state; omit to let the dialog manage its own trigger. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 /** Direct text ingestion, the counterpart to uploading a file. */
-export default function InsertTextDialog({ onDocumentsInserted }: InsertTextDialogProps) {
+export default function InsertTextDialog({
+  onDocumentsInserted,
+  open: controlledOpen,
+  onOpenChange
+}: InsertTextDialogProps) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = controlledOpen !== undefined
+  const open = isControlled ? controlledOpen : internalOpen
+  const setOpen = (next: boolean) => (isControlled ? onOpenChange?.(next) : setInternalOpen(next))
   const [text, setText] = useState('')
   const [fileSource, setFileSource] = useState('')
   const [overwrite, setOverwrite] = useState(false)

@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/state'
 import { useTranslation } from 'react-i18next'
 import { navigationService } from '@/services/navigation'
 import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
-import { ZapIcon, GithubIcon, LogOutIcon, DatabaseIcon } from 'lucide-react'
+import { GithubIcon, LogOutIcon, DatabaseIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/Select'
 
@@ -44,7 +44,7 @@ function KnowledgeBaseSwitcher() {
         onValueChange={selectKnowledgeBase}
         onOpenChange={(open) => open && void refreshKnowledgeBaseStats()}
       >
-        <SelectTrigger className="h-8 w-[180px]">
+        <SelectTrigger className="h-8 w-auto min-w-[140px] max-w-[300px]">
           {/* Radix echoes the selected item's children here, and those children carry the
               stats row, so the trigger renders the bare id from the store instead. */}
           <span className="truncate">
@@ -74,7 +74,8 @@ export default function SiteHeader() {
     ? `${coreVersion}/${apiVersion}`
     : null
 
-  const hasWarning = apiVersion?.endsWith('鈿狅笍')
+  // The backend appends the ⚠️ marker when the built webui assets are stale.
+  const hasWarning = apiVersion?.includes('⚠')
   const versionTooltip = hasWarning
     ? t('header.frontendNeedsRebuild')
     : versionDisplay ? `v${versionDisplay}` : ''
@@ -87,7 +88,7 @@ export default function SiteHeader() {
     <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 flex h-10 w-full border-b px-4 backdrop-blur">
       <div className="flex min-w-0 flex-1 items-center">
         <a href={webuiPrefix} className="flex shrink-0 items-center gap-2">
-          <ZapIcon className="size-4 text-emerald-400" aria-hidden="true" />
+          <img src="logo.png" alt="" className="size-4" aria-hidden="true" />
           <span className="font-bold md:inline-block">{SiteInfo.name}</span>
         </a>
         {webuiTitle && (

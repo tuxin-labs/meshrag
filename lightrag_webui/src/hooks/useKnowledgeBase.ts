@@ -87,21 +87,31 @@ export function useKnowledgeBase() {
   }, [refreshKnowledgeBases, selectKnowledgeBase])
 
   /**
-   * Deletes a base and keeps the selection valid. setAvailableKbIds falls back to the
-   * first remaining base, so a view reset is only needed when that actually moved.
+   * Deletes a base and keeps the selection valid. Deleting the currently selected
+   * base first moves the selection to a surviving base, so KB-scoped views reset
+   * along the same path as a normal switch instead of reacting to a base that is
+   * already gone (which used to freeze the delete dialog and the table).
    */
   const removeKnowledgeBase = useCallback(async (
     kbId: string
   ): Promise<KnowledgeBaseDeleteResponse> => {
-    const previousKbId = useSettingsStore.getState().selectedKbId
+    const settings = useSettingsStore.getState()
+    const wasSelected = settings.selectedKbId === kbId
+    if (wasSelected) {
+      const remaining = settings.availableKbIds.filter((id) => id !== kbId)
+      const fallback = remaining.find((id) => id === settings.defaultKbId) || remaining[0]
+      if (fallback) {
+        selectKnowledgeBase(fallback)
+      }
+    }
     const result = await deleteKnowledgeBase(kbId)
     await refreshKnowledgeBases()
     const current = useSettingsStore.getState()
-    if (current.selectedKbId !== previousKbId) {
+    if (current.selectedKbId !== settings.selectedKbId || wasSelected) {
       resetKbScopedViews()
     }
     return result
-  }, [refreshKnowledgeBases])
+  }, [refreshKnowledgeBases, selectKnowledgeBase])
 
   return {
     refreshKnowledgeBases,

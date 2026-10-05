@@ -113,6 +113,10 @@ interface SettingsState {
   sidebarCollapsed: boolean
   setSidebarCollapsed: (collapsed: boolean) => void
 
+  // Retrieval page right-hand parameter panel
+  retrievalParamsCollapsed: boolean
+  setRetrievalParamsCollapsed: (collapsed: boolean) => void
+
   // Search label dropdown refresh trigger (non-persistent, runtime only)
   searchLabelDropdownRefreshTrigger: number
   triggerSearchLabelDropdownRefresh: () => void
@@ -259,6 +263,10 @@ const useSettingsStoreBase = create<SettingsState>()(
 
       sidebarCollapsed: false,
       setSidebarCollapsed: (sidebarCollapsed: boolean) => set({ sidebarCollapsed }),
+
+      retrievalParamsCollapsed: false,
+      setRetrievalParamsCollapsed: (retrievalParamsCollapsed: boolean) =>
+        set({ retrievalParamsCollapsed }),
 
       setRetrievalHistory: (history: Message[]) => set({ retrievalHistory: history }),
 

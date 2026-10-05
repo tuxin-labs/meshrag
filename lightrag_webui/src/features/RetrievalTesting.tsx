@@ -8,9 +8,8 @@ import { errorMessage } from '@/lib/utils'
 import { useSettingsStore } from '@/stores/settings'
 import { useDebounce } from '@/hooks/useDebounce'
 import QuerySettings from '@/components/retrieval/QuerySettings'
-import RetrievalDataPanel from '@/components/retrieval/RetrievalDataPanel'
 import { ChatMessage, MessageWithError } from '@/components/retrieval/ChatMessage'
-import { EraserIcon, SendIcon, CopyIcon, LoaderIcon } from 'lucide-react'
+import { EraserIcon, SendIcon, CopyIcon, LoaderIcon, PanelRightOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { copyToClipboard } from '@/utils/clipboard'
@@ -137,6 +136,8 @@ export default function RetrievalTesting() {
   // Get current tab to determine if this tab is active (for performance optimization)
   const currentTab = useSettingsStore.use.currentTab()
   const isRetrievalTabActive = currentTab === 'retrieval'
+  const paramsCollapsed = useSettingsStore.use.retrievalParamsCollapsed()
+  const setParamsCollapsed = useSettingsStore.use.setRetrievalParamsCollapsed()
 
   const [messages, setMessages] = useState<MessageWithError[]>(() => {
     try {
@@ -172,6 +173,8 @@ export default function RetrievalTesting() {
   const [isLoading, setIsLoading] = useState(false)
   const [inputError, setInputError] = useState('') // Error message for input
   const [retrievalProgress, setRetrievalProgress] = useState<string | null>(null)
+  // Bumped when the conversation is cleared so the retrieval-data section drops its stale result.
+  const [dataResetKey, setDataResetKey] = useState(0)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
 
   // Smart switching logic: use Input for single line, Textarea for multi-line
@@ -677,6 +680,7 @@ export default function RetrievalTesting() {
   const clearMessages = useCallback(() => {
     setMessages([])
     useSettingsStore.getState().setRetrievalHistory([])
+    setDataResetKey((key) => key + 1)
   }, [setMessages])
 
   // Handle copying message content with robust clipboard support
@@ -880,9 +884,29 @@ export default function RetrievalTesting() {
             {t('retrievePanel.retrieval.send')}
           </Button>
         </form>
-        <RetrievalDataPanel getInputQuery={() => inputValue} />
       </div>
-      <QuerySettings />
+      {paramsCollapsed ? (
+        <button
+          type="button"
+          onClick={() => setParamsCollapsed(false)}
+          title={t('retrievePanel.querySettings.expand', { defaultValue: 'Show parameters' })}
+          className="border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent flex shrink-0 cursor-pointer flex-col items-center gap-2 rounded-md border px-1.5 py-2 transition-colors"
+        >
+          <PanelRightOpen className="size-4" />
+          <span
+            className="text-[11px] font-medium tracking-wide uppercase"
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            {t('retrievePanel.querySettings.parametersTitle')}
+          </span>
+        </button>
+      ) : (
+        <QuerySettings
+          onCollapse={() => setParamsCollapsed(true)}
+          getInputQuery={() => inputValue}
+          resetSignal={dataResetKey}
+        />
+      )}
     </div>
   )
 }

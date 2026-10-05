@@ -20,11 +20,21 @@ import { useTranslation } from 'react-i18next'
 
 interface UploadDocumentsDialogProps {
   onDocumentsUploaded?: () => Promise<void>
+  /** Semi-controlled open state; omit to let the dialog manage its own trigger. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export default function UploadDocumentsDialog({ onDocumentsUploaded }: UploadDocumentsDialogProps) {
+export default function UploadDocumentsDialog({
+  onDocumentsUploaded,
+  open: controlledOpen,
+  onOpenChange
+}: UploadDocumentsDialogProps) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = controlledOpen !== undefined
+  const open = isControlled ? controlledOpen : internalOpen
+  const setOpen = (next: boolean) => (isControlled ? onOpenChange?.(next) : setInternalOpen(next))
   const [isUploading, setIsUploading] = useState(false)
   const [overwrite, setOverwrite] = useState(false)
   const [progresses, setProgresses] = useState<Record<string, number>>({})

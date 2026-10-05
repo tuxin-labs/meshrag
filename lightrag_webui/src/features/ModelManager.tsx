@@ -51,7 +51,14 @@ import {
 import type { ConnectionTestResult, ModelBinding, ModelKind, ModelProfile, ModelProfileInput } from '@/api/lightrag'
 import { useSettingsStore } from '@/stores/settings'
 import { errorMessage } from '@/lib/utils'
-import { LoaderIcon, PencilIcon, PlugZapIcon, PlusIcon, RefreshCwIcon, Trash2Icon } from 'lucide-react'
+import { LoaderIcon, PencilIcon, PlugZapIcon, PlusIcon, RefreshCwIcon, Trash2Icon, EllipsisIcon } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from '@/components/ui/DropdownMenu'
 
 const emptyForm = (): ModelProfileInput => ({
   name: '',
@@ -237,52 +244,50 @@ export default function ModelManager() {
                 return (
                   <Fragment key={profile.id}>
                     <TableRow>
-                    <TableCell className="font-medium">{profile.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={profile.kind === 'llm' ? 'default' : 'secondary'}>{profile.kind}</Badge>
-                    </TableCell>
-                    <TableCell>{profile.binding}</TableCell>
-                    <TableCell className="max-w-40 truncate" title={profile.model}>{profile.model}</TableCell>
-                    <TableCell className="max-w-56 truncate" title={profile.host}>{profile.host}</TableCell>
-                    <TableCell>
-                      {profile.has_api_key ? `••••${profile.api_key_tail}` : (
-                        <span className="text-muted-foreground">{t('modelManager.noKey', { defaultValue: 'none' })}</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          tooltip={t('modelManager.test', { defaultValue: 'Test connection' })}
-                          onClick={() => handleTest(profile)}
-                          disabled={testingId === profile.id}
-                        >
-                          {testingId === profile.id
-                            ? <LoaderIcon className="size-3.5 animate-spin" />
-                            : <PlugZapIcon className="size-3.5" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          tooltip={t('common.edit', { defaultValue: 'Edit' })}
-                          onClick={() => openEdit(profile)}
-                        >
-                          <PencilIcon className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          tooltip={t('common.delete')}
-                          onClick={() => setPendingDelete(profile)}
-                        >
-                          <Trash2Icon className="size-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                      <TableCell className="font-medium">{profile.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={profile.kind === 'llm' ? 'default' : 'secondary'}>{profile.kind}</Badge>
+                      </TableCell>
+                      <TableCell>{profile.binding}</TableCell>
+                      <TableCell className="max-w-40 truncate" title={profile.model}>{profile.model}</TableCell>
+                      <TableCell className="max-w-56 truncate" title={profile.host}>{profile.host}</TableCell>
+                      <TableCell>
+                        {profile.has_api_key ? `••••${profile.api_key_tail}` : (
+                          <span className="text-muted-foreground">{t('modelManager.noKey', { defaultValue: 'none' })}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                              tooltip={t('common.actions', { defaultValue: 'Actions' })}
+                              disabled={testingId === profile.id}
+                            >
+                              {testingId === profile.id
+                                ? <LoaderIcon className="size-3.5 animate-spin" />
+                                : <EllipsisIcon className="size-4" />}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleTest(profile)}>
+                              <PlugZapIcon />
+                              {t('modelManager.test', { defaultValue: 'Test connection' })}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEdit(profile)}>
+                              <PencilIcon />
+                              {t('common.edit', { defaultValue: 'Edit' })}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem destructive onClick={() => setPendingDelete(profile)}>
+                              <Trash2Icon />
+                              {t('common.delete')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
                     {result && (
                       <TableRow className="bg-muted/40">

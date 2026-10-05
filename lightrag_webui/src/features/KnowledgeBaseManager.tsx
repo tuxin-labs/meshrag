@@ -37,12 +37,19 @@ import { useSettingsStore } from '@/stores/settings'
 import { errorMessage } from '@/lib/utils'
 import {
   CheckIcon,
+  EllipsisIcon,
   LoaderIcon,
   PlusIcon,
   RefreshCwIcon,
   Trash2Icon,
   TriangleAlertIcon
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from '@/components/ui/DropdownMenu'
 
 type KbRow = {
   id: string
@@ -277,21 +284,33 @@ export default function KnowledgeBaseManager() {
                             ? t('kbManager.switched', { defaultValue: 'Current' })
                             : t('kbManager.switch', { defaultValue: 'Use' })}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          disabled={isDefault}
-                          title={isDefault
-                            ? t('header.kbDeleteDefaultDisabled', { defaultValue: 'The default knowledge base cannot be deleted' })
-                            : t('kbManager.delete', { defaultValue: 'Delete knowledge base' })}
-                          onClick={() => {
-                            setPendingDelete(row)
-                            setDeleteConfirm('')
-                          }}
-                        >
-                          <Trash2Icon className="size-3.5" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                              disabled={isDefault}
+                              tooltip={isDefault
+                                ? t('header.kbDeleteDefaultDisabled', { defaultValue: 'The default knowledge base cannot be deleted' })
+                                : t('common.actions', { defaultValue: 'Actions' })}
+                            >
+                              <EllipsisIcon className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              destructive
+                              onClick={() => {
+                                setPendingDelete(row)
+                                setDeleteConfirm('')
+                              }}
+                            >
+                              <Trash2Icon />
+                              {t('kbManager.delete', { defaultValue: 'Delete knowledge base' })}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>

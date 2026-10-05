@@ -55,7 +55,14 @@ import type {
 } from '@/api/lightrag'
 import { useSettingsStore } from '@/stores/settings'
 import { errorMessage } from '@/lib/utils'
-import { LoaderIcon, PencilIcon, PlugZapIcon, PlusIcon, RefreshCwIcon, Trash2Icon } from 'lucide-react'
+import { LoaderIcon, PencilIcon, PlugZapIcon, PlusIcon, RefreshCwIcon, Trash2Icon, EllipsisIcon } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from '@/components/ui/DropdownMenu'
 
 const emptyForm = (): ExternalKBInput => ({
   name: '',
@@ -239,42 +246,42 @@ export default function ExternalKBManager() {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                            tooltip={t('externalKBManager.test', { defaultValue: 'Test connection' })}
-                            onClick={() => handleTest(kb)}
-                            disabled={testingId === kb.id}
-                          >
-                            {testingId === kb.id
-                              ? <LoaderIcon className="size-3.5 animate-spin" />
-                              : <PlugZapIcon className="size-3.5" />}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                            tooltip={t('common.edit', { defaultValue: 'Edit' })}
-                            onClick={() => {
-                              setEditing(kb)
-                              setForm(toForm(kb))
-                              setIsFormOpen(true)
-                            }}
-                          >
-                            <PencilIcon className="size-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                            tooltip={t('common.delete')}
-                            onClick={() => setPendingDelete(kb)}
-                          >
-                            <Trash2Icon className="size-3.5" />
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                              tooltip={t('common.actions', { defaultValue: 'Actions' })}
+                              disabled={testingId === kb.id}
+                            >
+                              {testingId === kb.id
+                                ? <LoaderIcon className="size-3.5 animate-spin" />
+                                : <EllipsisIcon className="size-4" />}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleTest(kb)}>
+                              <PlugZapIcon />
+                              {t('externalKBManager.test', { defaultValue: 'Test connection' })}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setEditing(kb)
+                                setForm(toForm(kb))
+                                setIsFormOpen(true)
+                              }}
+                            >
+                              <PencilIcon />
+                              {t('common.edit', { defaultValue: 'Edit' })}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem destructive onClick={() => setPendingDelete(kb)}>
+                              <Trash2Icon />
+                              {t('common.delete')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                     {result && (
