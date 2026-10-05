@@ -15,17 +15,24 @@
 
 ## Why MeshRAG
 
-MeshRAG keeps the LightRAG graph-RAG engine (entity/relation extraction, multi-modal retrieval, pluggable storage) and adds what production multi-team deployments need:
+MeshRAG keeps the LightRAG graph-RAG engine (entity/relation extraction, multi-mode graph retrieval, pluggable storage) and adds what production multi-team deployments need:
 
 ### 🔀 Multi-knowledge-base federated query
 
-Query **several local knowledge bases at once**, in a single API call:
+One API call retrieves from **multiple local knowledge bases together with
+registered external knowledge bases** (`external_kbs`):
 
-1. Per-KB parallel retrieval → raw chunks + knowledge graph context per KB
-2. Global deduplication and budget control across all KBs
-3. Chunk reranking (with optional reranker)
-4. Reference/citation rebuilding so answers cite the right KB
-5. LLM answer generation with merged context
+1. All sources are queried in parallel: each local KB returns chunks + knowledge
+   graph context; `retrieval`-type external services return chunks, while
+   `rag`-type external services return ready-made answers
+2. Chunks from every source land in one pool for global deduplication and budget control
+3. Cross-source chunk reranking (with optional reranker)
+4. Reference/citation rebuilding so answers cite the right KB or external service
+5. LLM answer generation with the merged context — a single `rag`-type external
+   answer is passed through as-is, several are synthesized by the LLM
+
+One failing external service never fails the whole query — its error is reported
+in `metadata.external_kb_errors` while the remaining sources answer normally.
 
 ### 🌐 External knowledge base integration
 
@@ -34,9 +41,27 @@ Federate **external retrieval/RAG APIs** into the same query flow via `external_
 - `retrieval` type: the external API returns similar text chunks; MeshRAG's LLM generates the answer
 - `rag` type: the external API is a full RAG service and returns a final answer
 
+Registry endpoints under `/external_kbs` manage connection profiles with a
+built-in connectivity test per entry; queries can pass inline configs via
+`external_kbs` or reference registered profiles by id via `external_kb_ids`;
+and `POST /ext/retrieval` ships a mock `retrieval`-type service (backed by your
+own KBs) for integration testing.
+
+### 🗂️ Knowledge-base lifecycle APIs
+
+Create, list, and delete knowledge bases at runtime — query them alone or federated:
+
+- `GET /knowledge_bases` — list knowledge bases
+- `GET /knowledge_bases/stats` — per-KB document and entity counts in one call
+- `POST /knowledge_bases` / `DELETE /knowledge_bases/{kb_id}` — provision or remove a KB
+- `POST /query/data` — retrieval-only variant of `/query`: returns the entities,
+  relationships, chunks, and references that were hit, without LLM generation
+
 ### 📄 Document management APIs
 
-Upload/status pipeline plus fast single-document lookup by file path —
+Upload/status pipeline plus direct text ingestion without files
+(`POST /documents/text`, batch via `/documents/texts`), and fast
+single-document lookup by file path —
 `GET /documents/by_file_path?kb_id=...&file_path=...` — avoiding expensive
 pagination when the document set is large.
 
@@ -47,9 +72,25 @@ deletion requests take priority over in-flight processing, interrupted
 documents resume instead of being reset, and transient failures do not get
 misreported as permanent failures.
 
+### 🖥️ Management WebUI
+
+The bundled React UI (`lightrag_webui`) mirrors the API for day-to-day operation:
+
+![MeshRAG WebUI — retrieval testing with a cited answer and the query-parameter panel](docs/images/webui-retrieval.png)
+
+- **Documents** — upload files or paste text, watch the parsing pipeline, rescan/retry
+- **Knowledge Graph** — browse and edit entities and relations (create, edit, merge)
+- **Retrieval** — chat-style playground with a per-query mode/parameter panel, KB
+  selectors, streaming answers with citations, and a retrieval dry-run inspector
+  that shows the raw hits (entities/relations/chunks) behind an answer
+- **Models** — register LLM profiles server-side and pick one per query;
+  API keys never reach the browser
+- **External KBs** — manage and test federation targets
+- Localized UI in 11 languages
+
 ### 🧬 Everything inherited from LightRAG
 
-- Graph-based knowledge representation with local / global / hybrid / naive / mix query modes
+- Graph-based knowledge representation with local / global / hybrid / naive / mix / bypass query modes
 - Pluggable storage backends (JSON, Redis, PostgreSQL, MongoDB, Milvus, Qdrant, Neo4j, Memgraph, Faiss, NetworkX)
 - WebUI, Ollama-compatible API, streaming responses
 - Workspace isolation for multi-tenant deployment
@@ -110,7 +151,7 @@ errors such as `AttributeError: __aenter__`.
 ### API server
 
 ```bash
-cp env.example .env    # configure LLM / embedding / storage first
+cp env.example .env    # or run `make env-base` for the interactive wizard
 meshrag-server         # production
 meshrag-gunicorn       # multi-worker
 ```
@@ -156,6 +197,7 @@ full contract of each external KB type.
 | `hybrid` | Combines local and global |
 | `naive` | Direct vector search without graph |
 | `mix` | Integrates KG and vector retrieval (recommended with a reranker) |
+| `bypass` | Skip retrieval; send conversation history and the question straight to the LLM |
 
 ## Storage Backends
 
@@ -174,6 +216,7 @@ self-signed TLS certificates.
 
 - [docs/LightRAG-upstream-usage.md](docs/LightRAG-upstream-usage.md) — inherited engine documentation (configuration, storage setup, API details)
 - [docs/external_kb_usage.md](docs/external_kb_usage.md) — external knowledge base integration guide (Chinese)
+- [CHANGELOG.md](CHANGELOG.md) — release notes
 - [docs/OfflineDeployment.md](docs/OfflineDeployment.md) — air-gapped deployment
 - [docs/DockerDeployment.md](docs/DockerDeployment.md) — Docker deployment
 - [docs/FrontendBuildGuide.md](docs/FrontendBuildGuide.md) — WebUI build
@@ -183,12 +226,32 @@ self-signed TLS certificates.
 ## Development
 
 ```bash
+# Backend
 uv sync                  # core package
 uv sync --extra api      # API server support
 uv sync --extra test     # testing dependencies
 
 uv run ruff check .      # lint
-uv run pytest tests/     # offline test suite (no external services)
+uv run pytest tests/     # offline suite (pass --run-integration for live services)
+```
+
+Interactive configuration wizard (writes `.env`, assembles `docker-compose.final.yml`):
+
+```bash
+make env-base            # LLM, embedding, reranker (run first)
+make env-storage         # storage backends (optional)
+make env-server          # port / security / SSL (optional)
+make env-validate        # validate an existing .env
+```
+
+WebUI (React 19 + TypeScript; Bun is mandatory):
+
+```bash
+cd lightrag_webui
+bun install
+bun run dev              # dev server with hot reload
+bun run build            # production bundle → lightrag/api/webui
+bun test
 ```
 
 ## License

@@ -75,6 +75,9 @@ download_models_hf.py
 # temporary test files in project root
 /test_*
 
+# Local GUI test screenshots (manual verification artefacts)
+/gui-test-screenshots/
+
 # Cline files
 memory-bank
 .claude/CLAUDE.md
