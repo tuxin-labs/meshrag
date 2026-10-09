@@ -3,6 +3,7 @@ This module contains all document-related routes for the LightRAG API.
 """
 
 import asyncio
+import os
 from functools import lru_cache
 from lightrag.utils import logger, get_pinyin_sort_key
 import aiofiles
@@ -1067,7 +1068,11 @@ class DocumentManager:
             self.input_dir = self.base_input_dir
 
         # Guard against workspace values that escape the base input directory
-        if not self.input_dir.resolve().is_relative_to(self.base_input_dir.resolve()):
+        resolved_root = os.path.realpath(self.base_input_dir)
+        resolved_input = os.path.realpath(self.input_dir)
+        if resolved_input != resolved_root and not resolved_input.startswith(
+            resolved_root + os.sep
+        ):
             raise ValueError(
                 f"workspace {workspace!r} resolves outside the base input directory"
             )

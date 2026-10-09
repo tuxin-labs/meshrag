@@ -90,7 +90,7 @@ async def fetch_external_kb(
         return await _do_fetch_retrieval(query, url, api_key, top_k, timeout), None
     except Exception as e:
         logger.warning(f"外部知识库请求失败 [{url}]: {e}")
-        return [], f"外部知识库(检索型) [{url}] 请求失败: {e}"
+        return [], f"外部知识库(检索型) [{url}] 请求失败"
 
 
 @retry(
@@ -198,7 +198,7 @@ async def fetch_rag_kb(
             "answer": "",
             "references": [],
             "source": url,
-        }, f"外部知识库(RAG服务型) [{url}] 请求失败: {e}"
+        }, f"外部知识库(RAG服务型) [{url}] 请求失败"
 
 
 @retry(
