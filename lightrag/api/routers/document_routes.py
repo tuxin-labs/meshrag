@@ -1076,6 +1076,8 @@ class DocumentManager:
             raise ValueError(
                 f"workspace {workspace!r} resolves outside the base input directory"
             )
+        # Use the normalized path for all downstream filesystem access
+        self.input_dir = Path(resolved_input)
 
         # Create input directory if it doesn't exist
         self.input_dir.mkdir(parents=True, exist_ok=True)

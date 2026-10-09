@@ -715,12 +715,21 @@ def create_query_routes(
             # Validation errors (unknown model profile / external KB, unknown
             # knowledge base ids) keep their 4xx status instead of a blanket 500.
             raise
-        except UnknownKnowledgeBaseError as e:
-            # The query scoped only to knowledge-base ids that do not exist.
-            raise HTTPException(status_code=404, detail=str(e))
+        except UnknownKnowledgeBaseError:
+            # Echo the requested ids instead of the exception text, which may
+            # embed internal details (flagged as stack-trace exposure).
+            requested = ", ".join(request.kb_ids or [])
+            raise HTTPException(
+                status_code=404,
+                detail=f"Knowledge base(s) not found: {requested}"
+                if requested
+                else "Knowledge base(s) not found",
+            )
         except Exception as e:
             logger.error(f"Error processing query: {str(e)}", exc_info=True)
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(
+                status_code=500, detail="Internal error while processing the query"
+            )
 
     @router.post(
         "/query/stream",
@@ -1106,12 +1115,22 @@ def create_query_routes(
             # Validation errors (unknown model profile / external KB, unknown
             # knowledge base ids) keep their 4xx status instead of a blanket 500.
             raise
-        except UnknownKnowledgeBaseError as e:
-            # The query scoped only to knowledge-base ids that do not exist.
-            raise HTTPException(status_code=404, detail=str(e))
+        except UnknownKnowledgeBaseError:
+            # Echo the requested ids instead of the exception text, which may
+            # embed internal details (flagged as stack-trace exposure).
+            requested = ", ".join(request.kb_ids or [])
+            raise HTTPException(
+                status_code=404,
+                detail=f"Knowledge base(s) not found: {requested}"
+                if requested
+                else "Knowledge base(s) not found",
+            )
         except Exception as e:
             logger.error(f"Error processing streaming query: {str(e)}", exc_info=True)
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(
+                status_code=500,
+                detail="Internal error while processing the streaming query",
+            )
 
     @router.post(
         "/query/data",
@@ -1549,12 +1568,22 @@ def create_query_routes(
             # Validation errors (unknown model profile / external KB, unknown
             # knowledge base ids) keep their 4xx status instead of a blanket 500.
             raise
-        except UnknownKnowledgeBaseError as e:
-            # The query scoped only to knowledge-base ids that do not exist.
-            raise HTTPException(status_code=404, detail=str(e))
+        except UnknownKnowledgeBaseError:
+            # Echo the requested ids instead of the exception text, which may
+            # embed internal details (flagged as stack-trace exposure).
+            requested = ", ".join(request.kb_ids or [])
+            raise HTTPException(
+                status_code=404,
+                detail=f"Knowledge base(s) not found: {requested}"
+                if requested
+                else "Knowledge base(s) not found",
+            )
         except Exception as e:
             logger.error(f"Error processing data query: {str(e)}", exc_info=True)
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(
+                status_code=500,
+                detail="Internal error while processing the data query",
+            )
 
     # ──────────────────────────────────────────
     # 外部知识库模拟接口（测试用）
