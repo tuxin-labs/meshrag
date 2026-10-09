@@ -1029,7 +1029,7 @@ def create_query_routes(
                                         yield f"{json.dumps({'response': chunk})}\n"
                             except Exception as e:
                                 logger.error(f"Streaming error: {str(e)}")
-                                yield f"{json.dumps({'error': str(e)})}\n"
+                                yield f"{json.dumps({'error': 'Internal streaming error'})}\n"
                     else:
                         response_content = llm_response.get("content", "")
                         if not response_content:
