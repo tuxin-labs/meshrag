@@ -44,7 +44,7 @@ dependencies = [
 [project.optional-dependencies]
 # Test framework dependencies (for CI/CD and testing)
 pytest = [
-    "pytest>=8.4.2",
+    "pytest>=9.0.3",
     "pytest-asyncio>=1.2.0",
     "pre-commit",
     "ruff",
@@ -80,16 +80,16 @@ api = [
     "jiter",
     "bcrypt>=4.0.0",
     "psutil",
-    "PyJWT>=2.8.0,<3.0.0",
+    "PyJWT>=2.15.0,<3.0.0",
     "python-jose[cryptography]",
-    "python-multipart",
+    "python-multipart>=0.0.31",
     "pytz",
     "uvicorn",
     "gunicorn",
     # Document processing dependencies (required for API document upload functionality)
     "openpyxl>=3.0.0,<4.0.0",      # XLSX processing
     "pycryptodome>=3.0.0,<4.0.0",  # PDF encryption support
-    "pypdf>=6.1.0",                 # PDF processing
+    "pypdf>=6.19.0",                # PDF processing
     "python-docx>=0.8.11,<2.0.0",  # DOCX processing
     "python-pptx>=0.6.21,<2.0.0",  # PPTX processing
 ]
@@ -98,7 +98,7 @@ api = [
 docling = [
     # On macOS, pytorch and frameworks use Objective-C are not fork-safe,
     # and not compatible to gunicorn multi-worker mode
-    "docling>=2.0.0,<3.0.0; sys_platform != 'darwin'",
+    "docling>=2.94.0,<3.0.0; sys_platform != 'darwin'",
 ]
 
 # Offline deployment dependencies (layered design for flexibility)
@@ -134,7 +134,7 @@ offline = [
 
 test = [
     "meshrag[api]",
-    "pytest>=8.4.2",
+    "pytest>=9.0.3",
     "pytest-asyncio>=1.2.0",
     "pre-commit",
     "ruff",
@@ -142,8 +142,8 @@ test = [
 
 evaluation = [
     "meshrag[api]",
-    "ragas>=0.3.7",
-    "datasets>=4.3.0",
+    "ragas>=0.4.3",
+    "datasets>=5.0.1",
 ]
 
 observability = [
@@ -186,3 +186,8 @@ python_functions = ["test_*"]
 
 [tool.ruff]
 target-version = "py310"
+
+[tool.uv]
+# zhipuai declares pyjwt>=2.8.0,<2.9.0 but PyJWT <2.15 carries token-forgery and
+# DoS advisories; override so the whole resolution (incl. zhipuai) uses the patched line.
+override-dependencies = ["pyjwt>=2.15.0,<3.0.0"]
