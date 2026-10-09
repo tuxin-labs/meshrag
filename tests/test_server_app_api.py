@@ -25,6 +25,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
+from urllib.parse import urlparse
 
 import httpx
 import pytest
@@ -744,14 +745,15 @@ def test_external_kb_probes(server_client, fake_probe_http):
     ).json()
 
     def handler(method, url):
-        if "ret.example.com" in url:
+        host = urlparse(url).hostname or ""
+        if host == "ret.example.com":
             return _response(
                 method,
                 url,
                 200,
                 {"status": "success", "results": [{"content": "c"}] * 3},
             )
-        if "rag.example.com" in url:
+        if host == "rag.example.com":
             return _response(
                 method, url, 200, {"status": "success", "answer": "the answer"}
             )

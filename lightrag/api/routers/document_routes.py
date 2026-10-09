@@ -1066,6 +1066,12 @@ class DocumentManager:
         else:
             self.input_dir = self.base_input_dir
 
+        # Guard against workspace values that escape the base input directory
+        if not self.input_dir.resolve().is_relative_to(self.base_input_dir.resolve()):
+            raise ValueError(
+                f"workspace {workspace!r} resolves outside the base input directory"
+            )
+
         # Create input directory if it doesn't exist
         self.input_dir.mkdir(parents=True, exist_ok=True)
 

@@ -539,14 +539,13 @@ def compute_args_hash(*args: Any) -> str:
     # Convert all arguments to strings and join them
     args_str = "".join([str(arg) for arg in args])
 
-    # Use 'replace' error handling to safely encode problematic Unicode characters
-    # This replaces invalid characters with Unicode replacement character (U+FFFD)
+    # MD5 here only derives non-security identifiers/cache keys, not credentials.
     try:
-        return md5(args_str.encode("utf-8")).hexdigest()
+        return md5(args_str.encode("utf-8"), usedforsecurity=False).hexdigest()
     except UnicodeEncodeError:
         # Handle surrogate characters and other encoding issues
         safe_bytes = args_str.encode("utf-8", errors="replace")
-        return md5(safe_bytes).hexdigest()
+        return md5(safe_bytes, usedforsecurity=False).hexdigest()
 
 
 def compute_mdhash_id(content: str, prefix: str = "") -> str:

@@ -10,6 +10,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from lightrag.utils import logger
 from ..utils_api import get_combined_auth_dependency
 from ..registry import ModelProfileStore, ExternalKBStore
 
@@ -243,10 +244,11 @@ def create_registry_routes(
                 "message": f"HTTP {e.response.status_code}",
             }
         except httpx.HTTPError as e:
+            logger.warning(f"External KB probe failed for profile: {e}")
             outcome = {
                 "reachable": False,
                 "model_available": False,
-                "message": f"Connection failed: {e}",
+                "message": "Connection failed",
             }
         outcome["latency_ms"] = int((time.monotonic() - started) * 1000)
         outcome["id"] = profile_id
@@ -317,10 +319,11 @@ def create_registry_routes(
         try:
             outcome = await _probe_external_kb(entry)
         except httpx.HTTPError as e:
+            logger.warning(f"External KB probe failed for {kb_id}: {e}")
             outcome = {
                 "reachable": False,
                 "model_available": False,
-                "message": f"Connection failed: {e}",
+                "message": "Connection failed",
             }
         outcome["latency_ms"] = int((time.monotonic() - started) * 1000)
         outcome["id"] = kb_id

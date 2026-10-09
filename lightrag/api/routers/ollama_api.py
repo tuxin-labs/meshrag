@@ -411,13 +411,12 @@ class OllamaAPI:
                                         }
                                         yield f"{json.dumps(data, ensure_ascii=False)}\n"
                             except (asyncio.CancelledError, Exception) as e:
-                                error_msg = str(e)
                                 if isinstance(e, asyncio.CancelledError):
                                     error_msg = "Stream was cancelled by server"
                                 else:
-                                    error_msg = f"Provider error: {error_msg}"
+                                    error_msg = "Provider error"
 
-                                logger.error(f"Stream error: {error_msg}")
+                                logger.error(f"Stream error: {e}")
 
                                 # Send error message to client
                                 error_data = {
@@ -647,13 +646,12 @@ class OllamaAPI:
                                         }
                                         yield f"{json.dumps(data, ensure_ascii=False)}\n"
                             except (asyncio.CancelledError, Exception) as e:
-                                error_msg = str(e)
                                 if isinstance(e, asyncio.CancelledError):
                                     error_msg = "Stream was cancelled by server"
                                 else:
-                                    error_msg = f"Provider error: {error_msg}"
+                                    error_msg = "Provider error"
 
-                                logger.error(f"Stream error: {error_msg}")
+                                logger.error(f"Stream error: {e}")
 
                                 # Send error message to client
                                 error_data = {

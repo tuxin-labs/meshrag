@@ -1238,9 +1238,13 @@ def create_app(args):
                     },
                 )
 
-        except ValueError as e:
+        except ValueError:
             return JSONResponse(
-                status_code=400, content={"status": "error", "message": str(e)}
+                status_code=400,
+                content={
+                    "status": "error",
+                    "message": "Cannot delete knowledge base: the default knowledge base is protected or the kb_id is invalid",
+                },
             )
         except Exception as e:
             logger.error(f"Error deleting knowledge base {kb_id}: {e}")
@@ -1248,7 +1252,7 @@ def create_app(args):
                 status_code=500,
                 content={
                     "status": "error",
-                    "message": f"Failed to delete knowledge base: {e}",
+                    "message": "Failed to delete knowledge base",
                 },
             )
 
