@@ -1011,7 +1011,7 @@ def create_query_routes(
 
                 except Exception as e:
                     logger.error(f"Error during retrieval: {e}", exc_info=True)
-                    yield f"{json.dumps({'error': f'Retrieval failed: {str(e)}'})}\n"
+                    yield f"{json.dumps({'error': 'Retrieval failed'})}\n"
                     return
 
                 # Extract references and LLM response from unified result

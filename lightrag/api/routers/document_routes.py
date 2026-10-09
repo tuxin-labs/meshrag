@@ -1070,14 +1070,16 @@ class DocumentManager:
         # Guard against workspace values that escape the base input directory
         resolved_root = os.path.realpath(self.base_input_dir)
         resolved_input = os.path.realpath(self.input_dir)
-        if resolved_input != resolved_root and not resolved_input.startswith(
-            resolved_root + os.sep
-        ):
-            raise ValueError(
-                f"workspace {workspace!r} resolves outside the base input directory"
-            )
-        # Use the normalized path for all downstream filesystem access
-        self.input_dir = Path(resolved_input)
+        if resolved_input != resolved_root:
+            if resolved_input.startswith(resolved_root + os.sep):
+                # Use the normalized path for all downstream filesystem access
+                self.input_dir = Path(resolved_input)
+            else:
+                raise ValueError(
+                    f"workspace {workspace!r} resolves outside the base input directory"
+                )
+        else:
+            self.input_dir = self.base_input_dir
 
         # Create input directory if it doesn't exist
         self.input_dir.mkdir(parents=True, exist_ok=True)
