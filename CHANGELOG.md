@@ -22,6 +22,14 @@ Security-hardening release: clears all GitHub Dependabot and CodeQL alerts.
   (IDs are not security-relevant; the digest must stay for data
   compatibility).
 
+### Fixed
+
+- `GET /documents` returned a 500 validation error for knowledge bases
+  containing text-inserted documents: the pipeline stores `file_path=None`
+  for inserts without a backing file, but the response model required a
+  string. The field is now optional (the WebUI already handles a missing
+  path).
+
 ### Changed
 
 - Dependency floors raised so fresh installs cannot resolve into known
