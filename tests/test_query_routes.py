@@ -214,9 +214,7 @@ class TestQueryEndpoint:
 
     @pytest.mark.asyncio
     @patch("lightrag.api.llm_factory.create_dynamic_llm_func")
-    async def test_query_llm_override_defaults_think_true(
-        self, mock_factory, test_app
-    ):
+    async def test_query_llm_override_defaults_think_true(self, mock_factory, test_app):
         """问答换模型时默认开启思考（调用方无需改动）。"""
         mock_factory.return_value = AsyncMock()
 
@@ -249,9 +247,7 @@ class TestQueryEndpoint:
 
     @pytest.mark.asyncio
     @patch("lightrag.api.llm_factory.create_dynamic_llm_func")
-    async def test_query_llm_think_false_passed_through(
-        self, mock_factory, test_app
-    ):
+    async def test_query_llm_think_false_passed_through(self, mock_factory, test_app):
         """显式传 llm_think=False 时应关闭思考。"""
         mock_factory.return_value = AsyncMock()
 

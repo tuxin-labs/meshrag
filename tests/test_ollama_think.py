@@ -56,9 +56,7 @@ class TestOllamaThinkPromotion:
         """options 里的 think 应移到 chat 顶层，并从 options 中移除。"""
         from lightrag.llm.ollama import _ollama_model_if_cache
 
-        mock_client_cls.return_value = _mock_client(
-            {"message": {"content": "ok"}}
-        )
+        mock_client_cls.return_value = _mock_client({"message": {"content": "ok"}})
 
         await _ollama_model_if_cache(
             "qwen3.5:latest",
@@ -78,9 +76,7 @@ class TestOllamaThinkPromotion:
         """显式顶层 think 应优先于 options 中的值。"""
         from lightrag.llm.ollama import _ollama_model_if_cache
 
-        mock_client_cls.return_value = _mock_client(
-            {"message": {"content": "ok"}}
-        )
+        mock_client_cls.return_value = _mock_client({"message": {"content": "ok"}})
 
         await _ollama_model_if_cache(
             "qwen3.5:latest",
@@ -99,9 +95,7 @@ class TestOllamaThinkPromotion:
         """未提供 think 时应默认注入 False（解析路径默认关闭思考）。"""
         from lightrag.llm.ollama import _ollama_model_if_cache
 
-        mock_client_cls.return_value = _mock_client(
-            {"message": {"content": "ok"}}
-        )
+        mock_client_cls.return_value = _mock_client({"message": {"content": "ok"}})
 
         await _ollama_model_if_cache(
             "qwen3.5:latest",
@@ -120,9 +114,7 @@ class TestOllamaThinkPromotion:
         """提升 think 时不应修改调用方传入的 options dict。"""
         from lightrag.llm.ollama import _ollama_model_if_cache
 
-        mock_client_cls.return_value = _mock_client(
-            {"message": {"content": "ok"}}
-        )
+        mock_client_cls.return_value = _mock_client({"message": {"content": "ok"}})
         original_options = {"num_ctx": 8192, "think": False}
 
         await _ollama_model_if_cache(

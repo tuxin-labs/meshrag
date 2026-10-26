@@ -91,9 +91,7 @@ class TestCreateDynamicLLMFunc:
         from lightrag.api.llm_factory import create_dynamic_llm_func
 
         mock_create.return_value = AsyncMock()
-        create_dynamic_llm_func(
-            binding="ollama", model="qwen3.5:latest", think=False
-        )
+        create_dynamic_llm_func(binding="ollama", model="qwen3.5:latest", think=False)
 
         assert mock_create.call_args.kwargs["think"] is False
 
