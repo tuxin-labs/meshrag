@@ -453,6 +453,7 @@ class _OllamaOptionsMixin:
         "embedding_only": "Only use for embeddings",
         "penalize_newline": "Penalize newline tokens",
         "stop": 'Stop sequences (JSON array of strings, e.g., \'["</s>", "\\n\\n"]\')',
+        "think": "Enable model thinking/reasoning mode (default: disabled for indexing)",
     }
 
 
@@ -470,6 +471,10 @@ class OllamaLLMOptions(_OllamaOptionsMixin, BindingOptions):
 
     # mandatory name of binding
     _binding_name: ClassVar[str] = "ollama_llm"
+
+    # 是否启用思考模式。解析阶段默认关闭：
+    # 思考型模型在实体提取等长任务中可能超时或输出异常字符
+    think: bool = False
 
 
 # =============================================================================

@@ -82,8 +82,20 @@ class TestCreateDynamicLLMFunc:
         )
 
         mock_create.assert_called_once_with(
-            "qwen2", None, None, 120, {"options": {"num_ctx": 32768}}
+            "qwen2", None, None, 120, {"options": {"num_ctx": 32768}}, think=True
         )
+
+    @patch("lightrag.api.llm_factory._create_ollama_func")
+    def test_create_ollama_func_receives_think(self, mock_create):
+        """create_dynamic_llm_func 应把 think 透传给 _create_ollama_func。"""
+        from lightrag.api.llm_factory import create_dynamic_llm_func
+
+        mock_create.return_value = AsyncMock()
+        create_dynamic_llm_func(
+            binding="ollama", model="qwen3.5:latest", think=False
+        )
+
+        assert mock_create.call_args.kwargs["think"] is False
 
     @patch("lightrag.api.llm_factory._create_bedrock_func")
     def test_create_bedrock_func_called(self, mock_create):
@@ -313,6 +325,36 @@ class TestOllamaFunc:
 
         call_kwargs = mock_model.call_args.kwargs
         assert call_kwargs["stream"] is True
+
+    @patch("lightrag.llm.ollama._ollama_model_if_cache")
+    async def test_ollama_dynamic_defaults_think_true(self, mock_model):
+        """问答（动态）路径默认开启思考。"""
+        from lightrag.api.llm_factory import _create_ollama_func
+
+        mock_model.return_value = "response"
+        func = _create_ollama_func(
+            model="qwen3.5:latest", host=None, api_key=None, timeout=60
+        )
+
+        await func("prompt")
+
+        call_kwargs = mock_model.call_args.kwargs
+        assert call_kwargs["think"] is True
+
+    @patch("lightrag.llm.ollama._ollama_model_if_cache")
+    async def test_ollama_dynamic_think_can_be_disabled(self, mock_model):
+        """调用方显式传 think=False 时应关闭思考。"""
+        from lightrag.api.llm_factory import _create_ollama_func
+
+        mock_model.return_value = "response"
+        func = _create_ollama_func(
+            model="qwen3.5:latest", host=None, api_key=None, timeout=60
+        )
+
+        await func("prompt", think=False)
+
+        call_kwargs = mock_model.call_args.kwargs
+        assert call_kwargs["think"] is False
 
 
 # ──────────────────────────────────────────────

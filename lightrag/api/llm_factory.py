@@ -29,6 +29,7 @@ def create_dynamic_llm_func(
     timeout: int = 120,
     default_model_kwargs: dict | None = None,
     default_headers: dict[str, str] | None = None,
+    think: bool = True,
 ) -> Callable[..., Awaitable[Union[str, AsyncIterator[str]]]]:
     """Create a dynamic LLM function for query-time model override.
 
@@ -40,6 +41,8 @@ def create_dynamic_llm_func(
         timeout: Request timeout in seconds.
         default_model_kwargs: Server's default LLM model kwargs (e.g., Ollama options with num_ctx).
         default_headers: Custom HTTP headers for OpenAI-compatible APIs (e.g. X-Apig-AppCode).
+        think: Enable model thinking for Ollama. Dynamic (query) path defaults to True,
+            unlike the indexing path which defaults to False.
 
     Returns:
         Async callable with standard LightRAG LLM function signature.
@@ -63,7 +66,9 @@ def create_dynamic_llm_func(
     elif binding == "gemini":
         return _create_gemini_func(model, host, api_key, timeout)
     elif binding == "ollama":
-        return _create_ollama_func(model, host, api_key, timeout, default_model_kwargs)
+        return _create_ollama_func(
+            model, host, api_key, timeout, default_model_kwargs, think=think
+        )
     elif binding == "aws_bedrock":
         return _create_bedrock_func(model, timeout)
     elif binding == "lollms":
@@ -199,8 +204,12 @@ def _create_ollama_func(
     api_key: str | None,
     timeout: int,
     default_model_kwargs: dict | None = None,
+    think: bool = True,
 ):
-    """Create dynamic LLM function for Ollama."""
+    """Create dynamic LLM function for Ollama.
+
+    Dynamic (query) path defaults to thinking enabled, unlike indexing.
+    """
     from lightrag.llm.ollama import _ollama_model_if_cache
 
     # Inherit server's Ollama options (num_ctx etc.) when available
@@ -230,6 +239,9 @@ def _create_ollama_func(
         # but allow per-call kwargs to override them
         if server_options and "options" not in kwargs:
             kwargs["options"] = server_options
+
+        # 问答路径默认开启思考（调用方可通过显式 think=False 关闭）
+        kwargs.setdefault("think", think)
 
         return await _ollama_model_if_cache(
             model,

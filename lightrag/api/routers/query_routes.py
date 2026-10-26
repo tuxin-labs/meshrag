@@ -167,6 +167,11 @@ class QueryRequest(BaseModel):
         description="LLM API key for query override. "
         "If not provided, uses the server's default API key.",
     )
+    llm_think: Optional[bool] = Field(
+        default=None,
+        description="Ollama 思考模式开关（仅 ollama binding 生效）。"
+        "查询换模型时默认开启思考；传 false 可显式关闭。不传保持默认行为。",
+    )
     llm_default_headers: Optional[Dict[str, str]] = Field(
         default=None,
         description="Custom HTTP headers for OpenAI-compatible query override "
@@ -262,6 +267,7 @@ class QueryRequest(BaseModel):
                 "llm_model",
                 "llm_binding_host",
                 "llm_binding_api_key",
+                "llm_think",
                 "llm_default_headers",
                 "llm_profile_id",
                 "external_kbs",
@@ -418,6 +424,8 @@ def create_query_routes(
         # Look up binding-specific kwargs (e.g., Ollama options with num_ctx)
         # This works regardless of the server's own binding type
         effective_model_kwargs = (binding_model_kwargs or {}).get(request.llm_binding)
+        # 问答换模型时默认开启思考，调用方可通过 llm_think=False 显式关闭
+        think = True if request.llm_think is None else request.llm_think
         return create_dynamic_llm_func(
             binding=request.llm_binding,
             model=request.llm_model,
@@ -426,6 +434,7 @@ def create_query_routes(
             timeout=llm_timeout,
             default_model_kwargs=effective_model_kwargs,
             default_headers=request.llm_default_headers,
+            think=think,
         )
 
     @router.post(

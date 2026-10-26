@@ -70,6 +70,18 @@ async def _ollama_model_if_cache(
         logger.debug("enable_cot=True is not supported for ollama and will be ignored.")
     stream = True if kwargs.get("stream") else False
 
+    # think 是 ollama chat 的顶层参数，不能放在 options 中。
+    # BindingOptions 会把 think 打包进 options，这里提升到顶层；
+    # 未显式指定时默认关闭，避免解析阶段思考超时与异常输出。
+    options = kwargs.get("options")
+    options_think = None
+    if isinstance(options, dict) and "think" in options:
+        options = dict(options)  # 不修改调用方传入的 dict
+        options_think = options.pop("think")
+        kwargs["options"] = options
+    if "think" not in kwargs:
+        kwargs["think"] = options_think if options_think is not None else False
+
     kwargs.pop("max_tokens", None)
     # kwargs.pop("response_format", None) # allow json
     host = kwargs.pop("host", None)

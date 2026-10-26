@@ -124,6 +124,21 @@ class TestQueryRequestValidation:
         )
         assert req.llm_default_headers == {"X-Apig-AppCode": "app-code-123"}
 
+    def test_llm_think_defaults_to_none(self):
+        """未传 llm_think 时应为 None（由 dynamic 路径默认开启思考）。"""
+        from lightrag.api.routers.query_routes import QueryRequest
+
+        req = QueryRequest(query="What is AI?")
+
+        assert req.llm_think is None
+
+    def test_llm_think_accepts_bool(self):
+        """llm_think 可显式传 True/False。"""
+        from lightrag.api.routers.query_routes import QueryRequest
+
+        assert QueryRequest(query="test", llm_think=True).llm_think is True
+        assert QueryRequest(query="test", llm_think=False).llm_think is False
+
     def test_external_kb_config_validation(self):
         """ExternalKBConfig 的 top_k 边界值验证。"""
         from lightrag.api.routers.query_routes import ExternalKBConfig
@@ -196,6 +211,77 @@ class TestQueryEndpoint:
         data = response.json()
         assert "response" in data
         assert data["response"] == "AI response text"
+
+    @pytest.mark.asyncio
+    @patch("lightrag.api.llm_factory.create_dynamic_llm_func")
+    async def test_query_llm_override_defaults_think_true(
+        self, mock_factory, test_app
+    ):
+        """问答换模型时默认开启思考（调用方无需改动）。"""
+        mock_factory.return_value = AsyncMock()
+
+        async def mock_multi_kb_query(*args, **kwargs):
+            return {
+                "status": "success",
+                "message": "ok",
+                "data": {"references": []},
+                "metadata": {},
+                "llm_response": {"content": "answer", "is_streaming": False},
+            }
+
+        mock_mgr = MagicMock()
+        mock_mgr.multi_kb_query = mock_multi_kb_query
+        mock_mgr.default_kb = "default"
+
+        client = _make_client(mock_mgr)
+        response = client.post(
+            "/query",
+            json={
+                "query": "What is AI?",
+                "llm_binding": "ollama",
+                "llm_model": "qwen3.5:latest",
+                "llm_binding_host": "http://172.16.60.242:11434",
+            },
+        )
+
+        assert response.status_code == 200
+        assert mock_factory.call_args.kwargs["think"] is True
+
+    @pytest.mark.asyncio
+    @patch("lightrag.api.llm_factory.create_dynamic_llm_func")
+    async def test_query_llm_think_false_passed_through(
+        self, mock_factory, test_app
+    ):
+        """显式传 llm_think=False 时应关闭思考。"""
+        mock_factory.return_value = AsyncMock()
+
+        async def mock_multi_kb_query(*args, **kwargs):
+            return {
+                "status": "success",
+                "message": "ok",
+                "data": {"references": []},
+                "metadata": {},
+                "llm_response": {"content": "answer", "is_streaming": False},
+            }
+
+        mock_mgr = MagicMock()
+        mock_mgr.multi_kb_query = mock_multi_kb_query
+        mock_mgr.default_kb = "default"
+
+        client = _make_client(mock_mgr)
+        response = client.post(
+            "/query",
+            json={
+                "query": "What is AI?",
+                "llm_binding": "ollama",
+                "llm_model": "qwen3.5:latest",
+                "llm_binding_host": "http://172.16.60.242:11434",
+                "llm_think": False,
+            },
+        )
+
+        assert response.status_code == 200
+        assert mock_factory.call_args.kwargs["think"] is False
 
     @pytest.mark.asyncio
     async def test_query_bypass_no_references(self, test_app):
