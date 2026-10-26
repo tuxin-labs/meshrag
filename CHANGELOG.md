@@ -4,6 +4,30 @@ All notable changes to MeshRAG are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] — 2026-10-26
+
+Ollama thinking-mode control, synced from the upstream LightRAG deployment.
+
+### Added
+
+- `OllamaLLMOptions.think` (env `OLLAMA_LLM_THINK`, default `false`):
+  indexing/extraction runs with thinking disabled so reasoning models
+  (qwen3, deepseek-r1, …) no longer time out or emit corrupted output
+  during entity extraction.
+- `POST /query` accepts `llm_think` (optional bool). Query-time model
+  overrides (`llm_binding` + `llm_model` + `llm_binding_host`) now
+  default to thinking **enabled**; send `llm_think: false` to opt out.
+  The field is stripped in `to_query_params()` and never reaches
+  `QueryParam`.
+
+### Changed
+
+- `_ollama_model_if_cache()` lifts `think` out of the `options` dict to
+  the ollama chat top level (it is not a model option), defaulting to
+  `false` when absent, without mutating the caller's dict.
+- `create_dynamic_llm_func()` / `_create_ollama_func()` accept a `think`
+  flag so the dynamic (query) and indexing paths can differ.
+
 ## [1.1.0] — 2026-10-09
 
 Security-hardening release: clears all GitHub Dependabot and CodeQL alerts.
